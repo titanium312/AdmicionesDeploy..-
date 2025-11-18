@@ -1,9 +1,9 @@
 // ./controllers/facturas.controller.js
 const axios = require('axios');
-const querystring = require('querystring'); // para x-www-form-urlencoded
+const querystring = require('querystring');
 
 // POST /facturas/cambiar-fecha-emision
-// body esperado: { idFactura: "3607138", fechaEmision: "11/11/2025" }
+// body esperado: { idFactura: "3607138", fechaEmision: "11/13/2025" } → se convierte a 13/11/2025
 async function cambiarFechaEmision(req, res) {
   try {
     const { idFactura, fechaEmision } = req.body;
@@ -15,18 +15,31 @@ async function cambiarFechaEmision(req, res) {
       });
     }
 
+    // === CONVERSIÓN DE FECHA: MM/DD/YYYY → DD/MM/YYYY ===
+    let fechaFormateada;
+    try {
+      const [mes, dia, anio] = fechaEmision.split('/').map(Number);
+
+      if (!mes || !dia || !anio || mes > 12 || dia > 31) {
+        throw new Error('Formato de fecha inválido o valores fuera de rango');
+      }
+
+      // Aseguramos 2 dígitos para día y mes
+      fechaFormateada = `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${anio}`;
+    } catch (err) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: 'Formato de fecha inválido. Usa MM/DD/YYYY (ej: 11/13/2025)',
+      });
+    }
+
     const uri = 'https://balance.saludplus.co/facturasAdministar/cambiarfechaEmisionAccion';
 
-    // El endpoint espera application/x-www-form-urlencoded
     const body = querystring.stringify({
-      idFacturas: idFactura,   // nombre EXACTO del parámetro en el endpoint VB
-      fechaEmision: fechaEmision,
+      idFacturas: idFactura,        // nombre exacto esperado por el backend
+      fechaEmision: fechaFormateada, // ← fecha ya convertida a DD/MM/YYYY
     });
 
-    // Encabezados similares a los de PowerShell
-    // IMPORTANTE: ajusta el origen de las cookies a tu caso real:
-    // - o las lees de req.headers.cookie
-    // - o usas una cookie fija en una variable de entorno
     const headers = {
       Accept: 'application/json, text/javascript, */*; q=0.01',
       'X-Requested-With': 'XMLHttpRequest',
@@ -36,11 +49,11 @@ async function cambiarFechaEmision(req, res) {
 
     const { data } = await axios.post(uri, body, { headers });
 
-    // data debería contener algo como:
-    // { mensajeRetorno: 'las facturas se modificaron  correctamente', valorretorno: 1 }
     return res.json({
       ok: true,
       data,
+      // Opcional: mostrar la fecha enviada
+      debug: { fechaRecibida: fechaEmision, fechaEnviada: fechaFormateada },
     });
   } catch (error) {
     console.error('Error al cambiar fecha de emisión:', error.message);
@@ -52,7 +65,7 @@ async function cambiarFechaEmision(req, res) {
       ok: false,
       mensaje: 'Error al llamar al servicio cambiarfechaEmisionAccion',
       error: error.message,
-      serverBody, // opcional, por si quieres ver la respuesta cruda del servidor
+      serverBody,
     });
   }
 }

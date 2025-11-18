@@ -1,1083 +1,476 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <title>Generar factura / Cambiar fecha / Enviar a la DIAN</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <style>
-    :root {
-      --bg: #050816;
-      --bg-soft: #0f172a;
-      --bg-softer: #111827;
-      --primary: #3b82f6;
-      --primary-soft: rgba(59, 130, 246, 0.15);
-      --primary-strong: #2563eb;
-      --accent: #22c55e;
-      --danger: #ef4444;
-      --warn: #facc15;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --border: #1f2937;
-      --radius-lg: 18px;
-      --radius-md: 10px;
-      --radius-pill: 999px;
-      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.75);
-      --transition-fast: 0.18s ease-out;
-      --transition-med: 0.25s ease-out;
-      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: var(--font-sans);
-      background: radial-gradient(circle at top, #1d2540 0, #050816 40%, #020617 100%);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    body {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 32px 16px;
-    }
-
-    .shell {
-      width: 100%;
-      max-width: 1100px;
-    }
-
-    .title {
-      margin-bottom: 18px;
-    }
-
-    .title h1 {
-      font-size: clamp(1.6rem, 2.2vw, 2rem);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin: 0;
-      color: #f9fafb;
-    }
-
-    .title h1 span.emoji {
-      font-size: 1.8rem;
-      filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7));
-    }
-
-    .title-sub {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-top: 4px;
-    }
-
-    .card {
-      background: radial-gradient(circle at top left, #111827 0, #020617 60%);
-      border-radius: 24px;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(148, 163, 184, 0.15);
-      overflow: hidden;
-    }
-
-    .card-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 20px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-      background: linear-gradient(90deg, rgba(55, 65, 81, 0.4), rgba(15, 23, 42, 0.95));
-    }
-
-    .card-header-left {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .card-title {
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .pill-env {
-      font-size: 0.75rem;
-      padding: 2px 10px;
-      border-radius: var(--radius-pill);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      background: rgba(15, 23, 42, 0.85);
-      color: var(--muted);
-    }
-
-    .card-subtitle {
-      font-size: 0.82rem;
-      color: var(--muted);
-    }
-
-    .card-body {
-      padding: 18px 20px 20px;
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 0.85rem;
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 0.8rem;
-      margin-top: 6px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap: 14px 18px;
-      align-items: flex-start;
-    }
-
-    .col-3 { grid-column: span 3; }
-    .col-4 { grid-column: span 4; }
-    .col-5 { grid-column: span 5; }
-    .col-6 { grid-column: span 6; }
-    .col-12 { grid-column: span 12; }
-
-    @media (max-width: 900px) {
-      .col-3, .col-4, .col-5, .col-6 { grid-column: span 12; }
-    }
-
-    label {
-      display: block;
-      font-size: 0.82rem;
-      font-weight: 500;
-      margin-bottom: 4px;
-      color: #e5e7eb;
-    }
-
-    input[type="number"],
-    input[type="date"],
-    textarea {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--bg-softer);
-      color: var(--text);
-      font: inherit;
-      padding: 9px 10px;
-      outline: none;
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), transform 0.08s ease-out;
-    }
-
-    input[type="number"]:focus,
-    input[type="date"]:focus,
-    textarea:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
-      background: #020617;
-      transform: translateY(-1px);
-    }
-
-    input[disabled],
-    textarea[disabled] {
-      opacity: 0.7;
-      cursor: not-allowed;
-      background: #020617;
-    }
-
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-      line-height: 1.4;
-      font-size: 0.9rem;
-      white-space: pre;
-    }
-
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border-radius: 999px;
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.95);
-      cursor: pointer;
-      font-size: 0.78rem;
-      color: var(--muted);
-      transition: border-color var(--transition-fast), background var(--transition-fast), transform 0.08s ease-out, box-shadow var(--transition-fast);
-    }
-
-    .chip input {
-      accent-color: var(--primary);
-      cursor: pointer;
-    }
-
-    .chip:hover {
-      border-color: rgba(59, 130, 246, 0.9);
-      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
-      transform: translateY(-1px);
-    }
-
-    .chip-active {
-      border-color: var(--primary);
-      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.45), rgba(15, 23, 42, 0.98));
-      color: #e5e7eb;
-    }
-
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      margin-top: 4px;
-    }
-
-    .btn {
-      border-radius: var(--radius-pill);
-      border: none;
-      padding: 8px 16px;
-      font-size: 0.86rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background var(--transition-med), transform 0.08s ease-out, box-shadow var(--transition-med), opacity var(--transition-fast);
-      outline: none;
-      letter-spacing: 0.01em;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-      color: #eff6ff;
-      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.55);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.7);
-    }
-
-    .btn-secondary {
-      background: rgba(31, 41, 55, 0.9);
-      color: #e5e7eb;
-      border: 1px solid rgba(148, 163, 184, 0.5);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(15, 23, 42, 1);
-      transform: translateY(-1px);
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.9);
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--muted);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      padding-inline: 12px;
-      font-size: 0.8rem;
-    }
-
-    .btn-ghost:hover {
-      background: rgba(15, 23, 42, 0.8);
-      color: #e5e7eb;
-      transform: translateY(-1px);
-    }
-
-    .btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      transform: none !important;
-      box-shadow: none !important;
-    }
-
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 16px;
-      gap: 10px;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      font-size: 0.76rem;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
-    }
-
-    .status-dot-paused {
-      background: var(--warn);
-      box-shadow: 0 0 10px rgba(250, 204, 21, 0.9);
-    }
-
-    .status-dot-stopped {
-      background: var(--danger);
-      box-shadow: 0 0 10px rgba(248, 113, 113, 0.8);
-    }
-
-    .progress {
-      width: 100%;
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 999px;
-      border: 1px solid rgba(31, 41, 55, 0.95);
-      overflow: hidden;
-      height: 9px;
-      position: relative;
-    }
-
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--primary));
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
-      transition: width 0.18s ease-out;
-      position: relative;
-    }
-
-    .progress-bar::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.3) 0,
-        transparent 40%,
-        transparent 60%,
-        rgba(255, 255, 255, 0.3) 100%
-      );
-      background-size: 30px 30px;
-      mix-blend-mode: soft-light;
-      opacity: 0.7;
-      animation: shimmer 1.1s linear infinite;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: -30px 0; }
-      100% { background-position: 30px 0; }
-    }
-
-    .table-wrapper {
-      margin-top: 18px;
-      border-radius: 14px;
-      border: 1px solid rgba(31, 41, 55, 0.95);
-      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.95), #020617);
-      overflow: hidden;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-    }
-
-    thead {
-      background: linear-gradient(90deg, rgba(15, 23, 42, 0.95), rgba(30, 64, 175, 0.8));
-    }
-
-    th, td {
-      padding: 7px 10px;
-      text-align: left;
-      border-bottom: 1px solid rgba(31, 41, 55, 0.95);
-    }
-
-    th {
-      font-weight: 500;
-      font-size: 0.78rem;
-      color: #9ca3af;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    tbody tr:nth-child(even) {
-      background: rgba(15, 23, 42, 0.85);
-    }
-
-    tbody tr:nth-child(odd) {
-      background: rgba(2, 6, 23, 0.9);
-    }
-
-    tbody tr:hover {
-      background: rgba(15, 23, 42, 1);
-    }
-
-    td {
-      vertical-align: top;
-    }
-
-    td.col-msg {
-      max-width: 320px;
-      word-break: break-word;
-      font-size: 0.78rem;
-    }
-
-    .tag {
-      border-radius: 999px;
-      padding: 2px 9px;
-      font-size: 0.72rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-    }
-
-    .tag-ok {
-      background: rgba(34, 197, 94, 0.12);
-      color: #bbf7d0;
-      border: 1px solid rgba(34, 197, 94, 0.5);
-    }
-
-    .tag-error {
-      background: rgba(239, 68, 68, 0.15);
-      color: #fecaca;
-      border: 1px solid rgba(248, 113, 113, 0.7);
-    }
-
-    .tag-info {
-      background: rgba(59, 130, 246, 0.12);
-      color: #bfdbfe;
-      border: 1px solid rgba(59, 130, 246, 0.6);
-    }
-
-    .tag-warn {
-      background: rgba(250, 204, 21, 0.14);
-      color: #fef9c3;
-      border: 1px solid rgba(250, 204, 21, 0.7);
-    }
-
-    .badge-small {
-      font-size: 0.74rem;
-      padding: 2px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      color: var(--muted);
-      background: rgba(15, 23, 42, 0.9);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .pill-count {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.78rem;
-      padding: 3px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(31, 41, 55, 0.95);
-      background: rgba(15, 23, 42, 0.9);
-    }
-
-    .pill-count span.num {
-      font-weight: 600;
-      color: #e5e7eb;
-    }
-
-    .pill-count span.total {
-      color: var(--muted);
-    }
-
-    .footer-hint {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .footer-hint b {
-      color: #e5e7eb;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interfaz Funcional Facturas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome para iconos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#6b7280',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .custom-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid #374151;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            background-color: white;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .custom-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .custom-checkbox:checked::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+        }
+        .custom-checkbox:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
-<body>
-  <div class="shell">
-    <div class="title">
-      <h1>
-        <span class="emoji">🧾</span>
-        <span>Gestión de facturas por admisión</span>
-      </h1>
-      <div class="title-sub">
-        Genera número de factura, actualiza fecha de emisión y envía a DIAN en lote, de forma automática.
-      </div>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen py-8 px-4">
+    <div class="container mx-auto max-w-4xl">
+        <div class="bg-white border-4 border-gray-800 rounded-xl p-8 shadow-2xl">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-file-invoice-dollar text-primary mr-3"></i>
+                    Sistema de Gestión de Facturas
+                </h1>
+                <p class="text-gray-600">Procesamiento automatizado de números de admisión</p>
+            </div>
+
+            <!-- Configuración de URL Base -->
+            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50">
+                <label for="urlBase" class="block text-lg font-bold text-gray-800 mb-3">
+                    <i class="fas fa-server mr-2"></i>Configuración del Servidor
+                </label>
+                <div class="flex gap-4">
+                    <input 
+                        type="text" 
+                        id="urlBase" 
+                        class="flex-1 border-2 border-gray-800 rounded-lg p-3 font-medium text-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                        placeholder="Ingrese la URL base del servidor (ej: http://localhost:3000)"
+                        value="http://localhost:3000"
+                    >
+                    <button 
+                        id="guardarUrlBtn" 
+                        class="bg-white border-2 border-gray-800 px-6 py-3 font-bold uppercase rounded-lg hover:bg-gray-100 hover:border-primary hover:text-primary transition-all flex items-center"
+                    >
+                        <i class="fas fa-save mr-2"></i>Guardar
+                    </button>
+                </div>
+                <div class="text-sm text-gray-600 mt-2 flex items-start">
+                    <i class="fas fa-info-circle text-primary mr-2 mt-0.5"></i>
+                    <span>Configure la URL base del servidor antes de ejecutar las acciones.</span>
+                </div>
+            </div>
+
+            <!-- Sección de Búsqueda -->
+            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50">
+                <label for="searchInput" class="block text-lg font-bold text-gray-800 mb-3">
+                    <i class="fas fa-search mr-2"></i>Números de Admisión
+                </label>
+                <textarea 
+                    id="searchInput" 
+                    class="w-full min-h-[100px] border-2 border-gray-800 rounded-lg p-4 font-medium text-gray-800 resize-y focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    placeholder="Ingrese números de Admisión, separados por coma o nueva línea (ej: 178913, 5605991)."
+                ></textarea>
+                <div class="text-sm text-gray-600 mt-2 flex items-start">
+                    <i class="fas fa-info-circle text-primary mr-2 mt-0.5"></i>
+                    <span>Ingrese números de Admisión, seleccione las acciones deseadas y presione 'Ejecutar Acciones' para buscar y procesar.</span>
+                </div>
+            </div>
+
+            <!-- Toolbar de Acciones -->
+            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap gap-6">
+                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-200 transition-colors">
+                        <span class="font-semibold text-gray-800 text-sm text-center">
+                            <i class="fas fa-file-invoice-dollar text-primary mr-1"></i>Generar Número<br>Factura
+                        </span>
+                        <input type="checkbox" id="generar" value="generar" class="custom-checkbox">
+                    </label>
+                    
+                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-200 transition-colors">
+                        <span class="font-semibold text-gray-800 text-sm">
+                            <i class="fas fa-calendar-alt text-primary mr-1"></i>Cambiar Fecha
+                        </span>
+                        <input type="checkbox" id="cambiar" value="cambiar_fecha" class="custom-checkbox">
+                    </label>
+                    
+                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-200 transition-colors">
+                        <span class="font-semibold text-gray-800 text-sm">
+                            <i class="fas fa-paper-plane text-primary mr-1"></i>Enviar a la DIAN
+                        </span>
+                        <input type="checkbox" id="enviar" value="enviar_dian" class="custom-checkbox">
+                    </label>
+                </div>
+                
+                <input 
+                    type="date" 
+                    id="fechaInput" 
+                    class="border-2 border-gray-800 rounded-lg px-4 py-2 font-medium text-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                >
+                
+                <button 
+                    id="ejecutarBtn" 
+                    class="bg-white border-2 border-gray-800 px-6 py-3 font-bold uppercase rounded-lg hover:bg-gray-100 hover:border-primary hover:text-primary transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-800 disabled:hover:text-gray-800 flex items-center"
+                    disabled
+                >
+                    <i class="fas fa-play mr-2"></i>Ejecutar Acciones
+                </button>
+            </div>
+
+            <!-- Área de Contenido -->
+            <div class="border-4 border-gray-800 rounded-lg p-4 bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-terminal mr-2"></i>Registro de Actividades
+                </h3>
+                <div id="contentArea" class="h-80 overflow-y-auto bg-white border-2 border-gray-300 rounded-lg p-4 font-mono text-sm">
+                    <div class="mb-3 p-3 border-l-4 border-primary bg-blue-50 rounded-r text-gray-700">
+                        Listo para ingresar números de admisión, seleccionar acciones y ejecutar...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 text-center text-gray-600 text-sm">
+                <p>Sistema de Facturación - Procesamiento automatizado</p>
+            </div>
+        </div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-left">
-          <div class="card-title">
-            Automatiza acciones por número de admisión
-            <span class="pill-env">API: https://total-oeyx.onrender.com</span>
-          </div>
-          <div class="card-subtitle">
-            Procesa cada admisión en orden y guarda un historial detallado de cada paso.
-          </div>
-        </div>
-        <button id="btnClear" class="btn btn-ghost" type="button">Limpiar todo</button>
-      </div>
-
-      <div class="card-body">
-        <div class="grid">
-          <div class="col-3">
-            <label for="institucionId">Institución ID</label>
-            <input id="institucionId" type="number" min="1" value="20" />
-            <div class="hint">Solo informativo, no se envía aún a la API.</div>
-          </div>
-
-          <div class="col-6">
-            <label>¿Qué deseas hacer?</label>
-            <div class="chips" role="group" aria-label="Opciones de proceso">
-              <label class="chip chip-active">
-                <input id="chkFactura" type="checkbox" checked />
-                Generar número de factura
-              </label>
-              <label class="chip">
-                <input id="chkFecha" type="checkbox" />
-                Cambiar fecha de emisión
-              </label>
-              <label class="chip">
-                <input id="chkEnviar" type="checkbox" />
-                Enviar a la DIAN
-              </label>
-            </div>
-            <div class="hint">
-              Siempre se buscará primero la factura por admisión.
-              <br>
-              Si marcas todo, el flujo será:
-              <b>Buscar factura → Generar número → Cambiar fecha → Enviar a DIAN</b>.
-            </div>
-          </div>
-
-          <div class="col-3">
-            <label for="fechaEmision">Fecha de emisión</label>
-            <input id="fechaEmision" type="date" disabled />
-            <div class="hint">
-              Se requiere cuando marcas <b>Cambiar fecha de emisión</b>.
-            </div>
-          </div>
-
-          <div class="col-12">
-            <label for="admisiones">Números de admisión (uno por línea)</label>
-            <textarea id="admisiones" placeholder="142811&#10;144140&#10;..."></textarea>
-          </div>
-
-          <div class="col-12">
-            <div class="btn-row">
-              <button id="btnStart" class="btn btn-primary" type="button">
-                ▶ Iniciar proceso
-              </button>
-              <button id="btnStop" class="btn btn-secondary" type="button" disabled>
-                ⏸ Detener
-              </button>
-              <span class="muted">
-                Procesa uno por uno y registra el resultado de cada acción en la tabla.
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="status-bar">
-          <div class="status-badge" id="statusBadge">
-            <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">En espera</span>
-          </div>
-          <div class="pill-count">
-            <span class="num" id="lblProcessed">0</span>
-            <span class="total" id="lblTotal">/ 0 procesadas</span>
-          </div>
-        </div>
-
-        <div style="margin-top: 10px;">
-          <div class="progress">
-            <div class="progress-bar" id="bar"></div>
-          </div>
-        </div>
-
-        <div class="table-wrapper">
-          <table id="tbl">
-            <thead>
-              <tr>
-                <th>Admisión</th>
-                <th>Acción</th>
-                <th>Estado</th>
-                <th>Mensaje</th>
-                <th>ID Factura</th>
-                <th>Hora</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="footer-hint">
-          <span>🧠 Cada acción se maneja de forma independiente, si alguna falla se registra en el historial.</span>
-          <span><b>Tip:</b> Usa el botón “Limpiar todo” antes de iniciar un nuevo lote grande.</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ==========================
-    // ⚙️ CONFIGURACIÓN
-    // ==========================
-    const API_BASE = 'https://total-oeyx.onrender.com';
-
-    // ==========================
-    // 🔗 REFERENCIAS DOM
-    // ==========================
-    const institucionIdInput = document.getElementById('institucionId');
-    const chkFactura = document.getElementById('chkFactura');
-    const chkFecha = document.getElementById('chkFecha');
-    const chkEnviar = document.getElementById('chkEnviar');
-    const fechaEmisionInput = document.getElementById('fechaEmision');
-    const admisionesInput = document.getElementById('admisiones');
-    const btnStart = document.getElementById('btnStart');
-    const btnStop = document.getElementById('btnStop');
-    const btnClear = document.getElementById('btnClear');
-    const bar = document.getElementById('bar');
-    const tblBody = document.querySelector('#tbl tbody');
-    const statusBadge = document.getElementById('statusBadge');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-    const lblProcessed = document.getElementById('lblProcessed');
-    const lblTotal = document.getElementById('lblTotal');
-
-    let isRunning = false;
-    let totalItems = 0;
-    let processedItems = 0;
-
-    // ==========================
-    // 🧩 UTILIDADES
-    // ==========================
-
-    function todayAsInputValue() {
-      const d = new Date();
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    function formatDateForApi(yyyyMmDd) {
-      if (!yyyyMmDd) return '';
-      const [y, m, d] = yyyyMmDd.split('-');
-      return `${d}/${m}/${y}`; // DD/MM/YYYY
-    }
-
-    function formatTime() {
-      const d = new Date();
-      return d.toLocaleTimeString('es-CO', { hour12: false });
-    }
-
-    function updateProgress(current, total) {
-      const pct = total === 0 ? 0 : Math.round((current / total) * 100);
-      bar.style.width = `${pct}%`;
-      processedItems = current;
-      lblProcessed.textContent = String(processedItems);
-      lblTotal.textContent = `/ ${totalItems} procesadas`;
-    }
-
-    function setStatus(mode, text) {
-      statusText.textContent = text;
-      statusDot.classList.remove('status-dot-paused', 'status-dot-stopped');
-      statusDot.classList.add('status-dot');
-
-      if (mode === 'idle') {
-        statusDot.style.background = 'var(--accent)';
-        statusDot.style.boxShadow = '0 0 10px rgba(34,197,94,0.8)';
-      } else if (mode === 'running') {
-        statusDot.style.background = 'var(--accent)';
-        statusDot.style.boxShadow = '0 0 10px rgba(34,197,94,0.8)';
-      } else if (mode === 'stopped') {
-        statusDot.style.background = 'var(--danger)';
-        statusDot.style.boxShadow = '0 0 10px rgba(248,113,113,0.9)';
-      } else if (mode === 'paused') {
-        statusDot.style.background = 'var(--warn)';
-        statusDot.style.boxShadow = '0 0 10px rgba(250,204,21,0.9)';
-      }
-    }
-
-    function createTag(status) {
-      const span = document.createElement('span');
-      span.classList.add('tag');
-      if (status === 'OK') {
-        span.classList.add('tag-ok');
-        span.textContent = 'OK';
-      } else if (status === 'ERROR') {
-        span.classList.add('tag-error');
-        span.textContent = 'ERROR';
-      } else if (status === 'WARN') {
-        span.classList.add('tag-warn');
-        span.textContent = 'AVISO';
-      } else {
-        span.classList.add('tag-info');
-        span.textContent = status || 'INFO';
-      }
-      return span;
-    }
-
-    function logRow({ admision, accion, estado, mensaje, idFactura, hora }) {
-      const tr = document.createElement('tr');
-
-      const tdAdm = document.createElement('td');
-      tdAdm.textContent = admision || '-';
-
-      const tdAccion = document.createElement('td');
-      tdAccion.textContent = accion;
-
-      const tdEstado = document.createElement('td');
-      tdEstado.appendChild(createTag(estado));
-
-      const tdMsg = document.createElement('td');
-      tdMsg.classList.add('col-msg');
-      tdMsg.textContent = mensaje || '';
-
-      const tdId = document.createElement('td');
-      tdId.textContent = idFactura || '';
-
-      const tdHora = document.createElement('td');
-      tdHora.textContent = hora || formatTime();
-
-      tr.appendChild(tdAdm);
-      tr.appendChild(tdAccion);
-      tr.appendChild(tdEstado);
-      tr.appendChild(tdMsg);
-      tr.appendChild(tdId);
-      tr.appendChild(tdHora);
-
-      tblBody.appendChild(tr);
-    }
-
-    function setRunningState(running) {
-      isRunning = running;
-      btnStart.disabled = running;
-      btnStop.disabled = !running;
-      btnClear.disabled = running;
-      admisionesInput.disabled = running;
-      institucionIdInput.disabled = running;
-      chkFactura.disabled = running;
-      chkFecha.disabled = running;
-      chkEnviar.disabled = running;
-      fechaEmisionInput.disabled = running || !chkFecha.checked;
-
-      if (!running && processedItems === totalItems) {
-        setStatus('idle', 'Proceso finalizado');
-      }
-    }
-
-    // ==========================
-    // 🌐 LLAMADAS A LA API
-    // ==========================
-
-    async function apiBuscarIdFactura(admision) {
-      const body = { sSearch: String(admision).trim() };
-      const resp = await fetch(`${API_BASE}/BuscarIdFactura`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (!resp.ok) {
-        throw new Error(`Error HTTP ${resp.status} en BuscarIdFactura`);
-      }
-
-      const data = await resp.json();
-      if (!data.idFactura) {
-        throw new Error('No se encontró idFactura en la respuesta.');
-      }
-
-      return data; // {idFactura, numeroAdmision?}
-    }
-
-    async function apiGenerarNumeroFactura(idFactura) {
-      const url = `${API_BASE}/GenerarNumeroFactura?idFacturas=${encodeURIComponent(idFactura)}`;
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        throw new Error(`Error HTTP ${resp.status} en GenerarNumeroFactura`);
-      }
-      return resp.json();
-    }
-
-    async function apiCambiarFecha(idFactura, fechaEmisionStr) {
-      const body = {
-        idFactura: String(idFactura),
-        fechaEmision: fechaEmisionStr
-      };
-      const resp = await fetch(`${API_BASE}/cambiar-fecha`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (!resp.ok) {
-        throw new Error(`Error HTTP ${resp.status} en cambiar-fecha`);
-      }
-      return resp.json();
-    }
-
-    async function apiEnviarDian(idFactura) {
-      const body = { idFacturas: String(idFactura) };
-      const resp = await fetch(`${API_BASE}/EnviarDian`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (!resp.ok) {
-        throw new Error(`Error HTTP ${resp.status} en EnviarDian`);
-      }
-      return resp.json();
-    }
-
-    // ==========================
-    // 🔁 PROCESAMIENTO
-    // ==========================
-
-    async function procesarAdmision(admision, fechaApiStr) {
-      const admisionLabel = String(admision).trim() || '(vacío)';
-
-      // 1. Buscar factura por admisión
-      let idFactura = null;
-      try {
-        const data = await apiBuscarIdFactura(admision);
-        idFactura = data.idFactura;
-        const numeroAdmision = data.numeroAdmision || admisionLabel;
-
-        logRow({
-          admision: numeroAdmision,
-          accion: 'Buscar factura',
-          estado: 'OK',
-          mensaje: `Factura encontrada. idFactura = ${idFactura}`,
-          idFactura
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuración de URL base
+            let urlBase = localStorage.getItem('facturasUrlBase') || 'https://total-oeyx.onrender.com';
+            document.getElementById('urlBase').value = urlBase;
+            
+            // Elementos DOM
+            const urlBaseInput = document.getElementById('urlBase');
+            const guardarUrlBtn = document.getElementById('guardarUrlBtn');
+            const searchInput = document.getElementById('searchInput');
+            const generarCheckbox = document.getElementById('generar');
+            const cambiarCheckbox = document.getElementById('cambiar');
+            const enviarCheckbox = document.getElementById('enviar');
+            const fechaInput = document.getElementById('fechaInput');
+            const ejecutarBtn = document.getElementById('ejecutarBtn');
+            const contentArea = document.getElementById('contentArea');
+            
+            // Configurar fecha por defecto (hoy)
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            fechaInput.value = formattedDate;
+            
+            // Variables para almacenar datos
+            let admissionNumbers = [];
+            
+            // Guardar URL base
+            guardarUrlBtn.addEventListener('click', function() {
+                const nuevaUrl = urlBaseInput.value.trim();
+                if (nuevaUrl) {
+                    urlBase = nuevaUrl;
+                    localStorage.setItem('facturasUrlBase', urlBase);
+                    addLogEntry(`URL base guardada: ${urlBase}`, 'success');
+                } else {
+                    addLogEntry('Error: La URL base no puede estar vacía', 'error');
+                }
+            });
+            
+            // Habilitar/deshabilitar botón de ejecución
+            function updateEjecutarBtn() {
+                const hasNumbers = admissionNumbers.length > 0;
+                const hasActions = generarCheckbox.checked || cambiarCheckbox.checked || enviarCheckbox.checked;
+                ejecutarBtn.disabled = !(hasNumbers && hasActions);
+            }
+            
+            // Procesar números de admisión ingresados
+            searchInput.addEventListener('input', function() {
+                const inputText = searchInput.value.trim();
+                
+                if (inputText) {
+                    // Separar por comas o saltos de línea
+                    admissionNumbers = inputText.split(/[\n,]+/)
+                        .map(num => num.trim())
+                        .filter(num => num !== '');
+                } else {
+                    admissionNumbers = [];
+                }
+                
+                updateEjecutarBtn();
+            });
+            
+            // Actualizar estado del botón cuando cambian las casillas
+            [generarCheckbox, cambiarCheckbox, enviarCheckbox].forEach(checkbox => {
+                checkbox.addEventListener('change', updateEjecutarBtn);
+            });
+            
+            // Ejecutar acciones
+            ejecutarBtn.addEventListener('click', async function() {
+                if (admissionNumbers.length === 0) {
+                    addLogEntry('Error: No hay números de admisión para procesar', 'error');
+                    return;
+                }
+                
+                if (!generarCheckbox.checked && !cambiarCheckbox.checked && !enviarCheckbox.checked) {
+                    addLogEntry('Error: No se ha seleccionado ninguna acción', 'error');
+                    return;
+                }
+                
+                // Deshabilitar botón durante la ejecución
+                ejecutarBtn.disabled = true;
+                ejecutarBtn.innerHTML = '<span class="loading-spinner mr-2"></span>Procesando...';
+                
+                // Limpiar área de contenido
+                contentArea.innerHTML = '';
+                addLogEntry('Iniciando procesamiento de números de admisión...');
+                
+                // Mostrar resumen de acciones seleccionadas
+                const acciones = [];
+                if (generarCheckbox.checked) acciones.push('Generar Número Factura');
+                if (cambiarCheckbox.checked) acciones.push('Cambiar Fecha');
+                if (enviarCheckbox.checked) acciones.push('Enviar a DIAN');
+                
+                addLogEntry(`Acciones seleccionadas: ${acciones.join(', ')}`);
+                addLogEntry(`Números a procesar: ${admissionNumbers.join(', ')}`);
+                addLogEntry(`URL base del servidor: ${urlBase}`);
+                
+                // Procesar cada número de admisión
+                for (let i = 0; i < admissionNumbers.length; i++) {
+                    const admissionNumber = admissionNumbers[i];
+                    await processAdmissionNumber(admissionNumber);
+                }
+                
+                addLogEntry('Procesamiento completado', 'success');
+                
+                // Restaurar botón
+                ejecutarBtn.disabled = false;
+                ejecutarBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Ejecutar Acciones';
+            });
+            
+            // Procesar un número de admisión
+            async function processAdmissionNumber(admissionNumber) {
+                addLogEntry(`--- Procesando admisión: ${admissionNumber} ---`);
+                
+                try {
+                    // Paso 1: Buscar ID de factura
+                    const facturaInfo = await buscarIdFactura(admissionNumber);
+                    
+                    if (!facturaInfo || !facturaInfo.idFactura) {
+                        addLogEntry(`Error: No se pudo encontrar ID de factura para admisión ${admissionNumber}`, 'error');
+                        return;
+                    }
+                    
+                    // Verificar si ya tiene FEH (saltar generación de factura)
+                    const hasFEH = facturaInfo.numeroAdmision && facturaInfo.numeroAdmision.includes('FEH');
+                    
+                    addLogEntry(`✓ ID Factura encontrado: ${facturaInfo.idFactura}${hasFEH ? ' (Ya tiene FEH)' : ''}`);
+                    
+                    // Paso 2: Generar número de factura (si está seleccionado y no tiene FEH)
+                    if (generarCheckbox.checked && !hasFEH) {
+                        await generarNumeroFactura(facturaInfo.idFactura);
+                    } else if (generarCheckbox.checked && hasFEH) {
+                        addLogEntry(`✓ Saltando generación de factura: ya tiene FEH`, 'success');
+                    }
+                    
+                    // Paso 3: Cambiar fecha (si está seleccionado)
+                    if (cambiarCheckbox.checked) {
+                        await cambiarFechaFactura(facturaInfo.idFactura, fechaInput.value);
+                    }
+                    
+                    // Paso 4: Enviar a la DIAN (si está seleccionado)
+                    if (enviarCheckbox.checked) {
+                        await enviarDian(facturaInfo.idFactura);
+                    }
+                    
+                    addLogEntry(`✓ Admisión ${admissionNumber} procesada correctamente`, 'success');
+                    
+                } catch (error) {
+                    addLogEntry(`✗ Error procesando admisión ${admissionNumber}: ${error.message}`, 'error');
+                }
+            }
+            
+            // Función para buscar ID de factura
+            async function buscarIdFactura(admissionNumber) {
+                try {
+                    addLogEntry(`Buscando ID de factura para admisión: ${admissionNumber}`);
+                    
+                    const response = await fetch(`${urlBase}/BuscarIdFactura`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ sSearch: admissionNumber })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.idFactura) {
+                        return data;
+                    } else {
+                        throw new Error('No se encontró ID de factura');
+                    }
+                } catch (error) {
+                    throw new Error(`Error en búsqueda de ID factura: ${error.message}`);
+                }
+            }
+            
+            // Función para generar número de factura
+            async function generarNumeroFactura(idFactura) {
+                try {
+                    addLogEntry(`Generando número de factura para ID: ${idFactura}`);
+                    
+                    const response = await fetch(`${urlBase}/GenerarNumeroFactura?idFacturas=${idFactura}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.valorRetorno === 1) {
+                        addLogEntry(`✓ Número de factura generado: ${data.numeroFactura}`, 'success');
+                    } else {
+                        throw new Error(data.mensajeRetorno || 'Error al generar número de factura');
+                    }
+                } catch (error) {
+                    throw new Error(`Error generando número de factura: ${error.message}`);
+                }
+            }
+            
+            // Función para cambiar fecha de factura
+            async function cambiarFechaFactura(idFactura, fecha) {
+                try {
+                    addLogEntry(`Cambiando fecha para ID: ${idFactura} a ${fecha}`);
+                    
+                    // Formatear fecha para el formato esperado por la API (DD/MM/YYYY)
+                    const [year, month, day] = fecha.split('-');
+                    const formattedDate = `${day}/${month}/${year}`;
+                    
+                    const response = await fetch(`${urlBase}/cambiar-fecha`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            idFactura: idFactura,
+                            fechaEmision: formattedDate
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.ok && data.data.valorretorno === 1) {
+                        addLogEntry(`✓ Fecha cambiada correctamente`, 'success');
+                    } else {
+                        throw new Error(data.data?.mensajeRetorno || 'Error al cambiar fecha');
+                    }
+                } catch (error) {
+                    throw new Error(`Error cambiando fecha: ${error.message}`);
+                }
+            }
+            
+            // Función para enviar a la DIAN
+            async function enviarDian(idFactura) {
+                try {
+                    addLogEntry(`Enviando a la DIAN ID: ${idFactura}`);
+                    
+                    const response = await fetch(`${urlBase}/EnviarDian`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ idFacturas: idFactura })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Asumiendo que la respuesta exitosa no tiene un formato específico
+                    addLogEntry(`✓ Envío a DIAN completado para ID: ${idFactura}`, 'success');
+                } catch (error) {
+                    throw new Error(`Error enviando a DIAN: ${error.message}`);
+                }
+            }
+            
+            // Función para agregar entradas al log
+            function addLogEntry(message, type = 'info') {
+                const logEntry = document.createElement('div');
+                
+                let bgColor = 'bg-blue-50';
+                let borderColor = 'border-primary';
+                let textColor = 'text-gray-700';
+                
+                if (type === 'success') {
+                    bgColor = 'bg-green-50';
+                    borderColor = 'border-success';
+                    textColor = 'text-green-800';
+                } else if (type === 'error') {
+                    bgColor = 'bg-red-50';
+                    borderColor = 'border-danger';
+                    textColor = 'text-red-800';
+                }
+                
+                logEntry.className = `mb-3 p-3 border-l-4 ${borderColor} ${bgColor} rounded-r ${textColor}`;
+                logEntry.textContent = message;
+                contentArea.appendChild(logEntry);
+                contentArea.scrollTop = contentArea.scrollHeight;
+            }
         });
-      } catch (error) {
-        logRow({
-          admision: admisionLabel,
-          accion: 'Buscar factura',
-          estado: 'ERROR',
-          mensaje: error.message || 'Error al buscar factura.',
-          idFactura: ''
-        });
-        // Sin idFactura no se puede seguir
-        return;
-      }
-
-      // 2. Generar número de factura (si está marcado)
-      if (chkFactura.checked) {
-        try {
-          const data = await apiGenerarNumeroFactura(idFactura);
-          const numeroFactura = data.numeroFactura ?? '(sin número)';
-          const descripcion = data.mensajeRetorno || 'Número de factura generado.';
-
-          logRow({
-            admision: admisionLabel,
-            accion: 'Generar número',
-            estado: 'OK',
-            mensaje: `${descripcion} Número: ${numeroFactura}`,
-            idFactura
-          });
-        } catch (error) {
-          logRow({
-            admision: admisionLabel,
-            accion: 'Generar número',
-            estado: 'ERROR',
-            mensaje: error.message || 'Error al generar número de factura.',
-            idFactura
-          });
-        }
-      }
-
-      // 3. Cambiar fecha de emisión (si está marcado)
-      if (chkFecha.checked && fechaApiStr) {
-        try {
-          const data = await apiCambiarFecha(idFactura, fechaApiStr);
-          const ok = data.ok;
-          const msg = (data.data && data.data.mensajeRetorno) || 'Fecha de emisión actualizada.';
-          const status = ok ? 'OK' : 'WARN';
-
-          logRow({
-            admision: admisionLabel,
-            accion: 'Cambiar fecha',
-            estado: status,
-            mensaje: `${msg} (${fechaApiStr})`,
-            idFactura
-          });
-        } catch (error) {
-          logRow({
-            admision: admisionLabel,
-            accion: 'Cambiar fecha',
-            estado: 'ERROR',
-            mensaje: error.message || 'Error al cambiar fecha.',
-            idFactura
-          });
-        }
-      }
-
-      // 4. Enviar a DIAN (si está marcado)
-      if (chkEnviar.checked) {
-        try {
-          const data = await apiEnviarDian(idFactura);
-          const msg =
-            data.mensajeRetorno ||
-            data.mensaje ||
-            'Factura enviada a la DIAN (revisar respuesta del backend).';
-
-          logRow({
-            admision: admisionLabel,
-            accion: 'Enviar DIAN',
-            estado: 'OK',
-            mensaje: msg,
-            idFactura
-          });
-        } catch (error) {
-          logRow({
-            admision: admisionLabel,
-            accion: 'Enviar DIAN',
-            estado: 'ERROR',
-            mensaje: error.message || 'Error al enviar a la DIAN.',
-            idFactura
-          });
-        }
-      }
-    }
-
-    async function procesarLote() {
-      const rawText = admisionesInput.value || '';
-      const líneas = rawText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-
-      if (!líneas.length) {
-        alert('Por favor ingresa al menos un número de admisión.');
-        return;
-      }
-
-      if (!chkFactura.checked && !chkFecha.checked && !chkEnviar.checked) {
-        const continuar = confirm(
-          'No has seleccionado ninguna acción (solo se buscará la factura). ¿Deseas continuar?'
-        );
-        if (!continuar) return;
-      }
-
-      if (chkFecha.checked) {
-        if (!fechaEmisionInput.value) {
-          alert('Selecciona una fecha de emisión para poder cambiar la fecha.');
-          return;
-        }
-      }
-
-      totalItems = líneas.length;
-      processedItems = 0;
-      updateProgress(0, totalItems);
-      setRunningState(true);
-      setStatus('running', 'Procesando admisiones...');
-
-      const fechaApiStr = chkFecha.checked ? formatDateForApi(fechaEmisionInput.value) : null;
-
-      for (let i = 0; i < líneas.length; i++) {
-        if (!isRunning) {
-          setStatus('stopped', 'Proceso detenido por el usuario');
-          break;
-        }
-
-        const admision = líneas[i];
-        await procesarAdmision(admision, fechaApiStr);
-        updateProgress(i + 1, totalItems);
-      }
-
-      setRunningState(false);
-    }
-
-    // ==========================
-    // 🎛️ EVENTOS UI
-    // ==========================
-
-    // chips visualmente activas
-    function syncChip(label, input) {
-      if (input.checked) {
-        label.classList.add('chip-active');
-      } else {
-        label.classList.remove('chip-active');
-      }
-    }
-
-    document.querySelectorAll('.chip').forEach(chip => {
-      const input = chip.querySelector('input');
-      syncChip(chip, input);
-      input.addEventListener('change', () => {
-        syncChip(chip, input);
-        if (input === chkFecha) {
-          fechaEmisionInput.disabled = !chkFecha.checked || isRunning;
-        }
-      });
-    });
-
-    btnStart.addEventListener('click', () => {
-      procesarLote().catch(err => {
-        console.error(err);
-        alert('Ocurrió un error inesperado al procesar el lote.');
-        setRunningState(false);
-      });
-    });
-
-    btnStop.addEventListener('click', () => {
-      if (isRunning) {
-        isRunning = false; // el loop se detendrá una vez termine la admisión actual
-        setStatus('stopped', 'Deteniendo después de la admisión actual...');
-      }
-    });
-
-    btnClear.addEventListener('click', () => {
-      admisionesInput.value = '';
-      tblBody.innerHTML = '';
-      bar.style.width = '0%';
-      totalItems = 0;
-      processedItems = 0;
-      lblProcessed.textContent = '0';
-      lblTotal.textContent = '/ 0 procesadas';
-      setStatus('idle', 'En espera');
-    });
-
-    // ==========================
-    // 🚀 INICIALIZACIÓN
-    // ==========================
-    document.addEventListener('DOMContentLoaded', () => {
-      fechaEmisionInput.value = todayAsInputValue();
-      fechaEmisionInput.disabled = !chkFecha.checked;
-      setStatus('idle', 'En espera');
-      lblProcessed.textContent = '0';
-      lblTotal.textContent = '/ 0 procesadas';
-    });
-  </script>
+    </script>
 </body>
 </html>
