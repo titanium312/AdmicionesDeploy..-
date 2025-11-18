@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interfaz Funcional Facturas</title>
+    <title>Sistema de Gestión de Facturas</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome para iconos -->
@@ -68,13 +68,27 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen py-8 px-4">
     <div class="container mx-auto max-w-4xl">
-        <div class="bg-white border-4 border-gray-800 rounded-xl p-8 shadow-2xl">
+        <div class="bg-white border-4 border-gray-800 rounded-xl p-8 shadow-2xl card-hover">
             <!-- Header -->
-            <div class="text-center mb-8">
+            <div class="text-center mb-8 fade-in">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">
                     <i class="fas fa-file-invoice-dollar text-primary mr-3"></i>
                     Sistema de Gestión de Facturas
@@ -82,34 +96,8 @@
                 <p class="text-gray-600">Procesamiento automatizado de números de admisión</p>
             </div>
 
-            <!-- Configuración de URL Base -->
-            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50">
-                <label for="urlBase" class="block text-lg font-bold text-gray-800 mb-3">
-                    <i class="fas fa-server mr-2"></i>Configuración del Servidor
-                </label>
-                <div class="flex gap-4">
-                    <input 
-                        type="text" 
-                        id="urlBase" 
-                        class="flex-1 border-2 border-gray-800 rounded-lg p-3 font-medium text-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                        placeholder="Ingrese la URL base del servidor (ej: http://localhost:3000)"
-                        value="http://localhost:3000"
-                    >
-                    <button 
-                        id="guardarUrlBtn" 
-                        class="bg-white border-2 border-gray-800 px-6 py-3 font-bold uppercase rounded-lg hover:bg-gray-100 hover:border-primary hover:text-primary transition-all flex items-center"
-                    >
-                        <i class="fas fa-save mr-2"></i>Guardar
-                    </button>
-                </div>
-                <div class="text-sm text-gray-600 mt-2 flex items-start">
-                    <i class="fas fa-info-circle text-primary mr-2 mt-0.5"></i>
-                    <span>Configure la URL base del servidor antes de ejecutar las acciones.</span>
-                </div>
-            </div>
-
             <!-- Sección de Búsqueda -->
-            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50">
+            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50 fade-in card-hover">
                 <label for="searchInput" class="block text-lg font-bold text-gray-800 mb-3">
                     <i class="fas fa-search mr-2"></i>Números de Admisión
                 </label>
@@ -125,7 +113,7 @@
             </div>
 
             <!-- Toolbar de Acciones -->
-            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50 flex flex-wrap items-center justify-between gap-4">
+            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50 flex flex-wrap items-center justify-between gap-4 fade-in card-hover">
                 <div class="flex flex-wrap gap-6">
                     <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-200 transition-colors">
                         <span class="font-semibold text-gray-800 text-sm text-center">
@@ -138,7 +126,7 @@
                         <span class="font-semibold text-gray-800 text-sm">
                             <i class="fas fa-calendar-alt text-primary mr-1"></i>Cambiar Fecha
                         </span>
-                        <input type="checkbox" id="cambiar" value="cambiar_fecha" class="custom-checkbox">
+                        <input type="checkbox" id="cambiar" value="cambiar_fecha" class="custom-checkbox" checked>
                     </label>
                     
                     <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-200 transition-colors">
@@ -149,11 +137,16 @@
                     </label>
                 </div>
                 
-                <input 
-                    type="date" 
-                    id="fechaInput" 
-                    class="border-2 border-gray-800 rounded-lg px-4 py-2 font-medium text-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                >
+                <div class="flex items-center gap-4">
+                    <label for="fechaInput" class="font-semibold text-gray-800 text-sm">
+                        <i class="fas fa-calendar-day text-primary mr-1"></i>Fecha:
+                    </label>
+                    <input 
+                        type="date" 
+                        id="fechaInput" 
+                        class="border-2 border-gray-800 rounded-lg px-4 py-2 font-medium text-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    >
+                </div>
                 
                 <button 
                     id="ejecutarBtn" 
@@ -165,7 +158,7 @@
             </div>
 
             <!-- Área de Contenido -->
-            <div class="border-4 border-gray-800 rounded-lg p-4 bg-gray-50">
+            <div class="border-4 border-gray-800 rounded-lg p-4 bg-gray-50 fade-in card-hover">
                 <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
                     <i class="fas fa-terminal mr-2"></i>Registro de Actividades
                 </h3>
@@ -177,7 +170,7 @@
             </div>
 
             <!-- Footer -->
-            <div class="mt-6 text-center text-gray-600 text-sm">
+            <div class="mt-6 text-center text-gray-600 text-sm fade-in">
                 <p>Sistema de Facturación - Procesamiento automatizado</p>
             </div>
         </div>
@@ -186,12 +179,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Configuración de URL base
-            let urlBase = localStorage.getItem('facturasUrlBase') || 'https://total-oeyx.onrender.com';
-            document.getElementById('urlBase').value = urlBase;
+            let urlBase = 'https://total-oeyx.onrender.com';
             
             // Elementos DOM
-            const urlBaseInput = document.getElementById('urlBase');
-            const guardarUrlBtn = document.getElementById('guardarUrlBtn');
             const searchInput = document.getElementById('searchInput');
             const generarCheckbox = document.getElementById('generar');
             const cambiarCheckbox = document.getElementById('cambiar');
@@ -207,18 +197,6 @@
             
             // Variables para almacenar datos
             let admissionNumbers = [];
-            
-            // Guardar URL base
-            guardarUrlBtn.addEventListener('click', function() {
-                const nuevaUrl = urlBaseInput.value.trim();
-                if (nuevaUrl) {
-                    urlBase = nuevaUrl;
-                    localStorage.setItem('facturasUrlBase', urlBase);
-                    addLogEntry(`URL base guardada: ${urlBase}`, 'success');
-                } else {
-                    addLogEntry('Error: La URL base no puede estar vacía', 'error');
-                }
-            });
             
             // Habilitar/deshabilitar botón de ejecución
             function updateEjecutarBtn() {
@@ -465,7 +443,7 @@
                     textColor = 'text-red-800';
                 }
                 
-                logEntry.className = `mb-3 p-3 border-l-4 ${borderColor} ${bgColor} rounded-r ${textColor}`;
+                logEntry.className = `mb-3 p-3 border-l-4 ${borderColor} ${bgColor} rounded-r ${textColor} fade-in`;
                 logEntry.textContent = message;
                 contentArea.appendChild(logEntry);
                 contentArea.scrollTop = contentArea.scrollHeight;
