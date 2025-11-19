@@ -2,453 +2,194 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Facturas</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome para iconos -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#3b82f6',
-                        secondary: '#6b7280',
-                        success: '#10b981',
-                        danger: '#ef4444',
-                        warning: '#f59e0b'
-                    }
-                }
-            }
-        }
-    </script>
+    <title>Gestión de Facturas</title>
     <style>
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(0, 0, 0, 0.1);
-            border-radius: 50%;
-            border-top-color: #3b82f6;
-            animation: spin 1s ease-in-out infinite;
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            padding: 20px;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .container {
+            max-width: 850px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .custom-checkbox {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
-            border: 2px solid #374151;
+        h2, h3 {
+            margin-top: 0;
+        }
+        .box {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #aaa;
             border-radius: 4px;
-            outline: none;
-            cursor: pointer;
-            background-color: white;
-            position: relative;
-            transition: all 0.3s ease;
         }
-        .custom-checkbox:checked {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-        }
-        .custom-checkbox:checked::after {
-            content: '\f00c';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
+        button {
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: #007bff;
+            border: none;
             color: white;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 12px;
+            cursor: pointer;
+            border-radius: 5px;
         }
-        .custom-checkbox:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        button:hover {
+            background: #005cd1;
         }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+        .result {
+            background: #eee;
+            padding: 10px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            border-radius: 4px;
+            font-family: monospace;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .error {
+            color: red;
+            font-weight: bold;
         }
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        .success {
+            color: green;
+            font-weight: bold;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen py-8 px-4">
-    <div class="container mx-auto max-w-4xl">
-        <div class="bg-white border-4 border-gray-800 rounded-xl p-8 shadow-2xl card-hover">
-            <!-- Header -->
-            <div class="text-center mb-8 fade-in">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                    <i class="fas fa-file-invoice-dollar text-primary mr-3"></i>
-                    Sistema de Gestión de Facturas
-                </h1>
-                <p class="text-gray-600">Procesamiento automatizado de números de admisión</p>
-            </div>
+<body>
 
-            <!-- Sección de Búsqueda -->
-            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50 fade-in card-hover">
-                <label for="searchInput" class="block text-lg font-bold text-gray-800 mb-3">
-                    <i class="fas fa-search mr-2"></i>Números de Admisión
-                </label>
-                <textarea 
-                    id="searchInput" 
-                    class="w-full min-h-[100px] border-2 border-gray-800 rounded-lg p-4 font-medium text-gray-800 resize-y focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    placeholder="Ingrese números de Admisión, separados por coma o nueva línea (ej: 178913, 5605991)."
-                ></textarea>
-                <div class="text-sm text-gray-600 mt-2 flex items-start">
-                    <i class="fas fa-info-circle text-primary mr-2 mt-0.5"></i>
-                    <span>Ingrese números de Admisión, seleccione las acciones deseadas y presione 'Ejecutar Acciones' para buscar y procesar.</span>
-                </div>
-            </div>
+<div class="container">
+    <h2>Gestión de Facturas</h2>
 
-            <!-- Toolbar de Acciones -->
-            <div class="border-4 border-gray-800 rounded-lg p-6 mb-6 bg-gray-50 flex flex-wrap items-center justify-between gap-4 fade-in card-hover">
-                <div class="flex flex-wrap gap-6">
-                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-200 transition-colors">
-                        <span class="font-semibold text-gray-800 text-sm text-center">
-                            <i class="fas fa-file-invoice-dollar text-primary mr-1"></i>Generar Número<br>Factura
-                        </span>
-                        <input type="checkbox" id="generar" value="generar" class="custom-checkbox">
-                    </label>
-                    
-                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-200 transition-colors">
-                        <span class="font-semibold text-gray-800 text-sm">
-                            <i class="fas fa-calendar-alt text-primary mr-1"></i>Cambiar Fecha
-                        </span>
-                        <input type="checkbox" id="cambiar" value="cambiar_fecha" class="custom-checkbox" checked>
-                    </label>
-                    
-                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-200 transition-colors">
-                        <span class="font-semibold text-gray-800 text-sm">
-                            <i class="fas fa-paper-plane text-primary mr-1"></i>Enviar a la DIAN
-                        </span>
-                        <input type="checkbox" id="enviar" value="enviar_dian" class="custom-checkbox">
-                    </label>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                    <label for="fechaInput" class="font-semibold text-gray-800 text-sm">
-                        <i class="fas fa-calendar-day text-primary mr-1"></i>Fecha:
-                    </label>
-                    <input 
-                        type="date" 
-                        id="fechaInput" 
-                        class="border-2 border-gray-800 rounded-lg px-4 py-2 font-medium text-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    >
-                </div>
-                
-                <button 
-                    id="ejecutarBtn" 
-                    class="bg-white border-2 border-gray-800 px-6 py-3 font-bold uppercase rounded-lg hover:bg-gray-100 hover:border-primary hover:text-primary transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-800 disabled:hover:text-gray-800 flex items-center"
-                    disabled
-                >
-                    <i class="fas fa-play mr-2"></i>Ejecutar Acciones
-                </button>
-            </div>
+    <!-- BUSCAR FACTURA -->
+    <div class="box">
+        <h3>Buscar Factura por Número de Admisión</h3>
 
-            <!-- Área de Contenido -->
-            <div class="border-4 border-gray-800 rounded-lg p-4 bg-gray-50 fade-in card-hover">
-                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
-                    <i class="fas fa-terminal mr-2"></i>Registro de Actividades
-                </h3>
-                <div id="contentArea" class="h-80 overflow-y-auto bg-white border-2 border-gray-300 rounded-lg p-4 font-mono text-sm">
-                    <div class="mb-3 p-3 border-l-4 border-primary bg-blue-50 rounded-r text-gray-700">
-                        Listo para ingresar números de admisión, seleccionar acciones y ejecutar...
-                    </div>
-                </div>
-            </div>
+        <label>Número de Admisión:</label>
+        <input id="admisionInput" type="text" placeholder="Ej: 178989">
 
-            <!-- Footer -->
-            <div class="mt-6 text-center text-gray-600 text-sm fade-in">
-                <p>Sistema de Facturación - Procesamiento automatizado</p>
-            </div>
-        </div>
+        <button onclick="buscarFactura()">Buscar</button>
+
+        <div id="resultadoBusqueda" class="result"></div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configuración de URL base
-            let urlBase = 'https://total-oeyx.onrender.com';
-            
-            // Elementos DOM
-            const searchInput = document.getElementById('searchInput');
-            const generarCheckbox = document.getElementById('generar');
-            const cambiarCheckbox = document.getElementById('cambiar');
-            const enviarCheckbox = document.getElementById('enviar');
-            const fechaInput = document.getElementById('fechaInput');
-            const ejecutarBtn = document.getElementById('ejecutarBtn');
-            const contentArea = document.getElementById('contentArea');
-            
-            // Configurar fecha por defecto (hoy)
-            const today = new Date();
-            const formattedDate = today.toISOString().split('T')[0];
-            fechaInput.value = formattedDate;
-            
-            // Variables para almacenar datos
-            let admissionNumbers = [];
-            
-            // Habilitar/deshabilitar botón de ejecución
-            function updateEjecutarBtn() {
-                const hasNumbers = admissionNumbers.length > 0;
-                const hasActions = generarCheckbox.checked || cambiarCheckbox.checked || enviarCheckbox.checked;
-                ejecutarBtn.disabled = !(hasNumbers && hasActions);
-            }
-            
-            // Procesar números de admisión ingresados
-            searchInput.addEventListener('input', function() {
-                const inputText = searchInput.value.trim();
-                
-                if (inputText) {
-                    // Separar por comas o saltos de línea
-                    admissionNumbers = inputText.split(/[\n,]+/)
-                        .map(num => num.trim())
-                        .filter(num => num !== '');
-                } else {
-                    admissionNumbers = [];
-                }
-                
-                updateEjecutarBtn();
-            });
-            
-            // Actualizar estado del botón cuando cambian las casillas
-            [generarCheckbox, cambiarCheckbox, enviarCheckbox].forEach(checkbox => {
-                checkbox.addEventListener('change', updateEjecutarBtn);
-            });
-            
-            // Ejecutar acciones
-            ejecutarBtn.addEventListener('click', async function() {
-                if (admissionNumbers.length === 0) {
-                    addLogEntry('Error: No hay números de admisión para procesar', 'error');
-                    return;
-                }
-                
-                if (!generarCheckbox.checked && !cambiarCheckbox.checked && !enviarCheckbox.checked) {
-                    addLogEntry('Error: No se ha seleccionado ninguna acción', 'error');
-                    return;
-                }
-                
-                // Deshabilitar botón durante la ejecución
-                ejecutarBtn.disabled = true;
-                ejecutarBtn.innerHTML = '<span class="loading-spinner mr-2"></span>Procesando...';
-                
-                // Limpiar área de contenido
-                contentArea.innerHTML = '';
-                addLogEntry('Iniciando procesamiento de números de admisión...');
-                
-                // Mostrar resumen de acciones seleccionadas
-                const acciones = [];
-                if (generarCheckbox.checked) acciones.push('Generar Número Factura');
-                if (cambiarCheckbox.checked) acciones.push('Cambiar Fecha');
-                if (enviarCheckbox.checked) acciones.push('Enviar a DIAN');
-                
-                addLogEntry(`Acciones seleccionadas: ${acciones.join(', ')}`);
-                addLogEntry(`Números a procesar: ${admissionNumbers.join(', ')}`);
-                addLogEntry(`URL base del servidor: ${urlBase}`);
-                
-                // Procesar cada número de admisión
-                for (let i = 0; i < admissionNumbers.length; i++) {
-                    const admissionNumber = admissionNumbers[i];
-                    await processAdmissionNumber(admissionNumber);
-                }
-                
-                addLogEntry('Procesamiento completado', 'success');
-                
-                // Restaurar botón
-                ejecutarBtn.disabled = false;
-                ejecutarBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Ejecutar Acciones';
-            });
-            
-            // Procesar un número de admisión
-            async function processAdmissionNumber(admissionNumber) {
-                addLogEntry(`--- Procesando admisión: ${admissionNumber} ---`);
-                
-                try {
-                    // Paso 1: Buscar ID de factura
-                    const facturaInfo = await buscarIdFactura(admissionNumber);
-                    
-                    if (!facturaInfo || !facturaInfo.idFactura) {
-                        addLogEntry(`Error: No se pudo encontrar ID de factura para admisión ${admissionNumber}`, 'error');
-                        return;
-                    }
-                    
-                    // Verificar si ya tiene FEH (saltar generación de factura)
-                    const hasFEH = facturaInfo.numeroAdmision && facturaInfo.numeroAdmision.includes('FEH');
-                    
-                    addLogEntry(`✓ ID Factura encontrado: ${facturaInfo.idFactura}${hasFEH ? ' (Ya tiene FEH)' : ''}`);
-                    
-                    // Paso 2: Generar número de factura (si está seleccionado y no tiene FEH)
-                    if (generarCheckbox.checked && !hasFEH) {
-                        await generarNumeroFactura(facturaInfo.idFactura);
-                    } else if (generarCheckbox.checked && hasFEH) {
-                        addLogEntry(`✓ Saltando generación de factura: ya tiene FEH`, 'success');
-                    }
-                    
-                    // Paso 3: Cambiar fecha (si está seleccionado)
-                    if (cambiarCheckbox.checked) {
-                        await cambiarFechaFactura(facturaInfo.idFactura, fechaInput.value);
-                    }
-                    
-                    // Paso 4: Enviar a la DIAN (si está seleccionado)
-                    if (enviarCheckbox.checked) {
-                        await enviarDian(facturaInfo.idFactura);
-                    }
-                    
-                    addLogEntry(`✓ Admisión ${admissionNumber} procesada correctamente`, 'success');
-                    
-                } catch (error) {
-                    addLogEntry(`✗ Error procesando admisión ${admissionNumber}: ${error.message}`, 'error');
-                }
-            }
-            
-            // Función para buscar ID de factura
-            async function buscarIdFactura(admissionNumber) {
-                try {
-                    addLogEntry(`Buscando ID de factura para admisión: ${admissionNumber}`);
-                    
-                    const response = await fetch(`${urlBase}/BuscarIdFactura`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ sSearch: admissionNumber })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    if (data.idFactura) {
-                        return data;
-                    } else {
-                        throw new Error('No se encontró ID de factura');
-                    }
-                } catch (error) {
-                    throw new Error(`Error en búsqueda de ID factura: ${error.message}`);
-                }
-            }
-            
-            // Función para generar número de factura
-            async function generarNumeroFactura(idFactura) {
-                try {
-                    addLogEntry(`Generando número de factura para ID: ${idFactura}`);
-                    
-                    const response = await fetch(`${urlBase}/GenerarNumeroFactura?idFacturas=${idFactura}`);
-                    
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    if (data.valorRetorno === 1) {
-                        addLogEntry(`✓ Número de factura generado: ${data.numeroFactura}`, 'success');
-                    } else {
-                        throw new Error(data.mensajeRetorno || 'Error al generar número de factura');
-                    }
-                } catch (error) {
-                    throw new Error(`Error generando número de factura: ${error.message}`);
-                }
-            }
-            
-            // Función para cambiar fecha de factura
-            async function cambiarFechaFactura(idFactura, fecha) {
-                try {
-                    addLogEntry(`Cambiando fecha para ID: ${idFactura} a ${fecha}`);
-                    
-                    // Formatear fecha para el formato esperado por la API (DD/MM/YYYY)
-                    const [year, month, day] = fecha.split('-');
-                    const formattedDate = `${day}/${month}/${year}`;
-                    
-                    const response = await fetch(`${urlBase}/cambiar-fecha`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            idFactura: idFactura,
-                            fechaEmision: formattedDate
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    if (data.ok && data.data.valorretorno === 1) {
-                        addLogEntry(`✓ Fecha cambiada correctamente`, 'success');
-                    } else {
-                        throw new Error(data.data?.mensajeRetorno || 'Error al cambiar fecha');
-                    }
-                } catch (error) {
-                    throw new Error(`Error cambiando fecha: ${error.message}`);
-                }
-            }
-            
-            // Función para enviar a la DIAN
-            async function enviarDian(idFactura) {
-                try {
-                    addLogEntry(`Enviando a la DIAN ID: ${idFactura}`);
-                    
-                    const response = await fetch(`${urlBase}/EnviarDian`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ idFacturas: idFactura })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    // Asumiendo que la respuesta exitosa no tiene un formato específico
-                    addLogEntry(`✓ Envío a DIAN completado para ID: ${idFactura}`, 'success');
-                } catch (error) {
-                    throw new Error(`Error enviando a DIAN: ${error.message}`);
-                }
-            }
-            
-            // Función para agregar entradas al log
-            function addLogEntry(message, type = 'info') {
-                const logEntry = document.createElement('div');
-                
-                let bgColor = 'bg-blue-50';
-                let borderColor = 'border-primary';
-                let textColor = 'text-gray-700';
-                
-                if (type === 'success') {
-                    bgColor = 'bg-green-50';
-                    borderColor = 'border-success';
-                    textColor = 'text-green-800';
-                } else if (type === 'error') {
-                    bgColor = 'bg-red-50';
-                    borderColor = 'border-danger';
-                    textColor = 'text-red-800';
-                }
-                
-                logEntry.className = `mb-3 p-3 border-l-4 ${borderColor} ${bgColor} rounded-r ${textColor} fade-in`;
-                logEntry.textContent = message;
-                contentArea.appendChild(logEntry);
-                contentArea.scrollTop = contentArea.scrollHeight;
-            }
+    <!-- CAMBIAR FECHA -->
+    <div class="box">
+        <h3>Cambiar Fecha de Emisión</h3>
+
+        <label>ID Factura:</label>
+        <input id="facturaIdInput" type="text" placeholder="Ej: 5607145">
+
+        <label>Nueva Fecha (dd/mm/yyyy):</label>
+        <input id="fechaInput" type="text" placeholder="Ej: 19/11/2025">
+
+        <button onclick="cambiarFecha()">Cambiar Fecha</button>
+
+        <div id="resultadoCambio" class="result"></div>
+    </div>
+</div>
+
+
+<script>
+    // ---------------------------
+    // BUSCAR FACTURA
+    // ---------------------------
+    function buscarFactura() {
+        const admision = document.getElementById("admisionInput").value.trim();
+        const salida = document.getElementById("resultadoBusqueda");
+
+        if (!admision) {
+            salida.innerHTML = "<span class='error'>Debes ingresar un número de admisión.</span>";
+            return;
+        }
+
+        salida.innerHTML = "Buscando...";
+
+        fetch("https://total-oeyx.onrender.com/BuscarIdFactura", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sSearch: admision })
+        })
+        .then(r => r.json())
+        .then(data => {
+            salida.innerHTML = JSON.stringify(data, null, 2);
+        })
+        .catch(() => {
+            salida.innerHTML = "<span class='error'>Error de conexión con la API.</span>";
         });
-    </script>
+    }
+
+    // ---------------------------
+    // CONVERSIÓN DE FECHA DD/MM/YYYY → MM/DD/YYYY
+    // ---------------------------
+    function convertirFecha(fecha) {
+        const partes = fecha.split("/");
+        if (partes.length !== 3) return null;
+
+        const [dd, mm, yyyy] = partes;
+
+        if (dd.length !== 2 || mm.length !== 2 || yyyy.length !== 4) return null;
+
+        return `${mm}/${dd}/${yyyy}`;
+    }
+
+    // ---------------------------
+    // CAMBIAR FECHA
+    // ---------------------------
+    function cambiarFecha() {
+        const idFactura = document.getElementById("facturaIdInput").value.trim();
+        const fecha = document.getElementById("fechaInput").value.trim();
+        const salida = document.getElementById("resultadoCambio");
+
+        if (!idFactura) {
+            salida.innerHTML = "<span class='error'>Debes ingresar un ID de factura.</span>";
+            return;
+        }
+
+        if (!fecha) {
+            salida.innerHTML = "<span class='error'>Debes ingresar una fecha.</span>";
+            return;
+        }
+
+        const fechaConvertida = convertirFecha(fecha);
+
+        if (!fechaConvertida) {
+            salida.innerHTML = `<span class='error'>Formato inválido. Usa DD/MM/YYYY</span>`;
+            return;
+        }
+
+        salida.innerHTML = "Procesando...";
+
+        fetch("http://localhost:3000/cambiar-fecha", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                idFactura: idFactura,
+                fechaEmision: fechaConvertida // SE ENVÍA EN FORMATO MM/DD/YYYY
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            salida.innerHTML = JSON.stringify(data, null, 2);
+        })
+        .catch(() => {
+            salida.innerHTML = "<span class='error'>Error al conectar con la API.</span>";
+        });
+    }
+</script>
+
 </body>
 </html>
