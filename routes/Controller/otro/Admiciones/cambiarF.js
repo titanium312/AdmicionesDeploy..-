@@ -40,7 +40,7 @@ async function cambiarFechaEmision(req, res) {
       ok: true,
       data,
       debug: {
-        fechaRecibida: fechaEmision,
+        fechaEnviada: fechaFormateada,
       },
     });
   } catch (error) {
