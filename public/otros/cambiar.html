@@ -358,16 +358,20 @@ async function ejecutarAcciones() {
       }
     }
 
-    /* ====== NO GENERAR FACTURA SI TIENE FEH (OK DIRECTO) ====== */
+    /* ====== GENERAR FACTURA SOLO SI NO TIENE NÚMERO ====== */
     if (accGenerar) {
       accionesRealizadas.push('Generar número');
 
-      const tieneFEH = numeroAdmision && String(numeroAdmision).toUpperCase().includes('FEH');
-      const yaTieneNumeroFactura = numeroFactura && String(numeroFactura).trim() !== '-' && String(numeroFactura).trim() !== '';
+      const yaTieneNumeroFactura =
+        numeroFactura &&
+        String(numeroFactura).trim() !== '-' &&
+        String(numeroFactura).trim() !== '';
 
-      if (yaTieneNumeroFactura || tieneFEH) {
-        resultadoResumen.push('Generar: OK');
+      if (yaTieneNumeroFactura) {
+        // Ya tenía número de factura asignado
+        resultadoResumen.push('Generar: OK (ya tenía número)');
       } else {
+        // No tiene número: generamos, sin importar si la admisión tiene FEH
         try {
           const respGen = await accionGenerarNumero(idFactura);
           if (respGen && (respGen.numeroFactura || respGen.numeroFacturaAsignado)) {
