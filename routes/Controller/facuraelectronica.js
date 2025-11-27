@@ -186,7 +186,7 @@ async function FacturaElectronica(req, res) {
     // A partir de aquí resolvedIdFactura está disponible
     const idFactura = resolvedIdFactura;
     const noFactura = numeroFactura ?? ids?.numeroFactura ?? undefined;
-    const nit = ids?.nitInstitucion ? String(ids.nitInstitucion) : 'NITDESCONOCIDO';
+    const nit = ids?.nitInstitucion ? String(ids.nitInstitucion) : '812001219';
 
     // 2) Obtener URL del ZIP
     const zipInfoUrl = `https://balance.saludplus.co/facturasAdministar/GetZipFile?IdFactura=${encodeURIComponent(idFactura)}`;
