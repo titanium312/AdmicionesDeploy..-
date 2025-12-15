@@ -233,20 +233,26 @@ function shortStatus(resp) {
   return 'ERROR';
 }
 
+
+
+
 /* =========== API actions =========== */
 async function buscarPorAdmision(num) {
   const metodo = document.querySelector('input[name="metodoBusqueda"]:checked').value;
+  let idFactura, numeroAdmision, numeroFactura, raw, institucion;
 
   if (metodo === 'admisionInstitucion') {
     const fk = fkInstitucionInput.value.trim();
     if (!fk || isNaN(fk)) throw new Error("Ingresa un fk_institucion válido");
+    
+    institucion = parseInt(fk); // Guardamos la institución
 
     const res = await fetch(API_BUSCAR_DB, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         numero_admision: num,
-        fk_institucion: parseInt(fk)
+        fk_institucion: institucion
       })
     });
 
@@ -254,17 +260,17 @@ async function buscarPorAdmision(num) {
     const json = await res.json();
 
     if (json.success && json.id_factura) {
-      return {
-        idFactura: String(json.id_factura),
-        numeroAdmision: String(json.numero_admision || num),
-        numeroFactura: json.numero_factura ? String(json.numero_factura) : null,
-        raw: json
-      };
+      idFactura = String(json.id_factura);
+      numeroAdmision = String(json.numero_admision || num);
+      numeroFactura = json.numero_factura ? String(json.numero_factura) : null;
+      raw = json;
     } else {
       throw new Error(json.message || "Factura no encontrada");
     }
   } else {
     // Método clásico sSearch
+    institucion = 20; // Por defecto para el método clásico
+    
     const res = await fetch(API_BUSCAR_SSEARCH, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -272,9 +278,31 @@ async function buscarPorAdmision(num) {
     });
     if (!res.ok) throw new Error(`BuscarIdFactura HTTP ${res.status}`);
     const json = await res.json();
-    return parseBuscarResponse(json);
+    
+    const parsed = parseBuscarResponse(json);
+    idFactura = parsed.idFactura;
+    numeroAdmision = parsed.numeroAdmision;
+    numeroFactura = parsed.numeroFactura;
+    raw = parsed.raw;
   }
+
+  return {
+    idFactura,
+    numeroAdmision,
+    numeroFactura,
+    institucion, // Añadimos la institución al resultado
+    raw
+  };
 }
+
+
+
+
+
+
+
+
+
 
 async function accionCambiarFecha(idFactura, fechaDDMMYYYY) {
   const fecha = convertirFechaDDMMaMMDD(fechaDDMMYYYY);
@@ -288,11 +316,47 @@ async function accionCambiarFecha(idFactura, fechaDDMMYYYY) {
   return await res.json();
 }
 
+
+
+
+
 async function accionGenerarNumero(idFactura) {
-  const res = await fetch(`${BASE}/GenerarNumeroFactura?idFacturas=${encodeURIComponent(idFactura)}`);
+  // Obtener el método de búsqueda seleccionado
+  const metodo = document.querySelector('input[name="metodoBusqueda"]:checked').value;
+  
+  // Determinar el Idinstitucion según el método
+  let Idinstitucion;
+  
+  if (metodo === 'admisionInstitucion') {
+    // Para el método nuevo, usar el valor del input
+    const fk = fkInstitucionInput.value.trim();
+    if (!fk || isNaN(fk)) {
+      return { 
+        ok: false, 
+        mensaje: "fk_institucion inválido para Generar Número" 
+      };
+    }
+    Idinstitucion = parseInt(fk);
+  } else {
+    // Para el método clásico, usar 20 por defecto
+    Idinstitucion = 20;
+  }
+  
+  // Construir la URL con el parámetro Idinstitucion
+  const url = `${BASE}/GenerarNumeroFactura?idFacturas=${encodeURIComponent(idFactura)}&Idinstitucion=${Idinstitucion}`;
+  
+  const res = await fetch(url);
   if (!res.ok) return { ok:false, mensaje:`HTTP ${res.status}`, status: res.status };
   return await res.json();
 }
+
+
+
+
+
+
+
+
 
 async function accionEnviarDian(idFactura) {
   const res = await fetch(`${BASE}/EnviarDian`, {
@@ -492,3 +556,13 @@ summary.textContent = 'Listo';
 </script>
 </body>
 </html>
+
+actuliza la  GenerarNumeroFactura hora pide Idinstitucion  si por Búsqueda clásica (sSearch)
+coje la 20 pordfecto si es Por número admisión + institución (recomendado) si o si pide el Idinstitucion
+
+
+C:\Users\User\Pictures\AnyDesk\,\AdmicionesDeploy->curl -X GET "http://localhost:3000/GenerarNumeroFactura?idFacturas=3735736&numeroFactura=&Idinstitucion=14"
+{"institucion":"TOLUVIEJO","resultado":{"numeroFactura":1472,"valorRetorno":1,"mensajeRetorno":"proceso de asignacion de numeros finalizado"}}
+C:\Users\User\Pictures\AnyDesk\,\AdmicionesDeploy->curl -X GET "http://localhost:3000/GenerarNumeroFactura?idFacturas=3735736&numeroFactura=&Idinstitucion=60"
+{"error":"Idinstitucion inválida","disponibles":["14","20"]}
+C:\Users\User\Pictures\AnyDesk\,\AdmicionesDeploy->
