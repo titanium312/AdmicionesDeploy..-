@@ -224,6 +224,19 @@ function convertirFechaDDMMaMMDD(fecha) {
 function shortStatus(resp) {
   if (!resp) return 'ERROR';
 
+  // Caso específico para cambiar-fecha
+  if (resp.ok === true && resp.data && resp.data.valorretorno === 1) {
+    return 'OK';
+  }
+
+  // Caso específico para GenerarNumeroFactura
+  if (resp.institucion && resp.resultado) {
+    // La API devuelve {institucion: "...", resultado: {...}}
+    if (resp.resultado.valorRetorno === 1) {
+      return 'OK';
+    }
+  }
+
   // Caso estándar
   if (resp.success === true) return 'OK';
 
@@ -231,9 +244,11 @@ function shortStatus(resp) {
   if (resp.ok === true) return 'OK';
   if (resp.valorRetorno === 1) return 'OK';
 
-  // Factura generada
-  if (resp.numeroFactura || resp.numeroFacturaAsignado || resp.numero_factura) {
-    return 'OK';
+  // Factura generada (numeroFactura puede ser 0 y aún ser exitoso)
+  if (resp.numeroFactura !== undefined || resp.numeroFacturaAsignado || resp.numero_factura) {
+    // Si hay un valorRetorno exitoso, es OK incluso si numeroFactura es 0
+    if (resp.valorRetorno === 1) return 'OK';
+    return 'OK'; // Solo tener un número de factura (incluso 0) puede ser considerado exitoso
   }
 
   // Código HTTP interno
@@ -255,15 +270,16 @@ function shortStatus(resp) {
     texto.includes('exito') ||
     texto.includes('éxito') ||
     texto.includes('generad') ||
-    texto.includes('enviado')
+    texto.includes('enviado') ||
+    texto.includes('modificaron') ||
+    texto.includes('finalizado') ||
+    texto.includes('asignacion')
   ) {
     return 'OK';
   }
 
   return 'ERROR';
 }
-
-
 
 /* =========== API actions =========== */
 async function buscarPorAdmision(num) {
@@ -585,4 +601,5 @@ summary.textContent = 'Listo';
 </script>
 </body>
 </html>
+
 
