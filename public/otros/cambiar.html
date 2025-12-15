@@ -444,6 +444,7 @@ function addTableRow({ admision, idFactura, numeroAdmision, numeroFactura, accio
 }
 
 /* Main flow */
+/* Main flow */
 async function ejecutarAcciones() {
   const listaTexto = admisionListaEl.value.trim();
   const fecha = fechaInputEl.value.trim();
@@ -458,7 +459,16 @@ async function ejecutarAcciones() {
   if (!listaTexto) { alert('Debes ingresar al menos una admisión.'); return; }
   if (!accCambiar && !accGenerar && !accEnviar) { alert('Marca al menos una acción.'); return; }
 
-  const lista = listaTexto.split('\n').map(l => l.trim()).filter(Boolean);
+  // Procesar la lista para manejar diferentes formatos: con comas, con espacios, o uno por línea
+  const lista = listaTexto
+    .split(/[\n,;]+/) // Separar por líneas nuevas, comas o punto y coma
+    .map(l => l.trim()) // Limpiar espacios
+    .filter(l => l !== '' && !isNaN(l) && l.length > 0); // Filtrar vacíos y no-números
+
+  if (lista.length === 0) {
+    alert('No se encontraron números de admisión válidos.');
+    return;
+  }
 
   ejecutarBtn.disabled = true;
   limpiarBtn.disabled = true;
@@ -514,7 +524,8 @@ async function ejecutarAcciones() {
       } else {
         try {
           const resp = await accionCambiarFecha(idFactura, fecha);
-          resultadoResumen.push(`Fecha: ${shortStatus(resp)}`);
+          const status = shortStatus(resp);
+          resultadoResumen.push(`Fecha: ${status}`);
         } catch (err) {
           resultadoResumen.push('Fecha: ERROR');
         }
@@ -523,16 +534,28 @@ async function ejecutarAcciones() {
 
     if (accGenerar) {
       accionesRealizadas.push('Generar número');
-      const yaTieneNumeroFactura = numeroFactura && String(numeroFactura).trim() !== '-' && String(numeroFactura).trim() !== '';
+      const yaTieneNumeroFactura = numeroFactura && 
+                                  String(numeroFactura).trim() !== '-' && 
+                                  String(numeroFactura).trim() !== '' && 
+                                  String(numeroFactura).trim() !== '0' && 
+                                  String(numeroFactura).trim() !== 'null';
+      
       if (yaTieneNumeroFactura) {
         resultadoResumen.push('Generar: OK (ya tenía)');
       } else {
         try {
           const respGen = await accionGenerarNumero(idFactura);
-          if (respGen && (respGen.numeroFactura || respGen.numeroFacturaAsignado)) {
-            numeroFactura = respGen.numeroFactura || respGen.numeroFacturaAsignado;
+          const status = shortStatus(respGen);
+          
+          // Actualizar número de factura si viene en la respuesta
+          if (respGen && respGen.resultado && respGen.resultado.numeroFactura !== undefined) {
+            // Incluso si es 0, lo mostramos
+            numeroFactura = String(respGen.resultado.numeroFactura);
+          } else if (respGen && respGen.numeroFactura !== undefined) {
+            numeroFactura = String(respGen.numeroFactura);
           }
-          resultadoResumen.push(`Generar: ${shortStatus(respGen)}`);
+          
+          resultadoResumen.push(`Generar: ${status}`);
         } catch (err) {
           resultadoResumen.push('Generar: ERROR');
         }
@@ -543,20 +566,28 @@ async function ejecutarAcciones() {
       accionesRealizadas.push('Enviar DIAN');
       try {
         const respD = await accionEnviarDian(idFactura);
-        resultadoResumen.push(`DIAN: ${shortStatus(respD)}`);
+        const status = shortStatus(respD);
+        resultadoResumen.push(`DIAN: ${status}`);
       } catch (err) {
         resultadoResumen.push('DIAN: ERROR');
       }
     }
 
-    const resultadoFinal = resultadoResumen.some(r => /ERROR/.test(r)) ? 'ERROR' : 'OK';
+    // Determinar si hubo algún ERROR real
+    const tieneError = resultadoResumen.some(r => {
+      return r.includes('ERROR') && 
+             !r.includes('OK (ya tenía)') && 
+             !r.includes('sin fecha');
+    });
+    
+    const resultadoFinal = tieneError ? 'ERROR' : 'OK';
     const level = resultadoFinal === 'ERROR' ? 'err' : 'ok';
 
     addTableRow({
       admision,
       idFactura,
       numeroAdmision,
-      numeroFactura,
+      numeroFactura: numeroFactura || '-',
       acciones: accionesRealizadas.join(' • ') || '-',
       resultado: resultadoFinal,
       level
@@ -574,7 +605,6 @@ async function ejecutarAcciones() {
   setProgress(100);
   summary.textContent = `Completado (${total})`;
 }
-
 /* Events */
 ejecutarBtn.addEventListener('click', ejecutarAcciones);
 
