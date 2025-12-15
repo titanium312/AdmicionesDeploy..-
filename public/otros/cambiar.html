@@ -223,16 +223,45 @@ function convertirFechaDDMMaMMDD(fecha) {
 
 function shortStatus(resp) {
   if (!resp) return 'ERROR';
-  try {
-    if (resp.ok === true) return 'OK';
-    if (resp.valorRetorno === 1) return 'OK';
-    if (resp.numeroFactura || resp.numeroFacturaAsignado) return 'OK';
-    const cand = String(resp.status || resp.statusMessage || resp.mensajeRetorno || resp.mensaje || '').toLowerCase();
-    if (cand.includes('ok') || cand.includes('exito') || cand.includes('éxito') || cand.includes('success')) return 'OK';
-  } catch (e) {}
+
+  // Caso estándar
+  if (resp.success === true) return 'OK';
+
+  // APIs antiguas
+  if (resp.ok === true) return 'OK';
+  if (resp.valorRetorno === 1) return 'OK';
+
+  // Factura generada
+  if (resp.numeroFactura || resp.numeroFacturaAsignado || resp.numero_factura) {
+    return 'OK';
+  }
+
+  // Código HTTP interno
+  if (resp.codigo && Number(resp.codigo) >= 200 && Number(resp.codigo) < 300) {
+    return 'OK';
+  }
+
+  // Mensajes textuales
+  const texto = (
+    resp.mensaje ||
+    resp.message ||
+    resp.mensajeRetorno ||
+    resp.statusMessage ||
+    ''
+  ).toLowerCase();
+
+  if (
+    texto.includes('ok') ||
+    texto.includes('exito') ||
+    texto.includes('éxito') ||
+    texto.includes('generad') ||
+    texto.includes('enviado')
+  ) {
+    return 'OK';
+  }
+
   return 'ERROR';
 }
-
 
 
 
