@@ -13,12 +13,14 @@ const { cambiarFechaEmision  } = require('./Controller/otro/Admiciones/cambiarF'
 const { NumeroFactura  } = require('./Controller/otro/Admiciones/generarNumeroFactura');
 const { EnviarADian } = require('./Controller/otro/Admiciones/EnviarAdian');
 const { buscarFactura } = require('./Controller/otro/Admiciones/buscar');
+const { buscarFacturaDb } = require('./Controller/otro/Admiciones/BuscarDB');
+
 // LABORATORIO -----------------------------------------------------------
 const { DescargarLaboratorio } = require('./Controller/otro/LABORATORIO/laboratorio');
 const { buscarPaciente } = require('./Controller/otro/LABORATORIO/herramientas/buscarPaciente');
-const { buscarFacturaDb } = require('./Controller/otro/Admiciones/BuscarDB');
-
-
+const { buscarFechaNacimiento } = require(
+  './Controller/otro/LABORATORIO/herramientas/BuscarPacienteFecha'
+);
 // AUDITORIA -----------------------------------------------------------
 router.get('/Hs_Anx', Hs_Anx);
 router.get('/facturaElectronica', FacturaElectronica);
@@ -35,6 +37,8 @@ router.post('/BuscarIdFacturaDb', buscarFacturaDb);
 // LABORATORIO -----------------------------------------------------------
 router.post('/DescargarLaboratorio', DescargarLaboratorio);
 router.post('/buscarPaciente', buscarPaciente);
+router.get('/buscarFechaNacimiento', buscarFechaNacimiento);
+
 
 
 //area de consultas de datos login
