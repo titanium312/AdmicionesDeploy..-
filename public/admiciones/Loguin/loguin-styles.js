@@ -32,19 +32,14 @@ export default css`
     isolation: isolate;
   }
 
-  /* Efectos de fondo futuristas */
+  /* Fondo */
   .bg-aurora {
     position: absolute;
     inset: 0;
-    background: radial-gradient(
-      ellipse at 75% 30%,
-      rgba(47, 33, 107, 0.3) 0%,
-      transparent 60%
-    );
+    background: radial-gradient(ellipse at 75% 30%, rgba(47, 33, 107, 0.3) 0%, transparent 60%);
     z-index: -2;
     animation: aurora 16s infinite alternate;
   }
-
   .bg-orb {
     position: absolute;
     border-radius: 50%;
@@ -52,13 +47,12 @@ export default css`
     opacity: 0.15;
     z-index: -1;
   }
-
   .orb-a { width: 300px; height: 300px; background: var(--accent); top: -100px; right: -100px; animation: float-a 24s infinite var(--ease); }
   .orb-b { width: 400px; height: 400px; background: var(--accent-cyan); bottom: -150px; left: -100px; animation: float-b 20s infinite var(--ease); }
 
-  /* Shell principal */
+  /* Contenedor */
   .shell {
-    position: relative; /* necesario para posicionar la esquina interna */
+    position: relative;
     width: 100%;
     max-width: 420px;
     background: rgba(26, 26, 46, 0.75);
@@ -73,7 +67,6 @@ export default css`
     transform: translateY(0);
     transition: var(--transition);
   }
-
   .shell:hover {
     transform: translateY(-4px);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3),
@@ -81,47 +74,23 @@ export default css`
       inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
 
-  /* Esquina: acepta imagen o texto */
+  /* Esquina decorativa opcional (no usada ahora) */
   .che-icon {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 20;
-    pointer-events: none; /* no bloquea clics del formulario; quítalo si quieres que sea clicable */
+    top: 10px; right: 10px; z-index: 20;
+    pointer-events: none;
     user-select: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 36px;
-    min-height: 36px;
-    padding: 6px 8px;
-    border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; min-height: 36px; padding: 6px 8px; border-radius: 10px;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     transition: transform .25s var(--ease), opacity .25s var(--ease);
   }
-
   .che-icon:hover { transform: translateY(-1px) scale(1.02); }
-
-  .che-icon img {
-    display: block;
-    width: 28px;   /* ajusta a tu gusto */
-    height: 28px;
-    object-fit: contain;
-    border-radius: 6px;
-    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35));
-  }
-
-  .che-icon .che-text {
-    font-size: 18px;     /* tamaño del emoji/texto */
-    line-height: 1;
-    color: var(--text);
-    opacity: 0.95;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.35);
-  }
+  .che-icon img { width: 28px; height: 28px; object-fit: contain; border-radius: 6px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35)); }
+  .che-icon .che-text { font-size: 18px; line-height: 1; color: var(--text); opacity: 0.95; text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
 
   /* Branding */
   .brand-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-bottom: 2.5rem; }
@@ -139,11 +108,12 @@ export default css`
 
   /* Formulario */
   .form { display: flex; flex-direction: column; gap: 1.5rem; }
-
   .group { position: relative; }
   .float { position: relative; }
 
-  input {
+  /* SOLO inputs de texto/clave (no checkbox) */
+  input[type="text"],
+  input[type="password"] {
     width: 100%;
     padding: 1rem;
     background: rgba(255, 255, 255, 0.05);
@@ -154,15 +124,18 @@ export default css`
     transition: var(--transition);
     outline: none;
   }
-  input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.2); }
-  input:disabled { opacity: 0.6; cursor: not-allowed; }
+  input[type="text"]:focus,
+  input[type="password"]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.2); }
+  input[type="text"]:disabled,
+  input[type="password"]:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  label {
+  /* Label flotante SOLO en .float */
+  .float label {
     position: absolute; left: 1rem; top: 1rem; color: var(--text-muted);
     pointer-events: none; transition: var(--transition); transform-origin: left center;
   }
-  input:focus + label,
-  input:not(:placeholder-shown) + label { transform: translateY(-1.5rem) scale(0.85); color: var(--accent); }
+  .float input:focus + label,
+  .float input:not(:placeholder-shown) + label { transform: translateY(-1.5rem) scale(0.85); color: var(--accent); }
 
   .peek {
     position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
@@ -172,14 +145,26 @@ export default css`
   .peek:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .glow { position: absolute; inset: 0; border-radius: var(--radius); pointer-events: none; opacity: 0; box-shadow: 0 0 12px var(--accent); transition: var(--transition); }
-  input:focus ~ .glow { opacity: 0.4; }
+  .float input:focus ~ .glow { opacity: 0.4; }
 
-  .options { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
-  .check { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
-  .check input { width: auto; accent-color: var(--accent); }
-
-  .forgot { color: var(--text-muted); text-decoration: none; transition: var(--transition); }
-  .forgot:hover { color: var(--accent); }
+  /* Checkbox flotante en esquina superior derecha del formulario */
+  .remember-top {
+    position: absolute;
+    top: 12px; right: 12px;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(255,255,255,0.06);
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    z-index: 25; /* por encima del contenido del shell */
+    user-select: none;
+  }
+  .remember-top input[type="checkbox"] {
+    width: auto; height: auto; margin: 0; accent-color: var(--accent);
+    background: initial; border: initial; border-radius: 3px;
+  }
+  .remember-top span { font-size: 0.75rem; color: var(--text-muted); }
 
   .cta {
     width: 100%;
@@ -216,6 +201,8 @@ export default css`
   /* Responsive */
   @media (max-width: 480px) {
     .shell { padding: 1.5rem; }
-    .che-icon { top: 8px; right: 8px; }
+    .remember-top { top: 8px; right: 8px; }
   }
+
+
 `;
