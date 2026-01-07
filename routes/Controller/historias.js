@@ -1,16 +1,16 @@
 // Archivo: routes/tuRuta.js
 
 const { createToken } = require('./Base/toke');
-const { obtenerIds, obtenerIdsPorAdmision } = require('./Base/ids');
+const { ConsultaId } = require('./Base/consultaid'); 
+
+// Importar datos de instituciones
+const { instituciones } = require('./Base/Instituciones');
 
 /* =========================
  *  Mapeos y constantes
  * ========================= */
 const PREFIJOS_NUEVA_EPS = {
-  // Facturación electrónica
   factura_electronica: 'FEV',
-
-  // Facturación / administrativos
   factura: 'FAT',
   detalle_factura: 'DFV',
   prefacturas: 'DFV',
@@ -18,8 +18,6 @@ const PREFIJOS_NUEVA_EPS = {
   formato_ami: 'AMI',
   lista_precios: 'LDP',
   comprobante_recibo_usuario: 'CRC',
-
-  // Clínicos / asistenciales
   historia: 'HAU',
   evolucion: 'HEV',
   epicrisis: 'EPI',
@@ -28,26 +26,17 @@ const PREFIJOS_NUEVA_EPS = {
   hoja_procedimientos: 'PDX',
   descripcion_quirurgica: 'DQX',
   registro_anestesia: 'RAN',
-
-  // Órdenes médicas (incluye lo que antes era HAD)
   ordenmedica: 'OPF',
-
-  // Traslados y transporte
   traslado_asistencial: 'TAP',
   transporte_no_asistencial: 'TNA',
-
-  // Nutrición
   acta_junta_nutricion: 'JNM',
   consentimiento_nutricion: 'CNM',
-
-  // Otros
   factura_material_osteosintesis: 'FMO',
   anexo: 'ANX',
   admisiones: 'ADM',
   hoja_gastos: 'LDP',
   historia_asistencial: 'HEV',
 };
-
 
 const CODIGOS_SALUD_TOTAL = {
   factura: 'prefacura',
@@ -72,7 +61,6 @@ const FECHA_FIJA_REPORTS = new Set([
   'ListadoHistoriasAsistencialesDestallado',
 ]);
 
-// Reporte ↔ param ↔ nombre lógico
 const reportMapping = [
   { param: 'idsHistorias',       report: 'ListadoHistoriasClinicasDetallado3',                 nombre: 'historia' },
   { param: 'idAnexosDos',        report: 'ListadoanexoDosDetallado',                           nombre: 'anexo' },
@@ -80,25 +68,21 @@ const reportMapping = [
   { param: 'idsEvoluciones',     report: 'ListadoEvolucionDestallado',                         nombre: 'evolucion' },
   { param: 'idsNotasEnfermeria', report: 'ListadoNotasEnfermeriaDestallado',                   nombre: 'enfermeria' },
   { param: 'idsAdmisiones',      report: 'ListadoAdmisionesDetallado',                         nombre: 'admisiones' },
-  // OJO: este usa param singular
   { param: 'idAdmisiones',       report: 'ListadoPrefacturasDetallado',                        nombre: 'prefacturas' },
   { param: 'idsOrdenMedicas',    report: 'ListadoOrdenMedicasDestallado',                      nombre: 'ordenmedica' },
-  // Nuevos (con fechas fijas)
   { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionProcedimientos', nombre: 'hoja_procedimientos' },
   { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionMedicamentos',   nombre: 'hoja_medicamentos' },
   { param: 'idsHistorias',       report: 'ListadoAsistencialHojaGastos',                       nombre: 'hoja_gastos' },
-  // Historia asistencial (param singular + auditoria=1)
   { param: 'idHistorias',        report: 'ListadoHistoriasAsistencialesDestallado',            nombre: 'historia_asistencial' },
 ];
 
-// Códigos → reportes (para filtro `tipos`)
 const CODE_TO_REPORTS = {
   HAU:  ['ListadoHistoriasClinicasDetallado3'],
   HEV:  ['ListadoEvolucionDestallado'],
   EPI:  ['ListadoEpicrisis'],
   HAM:  ['ListadoAsistencialHojaAdministracionMedicamentos'],
   PDX:  ['ListadoAsistencialHojaAdministracionProcedimientos'],
-  OPF:  ['ListadoOrdenMedicasDestallado'],  // único válido (HAD eliminado)
+  OPF:  ['ListadoOrdenMedicasDestallado'],
   ADM:  ['ListadoAdmisionesDetallado'],
   DFV:  ['ListadoPrefacturasDetallado'],
   HAA:  ['ListadoHistoriasAsistencialesDestallado'],
@@ -107,8 +91,6 @@ const CODE_TO_REPORTS = {
   HAP:  ['ListadoAsistencialHojaAdministracionProcedimientos'],
   HMD:  ['ListadoAsistencialHojaAdministracionMedicamentos'],
   HGA:  ['ListadoAsistencialHojaGastos'],
-
-  // Nuevos códigos (pendientes de reportes)
   NDC:  ['*'],
   AMI:  ['*'],
   DQX:  ['*'],
@@ -121,7 +103,6 @@ const CODE_TO_REPORTS = {
   TAP:  ['*'],
   TNA:  ['*'],
   CRC:  ['*'],
-
   TODO: ['*'],
 };
 
@@ -134,7 +115,7 @@ function getModulo(reportName) {
     ListadoanexoDosDetallado: 'Facturacion',
     ListadoEpicrisis: 'Asistencial',
     ListadoEvolucionDestallado: 'Asistencial',
-    ListadoNotasEnfermeriaDestallado: 'Asistencial',
+    ListadoNotasEnfermeriaDestallado: 'Asistencial', // 🔴 AGREGAR ESTA LÍNEA
     ListadoAdmisionesDetallado: 'Facturacion',
     ListadoPrefacturasDetallado: 'Facturacion',
     ListadoOrdenMedicasDestallado: 'Asistencial',
@@ -207,8 +188,18 @@ function parseTiposParam(raw) {
 
 function toArray(v) { return v == null ? [] : (Array.isArray(v) ? v : [v]); }
 
+function obtenerNitInstitucion(institucionId) {
+  if (!institucionId) return 'NITDESCONOCIDO';
+  
+  const institucion = instituciones.find(
+    inst => inst.idInstitucion === Number(institucionId)
+  );
+  
+  return institucion?.nit || 'NITDESCONOCIDO';
+}
+
 function construirContextoRenombramiento(ids, { idAdmision, institucionId }) {
-  const nit = ids?.nitInstitucion || 'NITDESCONOCIDO';
+  const nit = obtenerNitInstitucion(institucionId);
   const tipoId = (ids?.tipoDocumento || 'CC').toString().toUpperCase();
   const numId = (ids?.numero_documento || '0000000000').toString();
 
@@ -223,11 +214,11 @@ function construirContextoRenombramiento(ids, { idAdmision, institucionId }) {
   }
 
   return {
-    nit: String(nit),                 // Usaremos SIEMPRE NIT en los nombres
+    nit: String(nit),
     tipoId,
     numId,
     factura: String(numeroFactura),
-    institucionId: Number(institucionId) || 0, // se mantiene para otros usos si hace falta
+    institucionId: Number(institucionId) || 0,
     idAdmision: Number(idAdmision) || 0,
   };
 }
@@ -240,7 +231,6 @@ function resolverFacturaParaDocumento(ids, tipoDocumento, id, facturaFallback) {
   return String(facturaFallback || ids?.numeroFactura || '0');
 }
 
-// Detector de modalidad (cápita/evento) — respeta el query param si viene
 function esCapita({ modalidad, ids }) {
   if (modalidad) {
     const m = String(modalidad).toLowerCase();
@@ -262,41 +252,218 @@ function esCapita({ modalidad, ids }) {
   return cand.some(v => v.includes('cápita') || v.includes('capita') || v.includes('cap'));
 }
 
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// Nombres de archivo: SIEMPRE usando NIT (ctx.nit)
 function generarNombreArchivo(eps, tipoDocumento, ctx, options = {}) {
-  const { tipoId, numId, nit } = ctx;     // usar NIT
+  const { tipoId, numId, nit } = ctx;
   const factura = options.facturaPorDoc || ctx.factura || '0';
 
-  // NUEVA_EPS
   if (eps === 'NUEVA_EPS') {
     const prefijo = PREFIJOS_NUEVA_EPS[tipoDocumento] || tipoDocumento.toUpperCase();
 
     if (options.esCapita) {
-      // Siempre con tipoId+numId en CÁPITA
       return `${prefijo}_${nit}_FEH${factura}_${tipoId}${numId}.pdf`;
     }
-    // En EVENTO: quitar siempre el <tipoId><numId>
     return `${prefijo}_${nit}_FEH${factura}.pdf`;
   }
 
-  // SALUD_TOTAL (no cambia la regla actual)
   if (eps === 'SALUD_TOTAL') {
     const codigo = CODIGOS_SALUD_TOTAL[tipoDocumento] || 'soportes';
     return `${nit}_FEH_${factura}_${codigo}_1.pdf`;
   }
 
-  // Fallback genérico
   const id = options.id != null ? String(options.id) : '';
   return `${tipoDocumento}-${id}.pdf`;
 }
 
+/* =========================
+ *  Obtener IDs usando ConsultaId
+ * ========================= */
+/* =========================
+ *  Obtener IDs usando ConsultaId - VERSIÓN CORREGIDA
+ * ========================= */
+async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
+  try {
+    // 🔴 VALIDACIÓN ESTRICTA: Token debe venir por body
+    if (!token) {
+      console.error('❌ Token no proporcionado en body');
+      return null;
+    }
+
+    // Crear un objeto request que coincida EXACTAMENTE con lo que ConsultaId espera
+    const mockReq = {
+      body: {
+        sSearch: clave,
+        idInstitucion: Number(institucionId), // 🔴 CRÍTICO: Esto faltaba
+        include: [
+          'admision',
+          'egreso',
+          'evolucion',
+          'notas',
+          'ordenes',
+          'historias',
+          'facturas',
+          'idanexo'
+        ],
+        token: token.replace(/^Bearer\s+/i, '')
+      },
+      query: {
+        sSearch: clave,
+        idInstitucion: Number(institucionId) // También en query
+      },
+      headers: {}
+    };
+
+    // Variable para capturar la respuesta
+    let responseData = null;
+    let statusCode = 200;
+
+    // Crear mock response
+    const mockRes = {
+      json: function(data) {
+        responseData = data;
+        return this;
+      },
+      status: function(code) {
+        statusCode = code;
+        return this;
+      },
+      send: function(data) {
+        if (typeof data === 'string') {
+          try {
+            responseData = JSON.parse(data);
+          } catch {
+            responseData = { message: data };
+          }
+        } else {
+          responseData = data;
+        }
+        return this;
+      },
+      statusCode: 200
+    };
+
+    // 🔴 Llamar a ConsultaId como middleware
+    // ConsultaId espera (req, res, next) - usamos solo req, res
+    await ConsultaId(mockReq, mockRes);
+
+    // Verificar respuesta
+    if (!responseData?.ok) {
+      console.error('Error en ConsultaId:', responseData);
+      return null;
+    }
+
+    console.log('✅ Respuesta de ConsultaId:', {
+      ok: responseData.ok,
+      numeroBusqueda: responseData.numeroBusqueda,
+      ids: responseData.resultados?.ids
+    });
+
+    // 🔴 TRANSFORMACIÓN CORRECTA según la respuesta REAL de ConsultaId
+    // Basado en el ejemplo que proporcionaste:
+    // {
+    //   "ok": true,
+    //   "numeroBusqueda": "10542",
+    //   "idInstitucion": 20,
+    //   "institucion": "ESE HOSPITAL SAN JORGE AYAPEL",
+    //   "fechaConsulta": "06/01/2026",
+    //   "include": [...],
+    //   "resultados": {
+    //     "ids": {
+    //       "admision": [],
+    //       "egreso": [297161],
+    //       "evolucion": [584321],
+    //       "notasEnfermeria": [1000133, 1000002],
+    //       "ordenesMedicas": [495618],
+    //       "historiasClinicas": [1401147],
+    //       "factura": [3688929],
+    //       "idanexo": []
+    //     },
+    //     "totales": {...}
+    //   }
+    // }
+
+    const ids = responseData.resultados?.ids || {};
+    
+    const transformIds = {
+      // ID individuales
+      id_admision: ids.admision?.[0] || null,
+      id_egreso: ids.egreso?.[0] || null,
+      id_factura: ids.factura?.[0] || null,
+      
+      // Arrays de IDs
+      idsAdmisiones: ids.admision || [],
+      idEgresos: ids.egreso || [],
+      idsEvoluciones: ids.evolucion || [],
+      idsNotasEnfermeria: ids.notasEnfermeria || [],
+      idsOrdenMedicas: ids.ordenesMedicas || [],
+      idsHistorias: ids.historiasClinicas || [],
+      idAnexosDos: ids.idanexo || [],
+      
+      // Información de búsqueda
+      numeroFactura: responseData.numeroBusqueda || clave,
+      
+      // Información del paciente (estos campos pueden venir de otra fuente)
+      tipoDocumento: 'CC', // Por defecto
+      numero_documento: clave, // Temporalmente usamos la clave
+      
+      // Totales
+      totales: responseData.resultados?.totales || {
+        notasEnfermeria: ids.notasEnfermeria?.length || 0,
+        ordenesMedicas: ids.ordenesMedicas?.length || 0,
+        historiasClinicas: ids.historiasClinicas?.length || 0,
+      },
+      
+      // Información adicional (puede ser null si no está disponible)
+      modalidad: '',
+      regimen: '',
+      
+      // Datos de facturación
+      facturasDetalle: ids.factura ? ids.factura.map(id => ({
+        id_factura: id,
+        numero_factura: responseData.numeroBusqueda || clave,
+        // Si necesitas id_admision aquí, necesitas obtenerlo de otra fuente
+        id_admision: ids.admision?.[0] || null
+      })) : []
+    };
+
+    console.log('🔄 IDs transformados:', {
+      id_admision: transformIds.id_admision,
+      idsHistorias: transformIds.idsHistorias,
+      idsNotasEnfermeria: transformIds.idsNotasEnfermeria,
+      idsOrdenMedicas: transformIds.idsOrdenMedicas
+    });
+
+    return transformIds;
+
+  } catch (error) {
+    console.error('Error en obtenerIdsConConsultaId:', error);
+    return null;
+  }
+}
+
+
+async function obtenerIdsPorAdmision({ institucionId, idAdmision, token }) {
+  return await obtenerIdsConConsultaId({
+    clave: idAdmision.toString(),
+    institucionId,
+    token
+  });
+}
 
 /* =========================
- *  Controller principal
+ *  Controller principal MODIFICADO
  * ========================= */
 async function Hs_Anx(req, res) {
   try {
+    // 🔴 VALIDACIÓN EXPLÍCITA Y EXCLUSIVA DEL TOKEN EN BODY
+    const { token } = req.body;
+    
+    if (!token || typeof token !== 'string' || token.trim() === '') {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Token de autorización requerido EXCLUSIVAMENTE en body' 
+      });
+    }
+
     const {
       clave,
       numeroFactura,
@@ -305,11 +472,10 @@ async function Hs_Anx(req, res) {
       institucionId,
       idUser,
       eps,
-      // selectores de documentos
-      tipos, // preferido
-      docs,  // alias
-      tipo,  // alias
-      modalidad, // permite forzar 'capita' o 'evento'
+      tipos,
+      docs,
+      tipo,
+      modalidad,
     } = req.query;
 
     // Validaciones mínimas
@@ -325,22 +491,32 @@ async function Hs_Anx(req, res) {
       return res.status(400).send(`❌ Faltan parámetros: ${missing.join(', ')}`);
     }
 
-    // Filtro de tipos -> set de reportes
+    // Filtro de tipos
     const tiposRaw = tipos ?? docs ?? tipo;
     const reportesSeleccionados = parseTiposParam(tiposRaw);
 
-    // === Resolver IDs ===
+    // === Resolver IDs USANDO CONSULTAID (token ahora viene de req.body) ===
     const claveFinal = String(anyKey);
     let ids;
+    
     if (idAdmisionRaw && !numeroFactura && !clave && !numeroAdmision) {
       ids = await obtenerIdsPorAdmision({
         institucionId: Number(institucionId),
         idAdmision: Number(idAdmisionRaw),
+        token // 🔴 Token del body
       });
     } else {
-      ids = await obtenerIds({
-        institucionId: Number(institucionId),
+      ids = await obtenerIdsConConsultaId({
         clave: claveFinal,
+        institucionId: Number(institucionId),
+        token // 🔴 Token del body
+      });
+    }
+
+    if (!ids) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No se pudieron obtener los IDs para la consulta' 
       });
     }
 
@@ -352,7 +528,7 @@ async function Hs_Anx(req, res) {
       (Number.isFinite(Number(claveFinal)) ? Number(claveFinal) : 0)
     );
 
-    // Contexto de renombramiento
+    // Contexto de renombramiento con NIT correcto
     const ctx = construirContextoRenombramiento(ids, {
       idAdmision: resolvedAdmisionId,
       institucionId,
@@ -366,21 +542,19 @@ async function Hs_Anx(req, res) {
       idsEvoluciones:     toArray(ids.idsEvoluciones || ids.evoluciones),
       idsNotasEnfermeria: toArray(ids.idsNotasEnfermeria || ids.notas_enfermeria),
       idsAdmisiones:      toArray(ids.idsAdmisiones || ids.id_admision || resolvedAdmisionId),
-      idAdmisiones:       toArray(resolvedAdmisionId), // para prefacturas (param singular)
+      idAdmisiones:       toArray(resolvedAdmisionId),
       idsOrdenMedicas:    toArray(ids.idsOrdenMedicas || ids.ordenes_medicas),
-      idHistorias:        toArray(ids.idHistorias || ids.id_historia), // para historia asistencial
+      idHistorias:        toArray(ids.idHistorias || ids.id_historia),
     };
 
-    // === Construir items (sin descargar) ===
+    // === Construir items ===
     const trabajos = [];
     const FECHA_INICIAL_FIJA = '01/01/2023';
     const FECHA_FINAL_HOY = formatDateDDMMYYYY(new Date());
 
-    // Determinar modalidad (capita/evento)
     const es_capita = esCapita({ modalidad, ids });
 
     for (const { param, report, nombre } of reportMapping) {
-      // aplicar filtro por reporte
       if (!(reportesSeleccionados.has('*') || reportesSeleccionados.has(report))) continue;
 
       const lista = normalized[param];
@@ -390,7 +564,7 @@ async function Hs_Anx(req, res) {
       const nombreEPS = obtenerNombrePorEPS(eps, nombre);
 
       for (const id of lista) {
-        const token = createToken(report, Number(institucionId), 83, Number(idUser));
+        const tokenReporte = createToken(report, Number(institucionId), 83, Number(idUser));
 
         const urlParams = new URLSearchParams({
           modulo,
@@ -400,16 +574,14 @@ async function Hs_Anx(req, res) {
           environment: '1',
           userId: String(idUser),
           [param]: String(id),
-          token,
+          token: tokenReporte,
         });
 
-        // Fechas fijas para reportes específicos
         if (FECHA_FIJA_REPORTS.has(report)) {
           urlParams.set('fechaInicial', FECHA_INICIAL_FIJA);
           urlParams.set('fechaFinal', FECHA_FINAL_HOY);
         }
 
-        // auditoria=1 solo para historia asistencial
         if (report === 'ListadoHistoriasAsistencialesDestallado') {
           urlParams.set('auditoria', '1');
         }
@@ -423,10 +595,8 @@ async function Hs_Anx(req, res) {
         );
 
         trabajos.push({
-          // claves útiles para agrupado:
           numeroAdmision: String(numeroAdmision ?? idAdmisionRaw ?? resolvedAdmisionId),
           numeroFactura: String(numeroFactura ?? ctx.factura ?? '0'),
-          // respuesta al cliente:
           nombreArchivo: nombreEPS,
           url: `https://reportes.saludplus.co/view.aspx?${urlParams.toString()}`,
           nombrepdf: nombreArchivoFinal,
@@ -438,10 +608,7 @@ async function Hs_Anx(req, res) {
       return res.status(404).json({ success: false, message: 'No se encontraron documentos' });
     }
 
-    // === AGRUPAR por factura o por admisión, con prefijo en la clave ===
-    // Regla:
-    //  - Si request venía con numeroFactura explícito y no es "0" => agrupa por `factura-<num>`
-    //  - Si no, agrupa por `admision-<num>`
+    // === Agrupar resultados ===
     const agruparPorFactura = Boolean(numeroFactura) && String(numeroFactura) !== '0';
 
     const resultadoFinal = {};
@@ -460,7 +627,6 @@ async function Hs_Anx(req, res) {
       });
     }
 
-    // Entrega EXACTAMENTE el objeto agrupado por clave “admision-xxx” o “factura-yyy”
     return res.json(resultadoFinal);
 
   } catch (error) {
