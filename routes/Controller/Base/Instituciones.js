@@ -1,7 +1,9 @@
 const usuariosInstitucion = [
   { idUsuario: 6874, nombre: 'Rbarreto', idInstitucion: 20 },
   { idUsuario: 8098, nombre: 'MIGUELMARINO', idInstitucion: 14 },
-  { idUsuario: 6853, nombre: 'JERONIMORTEGA', idInstitucion: 20 }
+  { idUsuario: 6853, nombre: 'JERONIMORTEGA', idInstitucion: 20 },
+  { idUsuario: 10763, nombre: 'Ysalcedo', idInstitucion: 14 },
+  { idUsuario: 10762, nombre: 'Miguelmartinez', idInstitucion: 14 },
 ];
 
 const instituciones = [
