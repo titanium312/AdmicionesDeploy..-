@@ -293,17 +293,18 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       body: {
         sSearch: clave,
         idInstitucion: Number(institucionId), // 🔴 CRÍTICO: Esto faltaba
-        include: [
-          'admision',
-          'egreso',
-          'evolucion',
-          'notas',
-          'ordenes',
-          'historias',
-          'facturas',
-          'idanexo'
-        ],
-        token: token.replace(/^Bearer\s+/i, '')
+       include: [
+  'admision',
+  'egreso',
+  'evolucion',
+  'notasEnfermeria',
+  'ordenesMedicas',
+  'historias',
+  'facturas',
+  'idanexo'
+]
+,
+        tokenAnexo: token.replace(/^Bearer\s+/i, '')
       },
       query: {
         sSearch: clave,

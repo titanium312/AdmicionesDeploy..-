@@ -14,21 +14,21 @@ const ejecutarConsultaId = (sSearch, idInstitucion) =>
       body: {
         sSearch,
         idInstitucion,
-        include: ["facturas"]
-      }
+        include: ["facturas"],
+      },
     };
 
     const resSim = {
-      json: data => {
+      json: (data) => {
         if (data?.ok === false) {
           reject(data);
         } else {
           resolve(data);
         }
       },
-      status: code => ({
-        json: err => reject({ code, err })
-      })
+      status: (code) => ({
+        json: (err) => reject({ code, err }),
+      }),
     };
 
     ConsultaId(reqSim, resSim);
@@ -47,7 +47,7 @@ async function FacturaElectronica(req, res) {
     if (!sSearch || !idInstitucion) {
       return res.status(400).json({
         ok: false,
-        message: "Debe enviar sSearch e idInstitucion"
+        message: "Debe enviar sSearch e idInstitucion",
       });
     }
 
@@ -61,7 +61,6 @@ async function FacturaElectronica(req, res) {
 
     /* =========================
        2️⃣ Validación CRÍTICA
-       sSearch === numeroBusqueda
     ========================= */
     if (
       String(resultado?.numeroBusqueda).trim() !==
@@ -70,32 +69,32 @@ async function FacturaElectronica(req, res) {
       return res.status(409).json({
         ok: false,
         message:
-          "El número buscado no coincide con el número confirmado"
+          "El número buscado no coincide con el número confirmado",
       });
     }
 
     /* =========================
-       3️⃣ Validar facturas - BLOQUEO AQUÍ
+       3️⃣ Extraer ID de factura (CORREGIDO)
     ========================= */
-    const facturas = resultado?.ids?.factura;
+    const facturas =
+      resultado?.resultados?.ids?.factura;
 
     if (!Array.isArray(facturas) || facturas.length === 0) {
       return res.status(404).json({
         ok: false,
         message: "No existen facturas para la admisión enviada",
-        detalle: "ID de factura no encontrado en los resultados de la consulta"
+        detalle:
+          "ID de factura no encontrado en los resultados de la consulta",
       });
     }
 
-    // 👉 Solo ahora se permite tomar la factura
-    const idFactura = facturas[0];
+    const idFactura = Number(facturas[0]);
 
-    // VALIDACIÓN ADICIONAL: Asegurar que idFactura sea válido
     if (!idFactura || isNaN(idFactura) || idFactura <= 0) {
       return res.status(400).json({
         ok: false,
         message: "ID de factura inválido",
-        detalle: `El ID de factura obtenido (${idFactura}) no es válido`
+        detalle: `El ID de factura obtenido (${idFactura}) no es válido`,
       });
     }
 
@@ -117,7 +116,8 @@ async function FacturaElectronica(req, res) {
         ok: false,
         message:
           "No se pudo obtener el archivo de la factura",
-        detalle: "El servidor no devolvió información del archivo ZIP"
+        detalle:
+          "El servidor no devolvió información válida del ZIP",
       });
     }
 
@@ -128,12 +128,13 @@ async function FacturaElectronica(req, res) {
       infoZip.data.archivo,
       {
         responseType: "arraybuffer",
-        timeout: 20000
+        timeout: 20000,
       }
     );
 
     const zip = await unzipper.Open.buffer(zipResp.data);
-    const pdf = zip.files.find(f =>
+
+    const pdf = zip.files.find((f) =>
       f.path.toLowerCase().endsWith(".pdf")
     );
 
@@ -141,7 +142,8 @@ async function FacturaElectronica(req, res) {
       return res.status(400).json({
         ok: false,
         message: "El ZIP no contiene un PDF",
-        detalle: "El archivo comprimido no contiene documentos PDF"
+        detalle:
+          "El archivo comprimido no incluye documentos PDF",
       });
     }
 
@@ -155,19 +157,8 @@ async function FacturaElectronica(req, res) {
     );
 
     await pipeline(pdf.stream(), res);
-
   } catch (error) {
     console.error("❌ FacturaElectronica:", error);
-
-    // Manejo específico para cuando no se encuentra idFactura
-    if (error?.message?.includes("No existen facturas") || 
-        error?.detalle?.includes("factura no encontrada")) {
-      return res.status(404).json({
-        ok: false,
-        message: "Factura no encontrada",
-        detalle: "No se pudo obtener el ID de factura para la admisión especificada"
-      });
-    }
 
     if (!res.headersSent) {
       return res.status(500).json({
@@ -176,7 +167,7 @@ async function FacturaElectronica(req, res) {
         detalle:
           error?.err ||
           error?.message ||
-          error
+          "Error desconocido",
       });
     }
   }

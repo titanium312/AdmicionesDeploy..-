@@ -12,7 +12,8 @@ const {ConsultaId}  = require('./Controller/Base/consultaid');
 const { cambiarFechaEmision  } = require('./Controller/otro/Admiciones/cambiarF');
 const { NumeroFactura  } = require('./Controller/otro/Admiciones/generarNumeroFactura');
 const { EnviarADian } = require('./Controller/otro/Admiciones/EnviarAdian');
-const { buscarFactura } = require('./Controller/otro/Admiciones/buscar');
+const { buscarFactura } = require('./Controller/Base/ids/buscarIdFactura');
+const { BuscarAnexo } = require('./Controller/Base/ids/buscarIdAnexo');
 const { buscarFacturaDb } = require('./Controller/otro/Admiciones/BuscarDB');
 
 // LABORATORIO -----------------------------------------------------------
@@ -36,6 +37,7 @@ router.post('/cambiar-fecha', cambiarFechaEmision);
 router.get('/GenerarNumeroFactura', NumeroFactura);
 router.post('/EnviarDian', EnviarADian);
 router.post('/BuscarIdFactura', buscarFactura);
+router.post('/BuscarIdAnexo', BuscarAnexo);
 router.post('/BuscarIdFacturaDb', buscarFacturaDb);
 
 

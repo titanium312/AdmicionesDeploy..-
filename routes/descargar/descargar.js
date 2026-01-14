@@ -1,9 +1,10 @@
-// ./descargar/descargar.js
 const path = require("path");
 
 // ───────── IMPORT: solo Hs_Anx (handler Express) ─────────
+const { Hs_Anx } = require("../Controller/historias");
 
 // ───────── Utils ─────────
+const toCRLF = (s) => String(s).replace(/\r?\n/g, "\r\n");
 const deaccent = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const safeWinName = (s) => s.replace(/[\\/:*?"<>|]/g, "_");
 const guessFileName = (raw, fallback) => {
@@ -13,37 +14,75 @@ const guessFileName = (raw, fallback) => {
 };
 const escapeForBat = (str) => String(str).replace(/%/g, "%%");
 
-// ───────── Helpers de URL base (toman la base desde el propio request) ─────────
+// ───────── Helpers de URL base ─────────
 function getBaseURL(req) {
-  // Soporte para reverse proxies (Nginx/ALB/Cloudflare) y subpaths
-  const xfProto  = (req.headers["x-forwarded-proto"] || "").split(",")[0]?.trim();
-  const xfHost   = (req.headers["x-forwarded-host"]  || "").split(",")[0]?.trim();
+  const xfProto = (req.headers["x-forwarded-proto"] || "").split(",")[0]?.trim();
+  const xfHost = (req.headers["x-forwarded-host"] || "").split(",")[0]?.trim();
   const xfPrefix = (req.headers["x-forwarded-prefix"] || "").trim();
 
   const proto = xfProto || req.protocol || "http";
-  const host  = xfHost  || req.headers.host; // incluye puerto si aplica
+  const host = xfHost || req.headers.host;
 
   let prefix = "";
   if (xfPrefix) {
     prefix = xfPrefix.startsWith("/") ? xfPrefix : `/${xfPrefix}`;
-    // normaliza: sin slash final
     prefix = prefix.replace(/\/+$/, "");
   }
 
   return `${proto}://${host}${prefix}`;
 }
 
-// URL absoluta para que el BAT baje la factura desde TU BACKEND (usando la base del request)
-function buildFacturaURLAbsolute(req, { numeroAdmision, institucionId, idUser, eps }) {
+// URL absoluta para factura electrónica
+function buildFacturaURLAbsolute(req, { numeroAdmision, institucionId }) {
   const base = getBaseURL(req);
   const qs = new URLSearchParams({
-    numeroAdmision: String(numeroAdmision || ""),
-    institucionId: String(institucionId),
-    idUser: String(idUser),
-    eps: String(eps),
+    sSearch: String(numeroAdmision || ""),
+    idInstitucion: String(institucionId),
   });
   return `${base}/facturaElectronica?${qs.toString()}`;
 }
+
+// ───────── Validar si factura existe ─────────
+async function verificarFacturaExiste(req, { numeroAdmision, institucionId }) {
+  try {
+    const facturaUrl = buildFacturaURLAbsolute(req, { numeroAdmision, institucionId });
+    const respuesta = await fetch(facturaUrl);
+
+    if (!respuesta.ok) {
+      return { existe: false, error: `HTTP ${respuesta.status}` };
+    }
+
+    const contentType = respuesta.headers.get("content-type") || "";
+
+    // ✅ CASO CORRECTO: ES UN PDF
+    if (contentType.includes("application/pdf")) {
+      return { existe: true, url: facturaUrl };
+    }
+
+    // ⚠️ CASO JSON (no existe factura)
+    if (contentType.includes("application/json")) {
+      const data = await respuesta.json();
+
+      if (data.ok === false) {
+        return {
+          existe: false,
+          mensaje: data.message || data.detalle || "Factura no encontrada"
+        };
+      }
+    }
+
+    // ⚠️ Cualquier otro content-type inesperado
+    return {
+      existe: false,
+      error: `Respuesta inesperada (${contentType})`
+    };
+
+  } catch (error) {
+    console.error(`[ERROR] Validando factura para admisión ${numeroAdmision}:`, error.message);
+    return { existe: false, error: error.message };
+  }
+}
+
 
 // ───────── Bloques BAT ─────────
 function makeBlock({ folder, url, pdfName }) {
@@ -68,7 +107,6 @@ if not "!${FLAG}!"=="1" (
     )
     if !errorlevel! equ 0 (
         echo  [OK] ${pdfName}
-        rem Actualizar progreso de forma robusta (atomico)
         > "!progresoFile!.tmp" findstr /v /b "${FLAG}=" "!progresoFile!" 2>nul
         >> "!progresoFile!.tmp" echo ${FLAG}=1
         move /Y "!progresoFile!.tmp" "!progresoFile!" >nul
@@ -81,8 +119,10 @@ if not "!${FLAG}!"=="1" (
   };
 }
 
-function makeFacturaBlock({ folder, facturaUrl }) {
+function makeFacturaBlock({ folder, facturaUrl, admNumber }) {
   const FLAG = `${safeWinName(deaccent(folder))}_FACTURA_OK`;
+  const pdfName = guessFileName(`factura-${admNumber}.pdf`, "factura-electronica.pdf");
+  const out = `${folder}\\${pdfName}`;
   const curlBase = 'curl -L --retry 3 --retry-all-errors --retry-delay 3 --connect-timeout 15 --max-time 180 -A "!UA!" -H "Accept: application/pdf"';
   const urlEsc = escapeForBat(facturaUrl);
 
@@ -94,53 +134,69 @@ if not "!${FLAG}!"=="1" (
     if not exist "${folder}" mkdir "${folder}"
     echo Descargando Factura Electronica ...
     set "URL=${urlEsc}"
-    pushd "${folder}"
-    ${curlBase} -OJ "!URL!" --silent
+    set "OUT=${out}"
+    ${curlBase} -C - "!URL!" --output "!OUT!" --silent
     if not !errorlevel! equ 0 (
         echo  [WARN] Reintentando sin reanudacion...
-        ${curlBase} -OJ "!URL!" --silent
+        ${curlBase} "!URL!" --output "!OUT!" --silent
     )
     if !errorlevel! equ 0 (
         echo  [OK] Factura Electronica
-        rem Actualizar progreso de forma robusta (rutas relativas)
-        > "..\\!progresoFile!.tmp" findstr /v /b "${FLAG}=" "..\\!progresoFile!" 2>nul
-        >> "..\\!progresoFile!.tmp" echo ${FLAG}=1
-        move /Y "..\\!progresoFile!.tmp" "..\\!progresoFile!" >nul
+        > "!progresoFile!.tmp" findstr /v /b "${FLAG}=" "!progresoFile!" 2>nul
+        >> "!progresoFile!.tmp" echo ${FLAG}=1
+        move /Y "!progresoFile!.tmp" "!progresoFile!" >nul
     ) else (
         echo  [ERROR] Factura Electronica
     )
-    popd
 ) else (
     echo [SKIP] Factura Electronica ya estaba descargada.
 )`.trim(),
   };
 }
 
-// ───────── Adaptador: ejecutar Hs_Anx (handler Express) SIN HTTP ─────────
-async function callHsAnxAsFunction(query) {
+// ───────── Adaptador para llamar a Hs_Anx ─────────
+async function callHsAnxAsFunction(query, authToken) {
   return new Promise((resolve, reject) => {
-    const req = { query };
+    // Crear un objeto request que cumpla con lo que espera Hs_Anx
+    const req = {
+      query,  // Parámetros por query string
+      body: {
+        token: authToken  // 🔴 Token EXCLUSIVAMENTE en body
+      },
+      headers: {}
+    };
+    
     const res = {
       json: (data) => resolve(data),
       send: (data) => resolve(data),
       status: (code) => ({
-        json: (data) => reject(new Error(`Hs_Anx devolvió ${code}: ${JSON.stringify(data)}`)),
-        send: (data) => reject(new Error(`Hs_Anx devolvió ${code}: ${data}`)),
+        json: (data) => {
+          if (code >= 400) {
+            reject(new Error(`Hs_Anx devolvió ${code}: ${JSON.stringify(data)}`));
+          } else {
+            resolve(data);
+          }
+        },
+        send: (data) => {
+          if (code >= 400) {
+            reject(new Error(`Hs_Anx devolvió ${code}: ${data}`));
+          } else {
+            resolve(data);
+          }
+        },
       }),
     };
+    
     try {
-      const maybePromise = Hs_Anx(req, res);
-      if (maybePromise && typeof maybePromise.then === "function") {
-        maybePromise.then(() => void 0).catch(reject);
-      }
+      Hs_Anx(req, res).catch(reject);
     } catch (e) {
       reject(e);
     }
   });
 }
 
-// Usa la lógica de Hs_Anx via adaptador para obtener trabajos
-async function getTrabajosViaController(params) {
+// Obtener trabajos desde Hs_Anx
+async function getTrabajosViaController(params, authToken) {
   const data = await callHsAnxAsFunction({
     clave: params.clave,
     numeroFactura: params.numeroFactura,
@@ -150,21 +206,29 @@ async function getTrabajosViaController(params) {
     idUser: params.idUser,
     eps: params.eps,
     tipos: params.tipos,
-    modalidad: params.modalidad, // importante para HAA evento/cápita
-  });
+    modalidad: params.modalidad,
+  }, authToken);
 
   const jobs = [];
   if (!data || typeof data !== "object") return jobs;
 
-  for (const key of Object.keys(data)) {
-    const items = Array.isArray(data[key]) ? data[key] : [];
-    const folder = safeWinName(deaccent(key));
-    for (const it of items) {
-      const url = String(it.url || "");
+  // Hs_Anx devuelve un objeto agrupado por clave
+  for (const [folder, items] of Object.entries(data)) {
+    if (!Array.isArray(items)) continue;
+    
+    for (const item of items) {
+      const url = String(item.url || "");
       if (!url) continue;
-      const fallbackName = path.basename(new URL(url).pathname || "documento.pdf");
-      const pdfName = guessFileName(it.nombrepdf || fallbackName, "documento.pdf");
-      jobs.push({ folder, url, pdfName });
+      
+      // Usar nombrepdf que ya viene formateado correctamente
+      const pdfName = guessFileName(item.nombrepdf || "documento.pdf");
+      jobs.push({ 
+        folder: safeWinName(deaccent(folder)), 
+        url, 
+        pdfName,
+        // Información adicional para mostrar
+        nombreArchivo: item.nombreArchivo || pdfName
+      });
     }
   }
   return jobs;
@@ -172,10 +236,9 @@ async function getTrabajosViaController(params) {
 
 // ───────── Helpers de presentación ─────────
 function displayTitleFromFolder(folder) {
-  // Quita prefijos comunes "admision-", "admision_", etc., y arma "ADMISION NNN" si hay número
-  const clean = String(folder).replace(/^admisi[oó]n[-_ ]*/i, "");
+  const clean = String(folder).replace(/^(factura|admision)[-_]/i, "");
   const m = clean.match(/(\d{3,})/);
-  return m ? `ADMISION ${m[1]}` : folder.toUpperCase();
+  return m ? `${folder.startsWith('factura') ? 'FACTURA' : 'ADMISION'} ${m[1]}` : folder.toUpperCase();
 }
 
 // ───────── Controller principal (genera el .BAT) ─────────
@@ -189,120 +252,203 @@ const BatAuto = async (req, res) => {
       includeFactura = false,
     } = req.body || {};
 
-    // Normalizar modalidad a 'capita' | 'evento'
+    // Normalizar modalidad
     const normalizeModalidad = (m) => {
       if (!m) return "";
       const s = String(m).trim().toLowerCase();
-      if (["cápita","capita","capíta"].includes(s)) return "capita";
-      if (["evento","eventos"].includes(s)) return "evento";
-      // Abreviaturas
-      if (["cap","c"].includes(s)) return "capita";
-      if (["ev","e"].includes(s)) return "evento";
+      if (["cápita", "capita", "capíta"].includes(s)) return "capita";
+      if (["evento", "eventos"].includes(s)) return "evento";
+      if (["cap", "c"].includes(s)) return "capita";
+      if (["ev", "e"].includes(s)) return "evento";
       return "";
     };
+    
     const modalidadNorm = normalizeModalidad(modalidad);
+    
+    // 🔴 Obtener token de autenticación EXCLUSIVAMENTE del body
+    const authToken = req.body?.token;
+    
+    if (!authToken) {
+      return res.status(401).json({ 
+        success: false,
+        error: "Token de autorización requerido EXCLUSIVAMENTE en body" 
+      });
+    }
 
     // Validaciones
     const missing = [];
     if (!institucionId) missing.push("institucionId");
     if (!idUser) missing.push("idUser");
     if (!eps) missing.push("eps");
-    // Exigir modalidad explícita para el renombrado correcto (capita|evento)
-    if (!modalidadNorm) missing.push("modalidad (capita|evento)");
 
     const haveSingleKey = !!(numeroAdmision || idAdmision || numeroFactura || clave);
     const admList = Array.isArray(admisiones) ? admisiones.filter(x => x != null && String(x).trim() !== "") : [];
+    
     if (!haveSingleKey && admList.length === 0) {
       missing.push("admisiones[] | numeroAdmision | idAdmision | numeroFactura | clave");
     }
+    
     if (missing.length) {
-      return res.status(400).json({ error: `Faltan parámetros: ${missing.join(", ")}` });
+      return res.status(400).json({ 
+        success: false,
+        error: `Faltan parámetros: ${missing.join(", ")}` 
+      });
     }
 
-    // Construir consultas a la lógica interna (SIN HTTP)
+    // Construir consultas
     const queries = [];
     if (admList.length > 0) {
       for (const adm of admList) {
-        queries.push({ numeroAdmision: String(adm), institucionId, idUser, eps, tipos, modalidad: modalidadNorm });
+        queries.push({ 
+          numeroAdmision: String(adm), 
+          institucionId, 
+          idUser, 
+          eps, 
+          tipos, 
+          modalidad: modalidadNorm 
+        });
       }
     } else {
-      queries.push({ numeroAdmision, idAdmision, numeroFactura, clave, institucionId, idUser, eps, tipos, modalidad: modalidadNorm });
+      queries.push({ 
+        numeroAdmision, 
+        idAdmision, 
+        numeroFactura, 
+        clave, 
+        institucionId, 
+        idUser, 
+        eps, 
+        tipos, 
+        modalidad: modalidadNorm 
+      });
     }
 
     // Acumular todos los trabajos
     const allJobs = [];
     for (const q of queries) {
-      const jobs = await getTrabajosViaController(q);
-      allJobs.push(...(jobs || []));
-    }
-    if (!allJobs.length) {
-      return res.status(404).json({ error: "No se encontraron documentos para esos parámetros" });
-    }
-
-    // ───────── Preparar set de carpetas que deben llevar FACTURA dentro del grupo ─────────
-    const facturaFolders = new Set();
-    if (includeFactura) {
-      const admsForFactura = admList.length > 0
-        ? admList.map(String)
-        : [numeroAdmision || idAdmision].filter(Boolean).map(String);
-      for (const adm of admsForFactura) {
-        facturaFolders.add(safeWinName(deaccent(`admision-${adm}`)));
+      try {
+        const jobs = await getTrabajosViaController(q, authToken);
+        if (jobs && jobs.length > 0) {
+          allJobs.push(...jobs);
+        } else {
+          console.warn(`No se encontraron trabajos para: ${JSON.stringify(q)}`);
+        }
+      } catch (error) {
+        console.error(`Error obteniendo trabajos para consulta ${JSON.stringify(q)}:`, error);
+        // Continuar con las siguientes consultas
       }
     }
+    
+    if (!allJobs.length) {
+      return res.status(404).json({ 
+        success: false,
+        error: "No se encontraron documentos para esos parámetros" 
+      });
+    }
 
-    // ───────── Construcción de bloques BAT (agrupado, factura en su grupo) ─────────
+    // ───────── Preparar set de carpetas para factura ─────────
+    const facturaFolders = new Set();
+    const facturaExisteCache = new Map(); // Cache para evitar verificaciones repetidas
+    
+    if (includeFactura) {
+      // Verificar existencia de facturas antes de agregarlas
+      const admisionesParaVerificar = [];
+      
+      if (admList.length > 0) {
+        admList.forEach(adm => {
+          const folderName = safeWinName(deaccent(`admision-${adm}`));
+          admisionesParaVerificar.push({ adm, folderName });
+        });
+      } else if (numeroAdmision) {
+        const folderName = safeWinName(deaccent(`admision-${numeroAdmision}`));
+        admisionesParaVerificar.push({ adm: numeroAdmision, folderName });
+      } else if (idAdmision) {
+        const folderName = safeWinName(deaccent(`admision-${idAdmision}`));
+        admisionesParaVerificar.push({ adm: idAdmision, folderName });
+      }
+      
+      // Verificar facturas en paralelo
+      const verificaciones = await Promise.allSettled(
+        admisionesParaVerificar.map(async ({ adm, folderName }) => {
+          try {
+            const resultado = await verificarFacturaExiste(req, {
+              numeroAdmision: adm,
+              institucionId,
+            });
+            
+            if (resultado.existe) {
+              facturaFolders.add(folderName);
+              facturaExisteCache.set(folderName, resultado.url);
+              console.log(`[INFO] Factura encontrada para admisión ${adm}`);
+            } else {
+              console.log(`[INFO] No se agregará factura para admisión ${adm}: ${resultado.mensaje || resultado.error || 'No encontrada'}`);
+            }
+          } catch (error) {
+            console.error(`[ERROR] Verificando factura para admisión ${adm}:`, error.message);
+          }
+        })
+      );
+    }
+
+    // ───────── Construcción de bloques BAT ─────────
     const blocks = [];
     const flagsInit = [];
 
-    // 1) Agrupar jobs por carpeta
+    // Agrupar jobs por carpeta
     const groups = new Map();
     for (const j of allJobs) {
       if (!groups.has(j.folder)) groups.set(j.folder, []);
       groups.get(j.folder).push(j);
     }
 
-    // 2) Por cada carpeta: encabezado, lista, bloques de descarga y (si aplica) la factura al final del grupo
+    // Por cada carpeta: encabezado, lista, bloques de descarga
     for (const [folder, jobs] of groups.entries()) {
-      // Encabezado sobrio por admisión/carpeta
+      // Encabezado
       blocks.push([
         "echo.",
         `echo ////////// ${displayTitleFromFolder(folder)} //////////////////`,
         "echo."
       ].join("\r\n"));
 
-      // Lista limpia de nombres
-      for (const j of jobs) {
-        blocks.push(`echo  ${j.pdfName}`);
-      }
+// Lista de nombres
+for (const j of jobs) {
+  blocks.push(`echo  ${j.nombreArchivo || j.pdfName}`);
+}
 
-      // Línea en blanco
-      blocks.push("echo.");
+// ✅ Mostrar factura electrónica en la lista si existe
+if (includeFactura && facturaFolders.has(folder)) {
+  blocks.push(`echo  Factura Electronica`);
+}
 
-      // Bloques de descarga reales de la carpeta
+blocks.push("echo.");
+
+      // Bloques de descarga
       for (const j of jobs) {
         const { flagInit, block } = makeBlock(j);
         flagsInit.push(flagInit);
         blocks.push(block);
       }
 
-      // Si corresponde, agregar Factura ELECTRÓNICA en este mismo grupo
+      // Factura electrónica si existe
       if (includeFactura && facturaFolders.has(folder)) {
         const admNumber = folder.replace(/^admisi[oó]n[-_ ]*/i, "");
-        const facturaUrl = buildFacturaURLAbsolute(req, {
-          numeroAdmision: admNumber,
-          institucionId,
-          idUser,
-          eps,
-        });
+        const facturaUrl = facturaExisteCache.get(folder) || 
+                          buildFacturaURLAbsolute(req, {
+                            numeroAdmision: admNumber,
+                            institucionId,
+                          });
+        
         const { flagInit, block } = makeFacturaBlock({
           folder: safeWinName(deaccent(folder)),
           facturaUrl,
+          admNumber,
         });
         flagsInit.push(flagInit);
         blocks.push(block);
+      } else if (includeFactura && facturaFolders.size > 0) {
+        // Solo mostrar mensaje si estamos incluyendo facturas pero esta carpeta no tiene
+        console.log(`[INFO] Carpeta ${folder} no tendrá factura (no existe o no se encontró)`);
       }
 
-      // Separador visual entre grupos
       blocks.push("");
     }
 
@@ -322,6 +468,7 @@ const BatAuto = async (req, res) => {
     } else {
       label = "descargas";
     }
+    
     const filename = `descargas-${safeWinName(deaccent(label))}.bat`;
 
     // Plantilla .bat
@@ -373,8 +520,14 @@ pause
     res.send(bat);
   } catch (err) {
     console.error("BatAuto error:", err);
-    res.status(500).json({ error: err.message || "Error interno" });
+    res.status(500).json({ 
+      success: false,
+      error: err.message || "Error interno" 
+    });
   }
 };
 
 module.exports = { BatAuto };
+
+
+
