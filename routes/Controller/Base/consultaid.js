@@ -7,7 +7,7 @@ const { BuscarAnexo } = require("../Base/ids/buscarIdAnexo");
 /* =========================
    🔧 CONFIGURACIÓN GLOBAL
 ========================= */
-const BASE_URL = "https://total-oeyx.onrender.com";
+const BASE_URL = "https://balance.saludplus.co";
 const FECHA_INICIAL = "01/01/2024";
 
 const hoy = new Date();
