@@ -1,5 +1,5 @@
 // api.js — Configuración de APIs (base url + helper)
-export const BASE_URL = 'http://localhost:3000';
+export const BASE_URL = 'https://total-oeyx.onrender.com';
 
 /**
  * apiFetch — wrapper con:
