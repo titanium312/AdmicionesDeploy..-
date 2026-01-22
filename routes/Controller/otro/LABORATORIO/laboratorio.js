@@ -22,23 +22,18 @@ const ejecutarBuscarPaciente = (numeroAdmision) => {
 
 // =======================================================
 // Helper: normalizar fecha a YYYY-MM-DD
+// (tolerante a zona horaria)
 // =======================================================
 const normalizarFecha = (fecha) => {
   if (!fecha) return '';
 
+  const d = new Date(fecha);
+  if (!isNaN(d)) {
+    return d.toISOString().slice(0, 10);
+  }
+
   const f = String(fecha).trim();
 
-  // 1953-10-23T00:00:00
-  if (f.includes('T')) {
-    return f.split('T')[0];
-  }
-
-  // 1953-10-23 00:00:00
-  if (f.includes(' ')) {
-    return f.split(' ')[0];
-  }
-
-  // 23/10/1953
   if (f.includes('/')) {
     const [d, m, y] = f.split('/');
     return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
@@ -48,17 +43,16 @@ const normalizarFecha = (fecha) => {
 };
 
 // =======================================================
-// Controller principal
+// 🔐 PRODUCCIÓN — Descarga PDF laboratorio
 // =======================================================
 async function DescargarLaboratorio(req, res) {
   try {
-    // Soporta GET y POST
     const source = req.method === 'GET' ? req.query : req.body;
 
     const {
       institucionId,
       idUser,
-      numeroAdmicion, // se respeta el nombre
+      numeroAdmicion,
       tipoDocumento,
       numeroDocumento,
       fechaNacimiento
@@ -87,15 +81,12 @@ async function DescargarLaboratorio(req, res) {
     if (!Number.isFinite(instId) || !Number.isFinite(userId)) {
       return res.status(400).json({
         success: false,
-        paso: 'VALIDACION_NUMERICA',
-        message: 'institucionId e idUser deben ser numéricos'
+        paso: 'VALIDACION_NUMERICA'
       });
     }
 
     // ================= 1) BUSCAR PACIENTE =================
-    const numeroAdmisionBuscada = String(numeroAdmicion)
-      .trim()
-      .split(/\s+/)[0];
+    const numeroAdmisionBuscada = String(numeroAdmicion).trim();
 
     let paciente;
     try {
@@ -124,16 +115,13 @@ async function DescargarLaboratorio(req, res) {
     } = paciente;
 
     // ================= 2) VALIDACIÓN DE SEGURIDAD =================
-    const norm = (v) =>
-      v === undefined || v === null ? '' : String(v).trim().toUpperCase();
-
     const errores = [];
 
-    if (norm(tipoDocBD) !== norm(tipoDocumento)) {
+    if (String(tipoDocBD).toUpperCase() !== String(tipoDocumento).toUpperCase()) {
       errores.push('tipoDocumento');
     }
 
-    if (norm(numeroDocBD) !== norm(numeroDocumento)) {
+    if (String(numeroDocBD) !== String(numeroDocumento)) {
       errores.push('numeroDocumento');
     }
 
@@ -144,7 +132,7 @@ async function DescargarLaboratorio(req, res) {
       errores.push('fechaNacimiento');
     }
 
-    if (norm(numeroAdmision) !== norm(numeroAdmisionBuscada)) {
+    if (String(numeroAdmision) !== String(numeroAdmisionBuscada)) {
       errores.push('numeroAdmision');
     }
 
@@ -156,42 +144,15 @@ async function DescargarLaboratorio(req, res) {
       });
     }
 
-    // ================= 3) VALIDAR idAdmision =================
-    const resolvedAdmisionId = Number(idAdmision);
+    // ================= 3) TOKEN =================
+    const token = createToken(
+      'ListadoInformesResultadosLaboratorio',
+      instId,
+      83,
+      userId
+    );
 
-    if (!Number.isFinite(resolvedAdmisionId) || resolvedAdmisionId <= 0) {
-      return res.status(400).json({
-        success: false,
-        paso: 'ID_ADMISION_INVALIDO'
-      });
-    }
-
-    // ================= 4) GENERAR TOKEN =================
-    let token;
-    try {
-      token = createToken(
-        'ListadoInformesResultadosLaboratorio',
-        instId,
-        83,
-        userId
-      );
-    } catch (e) {
-      return res.status(500).json({
-        success: false,
-        paso: 'CREATE_TOKEN',
-        message: 'Error generando token',
-        error: e.message
-      });
-    }
-
-    if (!token) {
-      return res.status(500).json({
-        success: false,
-        paso: 'TOKEN_UNDEFINED'
-      });
-    }
-
-    // ================= 5) GENERAR URL =================
+    // ================= 4) URL REPORTE =================
     const params = new URLSearchParams({
       modulo: 'Laboratorio',
       reporte: 'ListadoInformesResultadosLaboratorio',
@@ -199,42 +160,34 @@ async function DescargarLaboratorio(req, res) {
       hideTool: 'true',
       environment: '1',
       userId: String(userId),
-      idAdmision: String(resolvedAdmisionId),
+      idAdmision: String(idAdmision),
       token
     });
 
     const url = `https://reportes.saludplus.co/view.aspx?${params.toString()}`;
 
-    // ================= 6) DESCARGAR PDF =================
-    const reportResponse = await axios.get(url, {
+    // ================= 5) DESCARGAR PDF =================
+    const response = await axios.get(url, {
       responseType: 'stream',
       validateStatus: () => true
     });
 
-    const contentType = reportResponse.headers['content-type'] || '';
-
-    if (!contentType.includes('pdf')) {
+    if (!response.headers['content-type']?.includes('pdf')) {
       return res.status(502).json({
         success: false,
-        paso: 'REPORTE_NO_PDF',
-        status: reportResponse.status,
-        contentType,
-        url
+        paso: 'REPORTE_NO_PDF'
       });
     }
 
-    // ================= 7) ENVIAR PDF =================
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="laboratorio_${resolvedAdmisionId}.pdf"`
+      `attachment; filename="laboratorio_${idAdmision}.pdf"`
     );
 
-    reportResponse.data.pipe(res);
+    response.data.pipe(res);
 
   } catch (error) {
-    console.error('🔥 ERROR GENERAL DescargarLaboratorio:', error);
-
     return res.status(500).json({
       success: false,
       paso: 'EXCEPCION_GENERAL',
@@ -243,4 +196,43 @@ async function DescargarLaboratorio(req, res) {
   }
 }
 
-module.exports = { DescargarLaboratorio };
+// =======================================================
+// 🧪 TEST — Debug sin romper producción
+// =======================================================
+async function DescargarLaboratorioTest(req, res) {
+  try {
+    const { numeroAdmicion, tipoDocumento, numeroDocumento, fechaNacimiento } = req.body;
+
+    const numeroAdmisionBuscada = String(numeroAdmicion).trim();
+    const paciente = await ejecutarBuscarPaciente(numeroAdmisionBuscada);
+
+    if (!paciente || !paciente.isSuccessful) {
+      return res.status(404).json({ success: false });
+    }
+
+    return res.json({
+      success: true,
+      request: {
+        numeroAdmicion,
+        tipoDocumento,
+        numeroDocumento,
+        fechaNacimiento,
+        fechaNacimiento_normalizada: normalizarFecha(fechaNacimiento)
+      },
+      bd: {
+        tipoDocumento: paciente.tipoDocumento,
+        numeroDocumento: paciente.documento,
+        fechaNacimiento: paciente.fechaNacimiento,
+        fechaNacimiento_normalizada: normalizarFecha(paciente.fechaNacimiento)
+      }
+    });
+
+  } catch (e) {
+    return res.status(500).json({ success: false, error: e.message });
+  }
+}
+
+module.exports = {
+  DescargarLaboratorio,
+  DescargarLaboratorioTest
+};

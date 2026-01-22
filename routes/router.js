@@ -17,7 +17,7 @@ const { BuscarAnexo } = require('./Controller/Base/ids/buscarIdAnexo');
 const { buscarFacturaDb } = require('./Controller/otro/Admiciones/BuscarDB');
 
 // LABORATORIO -----------------------------------------------------------
-const { DescargarLaboratorio } = require('./Controller/otro/LABORATORIO/laboratorio');
+const { DescargarLaboratorio,DescargarLaboratorioTest } = require('./Controller/otro/LABORATORIO/laboratorio');
 const { buscarPaciente } = require('./Controller/otro/LABORATORIO/herramientas/buscarPaciente');
 const { buscarFechaNacimiento } = require('./Controller/otro/LABORATORIO/herramientas/BuscarPacienteFecha');
 
@@ -43,6 +43,7 @@ router.post('/BuscarIdFacturaDb', buscarFacturaDb);
 
 // LABORATORIO -----------------------------------------------------------
 router.post('/DescargarLaboratorio', DescargarLaboratorio);
+router.post('/DescargarLaboratorio/test', DescargarLaboratorioTest);
 router.post('/buscarPaciente', buscarPaciente);
 router.get('/buscarFechaNacimiento', buscarFechaNacimiento);
 
