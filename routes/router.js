@@ -46,7 +46,7 @@ router.post('/DescargarLaboratorio', DescargarLaboratorio);
 router.post('/DescargarLaboratorio/test', DescargarLaboratorioTest);
 router.post('/buscarPaciente', buscarPaciente);
 router.get('/buscarFechaNacimiento', buscarFechaNacimiento);
-router.get("/enviarMensaje", enviarMensaje);
+router.post("/enviarMensaje", enviarMensaje);
 
 
 

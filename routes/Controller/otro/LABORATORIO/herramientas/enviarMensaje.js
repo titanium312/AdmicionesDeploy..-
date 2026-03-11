@@ -1,41 +1,23 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const { Client, LocalAuth } = require("whatsapp-web.js");
+const qrcode = require("qrcode-terminal");
 
 let client;
 
-// Detectar si estamos en Render
-const isRender = process.env.RENDER === "true";
+function iniciarCliente() {
 
-// Configuración de Puppeteer
-const puppeteerConfig = isRender
-  ? {
-      executablePath:
-        "/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.66/chrome-linux64/chrome",
+  client = new Client({
+    authStrategy: new LocalAuth({
+      dataPath: "./.wwebjs_auth"
+    }),
+    puppeteer: {
       headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--no-first-run",
-        "--no-zygote",
-        "--single-process",
-      ],
+        "--disable-gpu"
+      ]
     }
-  : {
-      headless: true,
-    };
-
-// ------------------
-// INICIAR CLIENTE
-// ------------------
-
-function iniciarCliente() {
-  client = new Client({
-    authStrategy: new LocalAuth({
-      dataPath: "./.wwebjs_auth",
-    }),
-    puppeteer: puppeteerConfig,
   });
 
   client.on("qr", (qr) => {
@@ -64,7 +46,6 @@ function iniciarCliente() {
   client.initialize();
 }
 
-// iniciar automáticamente
 iniciarCliente();
 
 
@@ -73,13 +54,15 @@ iniciarCliente();
 // ------------------
 
 const enviarMensaje = async (req, res) => {
+
   try {
+
     const { numero, mensaje } = req.body;
 
     if (!numero || !mensaje) {
       return res.status(400).json({
         ok: false,
-        error: "Numero y mensaje son obligatorios",
+        error: "Numero y mensaje son obligatorios"
       });
     }
 
@@ -90,18 +73,20 @@ const enviarMensaje = async (req, res) => {
     res.json({
       ok: true,
       enviado: true,
-      id: response.id.id,
+      id: response.id.id
     });
+
   } catch (error) {
+
     console.error("Error enviando mensaje:", error);
 
     res.status(500).json({
       ok: false,
-      error: error.message,
+      error: error.message
     });
   }
 };
 
 module.exports = {
-  enviarMensaje,
+  enviarMensaje
 };
