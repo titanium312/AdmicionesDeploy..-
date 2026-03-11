@@ -1,33 +1,107 @@
-const { Client, LocalAuth } = require("whatsapp-web.js");
-const qrcode = require("qrcode-terminal");
+const { Client, LocalAuth } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
 
-class WhatsappController {
-    constructor() {
-        this.client = new Client({
-            authStrategy: new LocalAuth(),
-            puppeteer: { args: ['--no-sandbox'] }
-        });
+let client;
 
-        this.initEvents();
-        this.client.initialize();
+// Detectar si estamos en Render
+const isRender = process.env.RENDER === "true";
+
+// Configuración de Puppeteer
+const puppeteerConfig = isRender
+  ? {
+      executablePath:
+        "/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.66/chrome-linux64/chrome",
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process",
+      ],
     }
+  : {
+      headless: true,
+    };
 
-    initEvents() {
-        this.client.on('qr', (qr) => qrcode.generate(qr, { small: true }));
-        this.client.on('ready', () => console.log("WhatsApp conectado"));
-    }
+// ------------------
+// INICIAR CLIENTE
+// ------------------
 
-    enviarMensaje = async (req, res) => {
-        try {
-            const { telefono, mensaje } = req.query; 
-            const numero = `${telefono}@c.us`;
-            await this.client.sendMessage(numero, mensaje);
-            res.json({ status: true, mensaje: "Enviado" });
-        } catch (error) {
-            res.status(500).json({ status: false, error: error.message });
-        }
-    }
+function iniciarCliente() {
+  client = new Client({
+    authStrategy: new LocalAuth({
+      dataPath: "./.wwebjs_auth",
+    }),
+    puppeteer: puppeteerConfig,
+  });
+
+  client.on("qr", (qr) => {
+    console.log("📲 Escanea el QR con tu WhatsApp");
+    qrcode.generate(qr, { small: true });
+  });
+
+  client.on("ready", () => {
+    console.log("✅ WhatsApp conectado");
+  });
+
+  client.on("authenticated", () => {
+    console.log("🔐 WhatsApp autenticado");
+  });
+
+  client.on("auth_failure", (msg) => {
+    console.error("❌ Error de autenticación:", msg);
+  });
+
+  client.on("disconnected", (reason) => {
+    console.log("⚠️ WhatsApp desconectado:", reason);
+    console.log("🔄 Reconectando...");
+    iniciarCliente();
+  });
+
+  client.initialize();
 }
 
-const whatsappService = new WhatsappController();
-module.exports = { enviarMensaje: whatsappService.enviarMensaje };
+// iniciar automáticamente
+iniciarCliente();
+
+
+// ------------------
+// ENVIAR MENSAJE
+// ------------------
+
+const enviarMensaje = async (req, res) => {
+  try {
+    const { numero, mensaje } = req.body;
+
+    if (!numero || !mensaje) {
+      return res.status(400).json({
+        ok: false,
+        error: "Numero y mensaje son obligatorios",
+      });
+    }
+
+    const numeroFormateado = numero + "@c.us";
+
+    const response = await client.sendMessage(numeroFormateado, mensaje);
+
+    res.json({
+      ok: true,
+      enviado: true,
+      id: response.id.id,
+    });
+  } catch (error) {
+    console.error("Error enviando mensaje:", error);
+
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  enviarMensaje,
+};
