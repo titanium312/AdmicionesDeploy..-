@@ -3,6 +3,10 @@ const qrcode = require("qrcode-terminal");
 
 let client;
 
+// -----------------------------
+// INICIAR WHATSAPP
+// -----------------------------
+
 function iniciarCliente() {
 
   client = new Client({
@@ -34,7 +38,7 @@ function iniciarCliente() {
   });
 
   client.on("auth_failure", (msg) => {
-    console.error("❌ Error de autenticación:", msg);
+    console.log("❌ Error de autenticación:", msg);
   });
 
   client.on("disconnected", (reason) => {
@@ -49,9 +53,9 @@ function iniciarCliente() {
 iniciarCliente();
 
 
-// ------------------
+// -----------------------------
 // ENVIAR MENSAJE
-// ------------------
+// -----------------------------
 
 const enviarMensaje = async (req, res) => {
 
@@ -66,9 +70,9 @@ const enviarMensaje = async (req, res) => {
       });
     }
 
-    const numeroFormateado = numero + "@c.us";
+    const chatId = numero + "@c.us";
 
-    const response = await client.sendMessage(numeroFormateado, mensaje);
+    const response = await client.sendMessage(chatId, mensaje);
 
     res.json({
       ok: true,
