@@ -3,9 +3,8 @@ const qrcode = require("qrcode-terminal");
 
 let client;
 
-// -----------------------------
-// INICIAR WHATSAPP
-// -----------------------------
+// detectar si estamos en Render
+const isRender = process.env.RENDER === "true";
 
 function iniciarCliente() {
 
@@ -13,15 +12,21 @@ function iniciarCliente() {
     authStrategy: new LocalAuth({
       dataPath: "./.wwebjs_auth"
     }),
-    puppeteer: {
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu"
-      ]
-    }
+    puppeteer: isRender
+      ? {
+          executablePath:
+            "/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.66/chrome-linux64/chrome",
+          headless: true,
+          args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu"
+          ]
+        }
+      : {
+          headless: true
+        }
   });
 
   client.on("qr", (qr) => {
@@ -37,13 +42,8 @@ function iniciarCliente() {
     console.log("🔐 WhatsApp autenticado");
   });
 
-  client.on("auth_failure", (msg) => {
-    console.log("❌ Error de autenticación:", msg);
-  });
-
   client.on("disconnected", (reason) => {
     console.log("⚠️ WhatsApp desconectado:", reason);
-    console.log("🔄 Reconectando...");
     iniciarCliente();
   });
 
@@ -66,7 +66,7 @@ const enviarMensaje = async (req, res) => {
     if (!numero || !mensaje) {
       return res.status(400).json({
         ok: false,
-        error: "Numero y mensaje son obligatorios"
+        error: "Numero y mensaje requeridos"
       });
     }
 
@@ -82,7 +82,7 @@ const enviarMensaje = async (req, res) => {
 
   } catch (error) {
 
-    console.error("Error enviando mensaje:", error);
+    console.error(error);
 
     res.status(500).json({
       ok: false,
