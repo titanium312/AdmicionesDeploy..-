@@ -20,7 +20,7 @@ const { buscarFacturaDb } = require('./Controller/otro/Admiciones/BuscarDB');
 const { DescargarLaboratorio,DescargarLaboratorioTest } = require('./Controller/otro/LABORATORIO/laboratorio');
 const { buscarPaciente } = require('./Controller/otro/LABORATORIO/herramientas/buscarPaciente');
 const { buscarFechaNacimiento } = require('./Controller/otro/LABORATORIO/herramientas/BuscarPacienteFecha');
-
+const { enviarMensaje } = require('./Controller/otro/LABORATORIO/herramientas/enviarMensaje');
 //Router<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // AUDITORIA -----------------------------------------------------------
@@ -46,6 +46,7 @@ router.post('/DescargarLaboratorio', DescargarLaboratorio);
 router.post('/DescargarLaboratorio/test', DescargarLaboratorioTest);
 router.post('/buscarPaciente', buscarPaciente);
 router.get('/buscarFechaNacimiento', buscarFechaNacimiento);
+router.get("/enviarMensaje", enviarMensaje);
 
 
 
