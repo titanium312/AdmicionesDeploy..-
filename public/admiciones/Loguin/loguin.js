@@ -1,4 +1,4 @@
-// loguin-main.js — Interfaz de login (actualizado con endpoint correcto)
+// loguin-main.js — Interfaz de login (corregido con fetch nativo)
 import { LitElement, html } from 'lit';
 import '../Main/main.js';
 import styles from './loguin-styles.js';
@@ -149,7 +149,7 @@ class Loguin extends LitElement {
     });
   }
 
-async handleSubmit(e) {
+  async handleSubmit(e) {
     e.preventDefault();
     if (this.loading) return;
 
@@ -158,7 +158,7 @@ async handleSubmit(e) {
     this.loading = true;
 
     try {
-        // Usamos fetch nativo en lugar de apiFetch
+        // Usamos fetch nativo (API del navegador)
         const response = await fetch('/Loguin', {
             method: 'POST',
             headers: {
@@ -218,7 +218,8 @@ async handleSubmit(e) {
     } finally {
         this.loading = false;
     }
-}
+  }
+
   renderBrand() {
     return html`
       <div class="brand-wrap" aria-hidden="true">
