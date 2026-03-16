@@ -2,7 +2,6 @@
 import { LitElement, html } from 'lit';
 import '../Main/main.js';
 import styles from './loguin-styles.js';
-import { BASE_URL, apiFetch } from '../api.js';
 
 // Helpers seguros para Storage
 const safeSet = (storage, k, v) => { try { storage.setItem(k, v); return true; } catch { return false; } };
@@ -150,7 +149,7 @@ class Loguin extends LitElement {
     });
   }
 
-  async handleSubmit(e) {
+async handleSubmit(e) {
     e.preventDefault();
     if (this.loading) return;
 
@@ -159,34 +158,33 @@ class Loguin extends LitElement {
     this.loading = true;
 
     try {
-      // USAR EL ENDPOINT CORRECTO /Loguin (con "i")
+      // Al usar '/Loguin', el navegador automáticamente usa el mismo dominio
+      // donde se está ejecutando el frontend (ej: http://tu-web.com/Loguin)
       const payload = await apiFetch('/Loguin', {
         method: 'POST',
-        body: { 
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
           username: this.username.trim(), 
           password: this.password 
-        }
+        })
       });
 
       if (!payload || !payload.token) {
         throw new Error('Respuesta inválida del servidor (falta token)');
       }
 
-      // La respuesta esperada es como la del curl:
-      // {
-      //   "token": "bxelyKFCq753YSacnxaU",
-      //   "usuario": { "id_usuario": 6874, "nombre": "...", "usuario": "...", "perfiles": [...] },
-      //   "institucion": { "idInstitucion": 20, "nombre": "..." },
-      //   "perfiles": ["ADMINISTRADOR DE SISTEMAS 1", "..."]
-      // }
+      // ... resto de tu lógica de loginData y storage (se mantiene igual)
       this.loginData = payload;
-
+      
       this.dispatchEvent(new CustomEvent('login-success', {
         detail: this.loginData, 
         bubbles: true, 
         composed: true,
       }));
 
+      // Lógica de persistencia (Local / Session Storage)
       if (storageOK()) {
         const payloadB64 = b64encode(JSON.stringify(this.loginData));
         if (this.remember) {
@@ -206,7 +204,7 @@ class Loguin extends LitElement {
         }
       }
 
-      this.password = ''; // Limpiar contraseña después del login exitoso
+      this.password = ''; 
     } catch (err) {
       this.errorMessage = err?.message || 'Login incorrecto o error del servidor';
       console.error('[login] error:', err);
