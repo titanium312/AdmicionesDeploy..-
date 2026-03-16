@@ -2,6 +2,8 @@ const path = require("path");
 
 // ───────── IMPORT: solo Hs_Anx (handler Express) ─────────
 const { Hs_Anx } = require("../Controller/historias");
+// Importamos las instituciones para obtener el NIT
+const { instituciones } = require("../Controller/Base/Instituciones"); 
 
 // ───────── Utils ─────────
 const toCRLF = (s) => String(s).replace(/\r?\n/g, "\r\n");
@@ -119,9 +121,11 @@ if not "!${FLAG}!"=="1" (
   };
 }
 
-function makeFacturaBlock({ folder, facturaUrl, admNumber }) {
+// ───────── CORREGIDO: Usa el mismo formato que FacturaElectronica ─────────
+function makeFacturaBlock({ folder, facturaUrl, admNumber, nitInstitucion }) {
   const FLAG = `${safeWinName(deaccent(folder))}_FACTURA_OK`;
-  const pdfName = guessFileName(`factura-${admNumber}.pdf`, "factura-electronica.pdf");
+  // Mismo formato que FacturaElectronica: FEV_NIT_NUMERO.pdf
+  const pdfName = `FEV_${nitInstitucion}_${admNumber}.pdf`;
   const out = `${folder}\\${pdfName}`;
   const curlBase = 'curl -L --retry 3 --retry-all-errors --retry-delay 3 --connect-timeout 15 --max-time 180 -A "!UA!" -H "Accept: application/pdf"';
   const urlEsc = escapeForBat(facturaUrl);
@@ -141,7 +145,7 @@ if not "!${FLAG}!"=="1" (
         ${curlBase} "!URL!" --output "!OUT!" --silent
     )
     if !errorlevel! equ 0 (
-        echo  [OK] Factura Electronica
+        echo  [OK] Factura Electronica (${pdfName})
         > "!progresoFile!.tmp" findstr /v /b "${FLAG}=" "!progresoFile!" 2>nul
         >> "!progresoFile!.tmp" echo ${FLAG}=1
         move /Y "!progresoFile!.tmp" "!progresoFile!" >nul
@@ -295,6 +299,11 @@ const BatAuto = async (req, res) => {
       });
     }
 
+    // --- Obtener NIT de la institución para el formato de factura ---
+    const infoInstitucion = instituciones.find(inst => inst.idInstitucion === Number(institucionId));
+    const nitInstitucion = infoInstitucion ? infoInstitucion.nit : "000000000";
+    // ----------------------------------------------------------------
+
     // Construir consultas
     const queries = [];
     if (admList.length > 0) {
@@ -416,7 +425,7 @@ for (const j of jobs) {
 
 // ✅ Mostrar factura electrónica en la lista si existe
 if (includeFactura && facturaFolders.has(folder)) {
-  blocks.push(`echo  Factura Electronica`);
+  blocks.push(`echo  Factura Electronica (FEV_${nitInstitucion}_${folder.replace(/^admisi[oó]n[-_ ]*/i, "")}.pdf)`);
 }
 
 blocks.push("echo.");
@@ -441,6 +450,7 @@ blocks.push("echo.");
           folder: safeWinName(deaccent(folder)),
           facturaUrl,
           admNumber,
+          nitInstitucion,  // ← Pasamos el NIT para el formato correcto
         });
         flagsInit.push(flagInit);
         blocks.push(block);
@@ -528,6 +538,3 @@ pause
 };
 
 module.exports = { BatAuto };
-
-
-
