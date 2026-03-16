@@ -158,61 +158,67 @@ async handleSubmit(e) {
     this.loading = true;
 
     try {
-      // Al usar '/Loguin', el navegador automáticamente usa el mismo dominio
-      // donde se está ejecutando el frontend (ej: http://tu-web.com/Loguin)
-      const payload = await apiFetch('/Loguin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          username: this.username.trim(), 
-          password: this.password 
-        })
-      });
+        // Usamos fetch nativo en lugar de apiFetch
+        const response = await fetch('/Loguin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                username: this.username.trim(), 
+                password: this.password 
+            })
+        });
 
-      if (!payload || !payload.token) {
-        throw new Error('Respuesta inválida del servidor (falta token)');
-      }
-
-      // ... resto de tu lógica de loginData y storage (se mantiene igual)
-      this.loginData = payload;
-      
-      this.dispatchEvent(new CustomEvent('login-success', {
-        detail: this.loginData, 
-        bubbles: true, 
-        composed: true,
-      }));
-
-      // Lógica de persistencia (Local / Session Storage)
-      if (storageOK()) {
-        const payloadB64 = b64encode(JSON.stringify(this.loginData));
-        if (this.remember) {
-          const exp = nowMs() + ONE_HOUR_MS;
-          safeSet(localStorage, KEYS.TOKEN_LS, b64encode(payload.token));
-          safeSet(localStorage, KEYS.TOKEN_EXP, String(exp));
-          safeSet(localStorage, KEYS.PAYLOAD_LS, payloadB64);
-          safeSet(localStorage, KEYS.REMEMBER_USER, this.username.trim());
-          safeSet(localStorage, KEYS.REMEMBER_FLAG, '1');
-          this.#clearSession();
-        } else {
-          safeSet(sessionStorage, SESSION.TOKEN, this.loginData.token);
-          safeSet(sessionStorage, SESSION.PAYLOAD, payloadB64);
-          this.#clearPersistent();
-          safeSet(localStorage, KEYS.REMEMBER_FLAG, '0');
-          safeDel(localStorage, KEYS.REMEMBER_USER);
+        // Verificamos si la respuesta es correcta (status 200-299)
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error del servidor (${response.status})`);
         }
-      }
 
-      this.password = ''; 
+        const payload = await response.json();
+
+        if (!payload || !payload.token) {
+            throw new Error('Respuesta inválida del servidor (falta token)');
+        }
+
+        // Lógica de éxito
+        this.loginData = payload;
+        
+        this.dispatchEvent(new CustomEvent('login-success', {
+            detail: this.loginData, 
+            bubbles: true, 
+            composed: true,
+        }));
+
+        // Persistencia
+        if (storageOK()) {
+            const payloadB64 = b64encode(JSON.stringify(this.loginData));
+            if (this.remember) {
+                const exp = nowMs() + ONE_HOUR_MS;
+                safeSet(localStorage, KEYS.TOKEN_LS, b64encode(payload.token));
+                safeSet(localStorage, KEYS.TOKEN_EXP, String(exp));
+                safeSet(localStorage, KEYS.PAYLOAD_LS, payloadB64);
+                safeSet(localStorage, KEYS.REMEMBER_USER, this.username.trim());
+                safeSet(localStorage, KEYS.REMEMBER_FLAG, '1');
+                this.#clearSession();
+            } else {
+                safeSet(sessionStorage, SESSION.TOKEN, this.loginData.token);
+                safeSet(sessionStorage, SESSION.PAYLOAD, payloadB64);
+                this.#clearPersistent();
+                safeSet(localStorage, KEYS.REMEMBER_FLAG, '0');
+                safeDel(localStorage, KEYS.REMEMBER_USER);
+            }
+        }
+
+        this.password = ''; 
     } catch (err) {
-      this.errorMessage = err?.message || 'Login incorrecto o error del servidor';
-      console.error('[login] error:', err);
+        this.errorMessage = err?.message || 'Login incorrecto o error del servidor';
+        console.error('[login] error:', err);
     } finally {
-      this.loading = false;
+        this.loading = false;
     }
-  }
-
+}
   renderBrand() {
     return html`
       <div class="brand-wrap" aria-hidden="true">
