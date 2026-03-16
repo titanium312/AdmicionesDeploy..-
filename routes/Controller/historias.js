@@ -21,7 +21,7 @@ const PREFIJOS_NUEVA_EPS = {
   historia: 'HAU',
   evolucion: 'HEV',
   epicrisis: 'EPI',
-  enfermeria: 'HAM',
+  enfermeria: 'NOT',           // Cambiado de HAM a NOT
   hoja_medicamentos: 'HAM',
   hoja_procedimientos: 'PDX',
   descripcion_quirurgica: 'DQX',
@@ -33,9 +33,9 @@ const PREFIJOS_NUEVA_EPS = {
   consentimiento_nutricion: 'CNM',
   factura_material_osteosintesis: 'FMO',
   anexo: 'ANX',
-  admisiones: 'ADM',
-  hoja_gastos: 'LDP',
-  historia_asistencial: 'HEV',
+  admisiones: 'HAD',           // Cambiado de ADM a HAD
+  hoja_gastos: 'INS',          // Cambiado de LDP a INS
+  historia_asistencial: 'HAU', // Para auditoría
 };
 
 const CODIGOS_SALUD_TOTAL = {
@@ -62,31 +62,33 @@ const FECHA_FIJA_REPORTS = new Set([
 ]);
 
 const reportMapping = [
-  { param: 'idsHistorias',       report: 'ListadoHistoriasClinicasDetallado3',                 nombre: 'historia' },
-  { param: 'idAnexosDos',        report: 'ListadoanexoDosDetallado',                           nombre: 'anexo' },
-  { param: 'idEgresos',          report: 'ListadoEpicrisis',                                   nombre: 'epicrisis' },
-  { param: 'idsEvoluciones',     report: 'ListadoEvolucionDestallado',                         nombre: 'evolucion' },
-  { param: 'idsNotasEnfermeria', report: 'ListadoNotasEnfermeriaDestallado',                   nombre: 'enfermeria' },
-  { param: 'idsAdmisiones',      report: 'ListadoAdmisionesDetallado',                         nombre: 'admisiones' },
-  { param: 'idAdmisiones',       report: 'ListadoPrefacturasDetallado',                        nombre: 'prefacturas' },
-  { param: 'idsOrdenMedicas',    report: 'ListadoOrdenMedicasDestallado',                      nombre: 'ordenmedica' },
-  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionProcedimientos', nombre: 'hoja_procedimientos' },
-  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionMedicamentos',   nombre: 'hoja_medicamentos' },
-  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaGastos',                       nombre: 'hoja_gastos' },
-  { param: 'idHistorias',        report: 'ListadoHistoriasAsistencialesDestallado',            nombre: 'historia_asistencial' },
+  { param: 'idsHistorias',       report: 'ListadoHistoriasClinicasDetallado3',                 nombre: 'historia' },                    // → HAU
+  { param: 'idAnexosDos',        report: 'ListadoanexoDosDetallado',                           nombre: 'anexo' },                        // → ANX
+  { param: 'idEgresos',          report: 'ListadoEpicrisis',                                   nombre: 'epicrisis' },                    // → EPI
+  { param: 'idsEvoluciones',     report: 'ListadoEvolucionDestallado',                         nombre: 'evolucion' },                    // → HEV
+  { param: 'idsNotasEnfermeria', report: 'ListadoNotasEnfermeriaDestallado',                   nombre: 'enfermeria' },                   // → NOT
+  { param: 'idsAdmisiones',      report: 'ListadoAdmisionesDetallado',                         nombre: 'admisiones' },                   // → HAD
+  { param: 'idAdmisiones',       report: 'ListadoPrefacturasDetallado',                        nombre: 'prefacturas' },                  // → DFV
+  { param: 'idsOrdenMedicas',    report: 'ListadoOrdenMedicasDestallado',                      nombre: 'ordenmedica' },                  // → OPF/CRC
+  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionProcedimientos', nombre: 'hoja_procedimientos' },          // → PDX
+  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionMedicamentos',   nombre: 'hoja_medicamentos' },            // → HAM
+  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaGastos',                       nombre: 'hoja_gastos' },                  // → INS
+  { param: 'idHistorias',        report: 'ListadoHistoriasAsistencialesDestallado',            nombre: 'historia_asistencial' },         // → HAU (auditoría)
 ];
 
 const CODE_TO_REPORTS = {
-  HAU:  ['ListadoHistoriasClinicasDetallado3'],
+  HAU:  ['ListadoHistoriasClinicasDetallado3', 'ListadoHistoriasAsistencialesDestallado'],
   HEV:  ['ListadoEvolucionDestallado'],
   EPI:  ['ListadoEpicrisis'],
+  NOT:  ['ListadoNotasEnfermeriaDestallado'],    // Nuevo código para enfermería
   HAM:  ['ListadoAsistencialHojaAdministracionMedicamentos'],
   PDX:  ['ListadoAsistencialHojaAdministracionProcedimientos'],
   OPF:  ['ListadoOrdenMedicasDestallado'],
-  ADM:  ['ListadoAdmisionesDetallado'],
+  HAD:  ['ListadoAdmisionesDetallado'],          // Nuevo código para admisiones
   DFV:  ['ListadoPrefacturasDetallado'],
-  HAA:  ['ListadoHistoriasAsistencialesDestallado'],
+  INS:  ['ListadoAsistencialHojaGastos'],        // Nuevo código para hoja de gastos
   ANX:  ['ListadoanexoDosDetallado'],
+  CRC:  ['ListadoOrdenMedicasDestallado'],       // Para Mutualser
   PREF: ['ListadoPrefacturasDetallado'],
   HAP:  ['ListadoAsistencialHojaAdministracionProcedimientos'],
   HMD:  ['ListadoAsistencialHojaAdministracionMedicamentos'],
@@ -102,7 +104,6 @@ const CODE_TO_REPORTS = {
   FMO:  ['*'],
   TAP:  ['*'],
   TNA:  ['*'],
-  CRC:  ['*'],
   TODO: ['*'],
 };
 
@@ -115,7 +116,7 @@ function getModulo(reportName) {
     ListadoanexoDosDetallado: 'Facturacion',
     ListadoEpicrisis: 'Asistencial',
     ListadoEvolucionDestallado: 'Asistencial',
-    ListadoNotasEnfermeriaDestallado: 'Asistencial', // 🔴 AGREGAR ESTA LÍNEA
+    ListadoNotasEnfermeriaDestallado: 'Asistencial',
     ListadoAdmisionesDetallado: 'Facturacion',
     ListadoPrefacturasDetallado: 'Facturacion',
     ListadoOrdenMedicasDestallado: 'Asistencial',
@@ -130,34 +131,38 @@ function getModulo(reportName) {
 function obtenerNombrePorEPS(eps, nombreBase) {
   const nombresPorEPS = {
     NUEVA_EPS: {
-      historia: 'HistoriaNuevaEPS',
+      historia: 'HistoriaClinicaNuevaEPS',
       anexo: 'AnexoNuevaEPS',
       epicrisis: 'EpicrisisNuevaEPS',
       evolucion: 'EvolucionNuevaEPS',
-      enfermeria: 'EnfermeriaNuevaEPS',
-      admisiones: 'AdmisionesNuevaEPS',
+      enfermeria: 'NotasEnfermeriaNuevaEPS',
+      admisiones: 'HojaAdmisionNuevaEPS',
       prefacturas: 'PrefacturasNuevaEPS',
       ordenmedica: 'OrdenMedicaNuevaEPS',
       hoja_procedimientos: 'HojaProcedimientosNuevaEPS',
       hoja_medicamentos: 'HojaMedicamentosNuevaEPS',
-      hoja_gastos: 'HojaGastosNuevaEPS',
-      historia_asistencial: 'HistoriaAsistencialNuevaEPS',
+      hoja_gastos: 'HojaInsumosNuevaEPS',
+      historia_asistencial: 'HistoriaClinicaAuditoriaNuevaEPS',
     },
     SALUD_TOTAL: {
       historia: 'HistoriaSaludTotal',
       anexo: 'AnexoSaludTotal',
       epicrisis: 'EpicrisisSaludTotal',
       evolucion: 'EvolucionSaludTotal',
-      enfermeria: 'EnfermeriaSaludTotal',
-      admisiones: 'AdmisionesSaludTotal',
+      enfermeria: 'NotasEnfermeriaSaludTotal',
+      admisiones: 'HojaAdmisionSaludTotal',
       prefacturas: 'PrefacturasSaludTotal',
       ordenmedica: 'OrdenMedicaSaludTotal',
       hoja_procedimientos: 'HojaProcedimientosSaludTotal',
       hoja_medicamentos: 'HojaMedicamentosSaludTotal',
-      hoja_gastos: 'HojaGastosSaludTotal',
-      historia_asistencial: 'HistoriaAsistencialSaludTotal',
+      hoja_gastos: 'HojaInsumosSaludTotal',
+      historia_asistencial: 'HistoriaClinicaAuditoriaSaludTotal',
     },
+    MUTUALSER: {
+      ordenmedica: 'OrdenMedicaMutualser',
+    }
   };
+  
   const epsNombres = nombresPorEPS[eps] || {};
   return epsNombres[nombreBase.toLowerCase()] || nombreBase;
 }
@@ -255,14 +260,18 @@ function esCapita({ modalidad, ids }) {
 function generarNombreArchivo(eps, tipoDocumento, ctx, options = {}) {
   const { tipoId, numId, nit } = ctx;
   const factura = options.facturaPorDoc || ctx.factura || '0';
+  const numeroParaRenombrar = options.esCapita ? 
+    `${factura}_${tipoId}${numId}` : 
+    factura;
+
+  // MUTUALSER tiene tratamiento especial para OrdenesMedicas
+  if (eps === 'MUTUALSER' && tipoDocumento === 'ordenmedica') {
+    return `CRC_${nit}_${numeroParaRenombrar}.pdf`;
+  }
 
   if (eps === 'NUEVA_EPS') {
     const prefijo = PREFIJOS_NUEVA_EPS[tipoDocumento] || tipoDocumento.toUpperCase();
-
-    if (options.esCapita) {
-      return `${prefijo}_${nit}_FEH${factura}_${tipoId}${numId}.pdf`;
-    }
-    return `${prefijo}_${nit}_FEH${factura}.pdf`;
+    return `${prefijo}_${nit}_${numeroParaRenombrar}.pdf`;
   }
 
   if (eps === 'SALUD_TOTAL') {
@@ -270,6 +279,7 @@ function generarNombreArchivo(eps, tipoDocumento, ctx, options = {}) {
     return `${nit}_FEH_${factura}_${codigo}_1.pdf`;
   }
 
+  // Formato por defecto
   const id = options.id != null ? String(options.id) : '';
   return `${tipoDocumento}-${id}.pdf`;
 }
@@ -277,38 +287,34 @@ function generarNombreArchivo(eps, tipoDocumento, ctx, options = {}) {
 /* =========================
  *  Obtener IDs usando ConsultaId
  * ========================= */
-/* =========================
- *  Obtener IDs usando ConsultaId - VERSIÓN CORREGIDA
- * ========================= */
 async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
   try {
-    // 🔴 VALIDACIÓN ESTRICTA: Token debe venir por body
+    // Validación estricta: Token debe venir por body
     if (!token) {
       console.error('❌ Token no proporcionado en body');
       return null;
     }
 
-    // Crear un objeto request que coincida EXACTAMENTE con lo que ConsultaId espera
+    // Crear un objeto request que coincida exactamente con lo que ConsultaId espera
     const mockReq = {
       body: {
         sSearch: clave,
-        idInstitucion: Number(institucionId), // 🔴 CRÍTICO: Esto faltaba
-       include: [
-  'admision',
-  'egreso',
-  'evolucion',
-  'notasEnfermeria',
-  'ordenesMedicas',
-  'historias',
-  'facturas',
-  'idanexo'
-]
-,
+        idInstitucion: Number(institucionId),
+        include: [
+          'admision',
+          'egreso',
+          'evolucion',
+          'notasEnfermeria',
+          'ordenesMedicas',
+          'historias',
+          'facturas',
+          'idanexo'
+        ],
         tokenAnexo: token.replace(/^Bearer\s+/i, '')
       },
       query: {
         sSearch: clave,
-        idInstitucion: Number(institucionId) // También en query
+        idInstitucion: Number(institucionId)
       },
       headers: {}
     };
@@ -342,8 +348,7 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       statusCode: 200
     };
 
-    // 🔴 Llamar a ConsultaId como middleware
-    // ConsultaId espera (req, res, next) - usamos solo req, res
+    // Llamar a ConsultaId como middleware
     await ConsultaId(mockReq, mockRes);
 
     // Verificar respuesta
@@ -357,30 +362,6 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       numeroBusqueda: responseData.numeroBusqueda,
       ids: responseData.resultados?.ids
     });
-
-    // 🔴 TRANSFORMACIÓN CORRECTA según la respuesta REAL de ConsultaId
-    // Basado en el ejemplo que proporcionaste:
-    // {
-    //   "ok": true,
-    //   "numeroBusqueda": "10542",
-    //   "idInstitucion": 20,
-    //   "institucion": "ESE HOSPITAL SAN JORGE AYAPEL",
-    //   "fechaConsulta": "06/01/2026",
-    //   "include": [...],
-    //   "resultados": {
-    //     "ids": {
-    //       "admision": [],
-    //       "egreso": [297161],
-    //       "evolucion": [584321],
-    //       "notasEnfermeria": [1000133, 1000002],
-    //       "ordenesMedicas": [495618],
-    //       "historiasClinicas": [1401147],
-    //       "factura": [3688929],
-    //       "idanexo": []
-    //     },
-    //     "totales": {...}
-    //   }
-    // }
 
     const ids = responseData.resultados?.ids || {};
     
@@ -402,9 +383,9 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       // Información de búsqueda
       numeroFactura: responseData.numeroBusqueda || clave,
       
-      // Información del paciente (estos campos pueden venir de otra fuente)
-      tipoDocumento: 'CC', // Por defecto
-      numero_documento: clave, // Temporalmente usamos la clave
+      // Información del paciente
+      tipoDocumento: 'CC',
+      numero_documento: clave,
       
       // Totales
       totales: responseData.resultados?.totales || {
@@ -413,7 +394,7 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
         historiasClinicas: ids.historiasClinicas?.length || 0,
       },
       
-      // Información adicional (puede ser null si no está disponible)
+      // Información adicional
       modalidad: '',
       regimen: '',
       
@@ -421,7 +402,6 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       facturasDetalle: ids.factura ? ids.factura.map(id => ({
         id_factura: id,
         numero_factura: responseData.numeroBusqueda || clave,
-        // Si necesitas id_admision aquí, necesitas obtenerlo de otra fuente
         id_admision: ids.admision?.[0] || null
       })) : []
     };
@@ -441,7 +421,6 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
   }
 }
 
-
 async function obtenerIdsPorAdmision({ institucionId, idAdmision, token }) {
   return await obtenerIdsConConsultaId({
     clave: idAdmision.toString(),
@@ -451,11 +430,11 @@ async function obtenerIdsPorAdmision({ institucionId, idAdmision, token }) {
 }
 
 /* =========================
- *  Controller principal MODIFICADO
+ *  Controller principal
  * ========================= */
 async function Hs_Anx(req, res) {
   try {
-    // 🔴 VALIDACIÓN EXPLÍCITA Y EXCLUSIVA DEL TOKEN EN BODY
+    // Validación explícita y exclusiva del token en body
     const { token } = req.body;
     
     if (!token || typeof token !== 'string' || token.trim() === '') {
@@ -496,7 +475,7 @@ async function Hs_Anx(req, res) {
     const tiposRaw = tipos ?? docs ?? tipo;
     const reportesSeleccionados = parseTiposParam(tiposRaw);
 
-    // === Resolver IDs USANDO CONSULTAID (token ahora viene de req.body) ===
+    // Resolver IDs usando ConsultaId
     const claveFinal = String(anyKey);
     let ids;
     
@@ -504,13 +483,13 @@ async function Hs_Anx(req, res) {
       ids = await obtenerIdsPorAdmision({
         institucionId: Number(institucionId),
         idAdmision: Number(idAdmisionRaw),
-        token // 🔴 Token del body
+        token
       });
     } else {
       ids = await obtenerIdsConConsultaId({
         clave: claveFinal,
         institucionId: Number(institucionId),
-        token // 🔴 Token del body
+        token
       });
     }
 
@@ -535,7 +514,7 @@ async function Hs_Anx(req, res) {
       institucionId,
     });
 
-    // === Normalizar colecciones ===
+    // Normalizar colecciones
     const normalized = {
       idsHistorias:       toArray(ids.idsHistorias || ids.id_historia),
       idAnexosDos:        toArray(ids.idAnexosDos || ids.anexo2),
@@ -548,7 +527,7 @@ async function Hs_Anx(req, res) {
       idHistorias:        toArray(ids.idHistorias || ids.id_historia),
     };
 
-    // === Construir items ===
+    // Construir items
     const trabajos = [];
     const FECHA_INICIAL_FIJA = '01/01/2023';
     const FECHA_FINAL_HOY = formatDateDDMMYYYY(new Date());
@@ -609,7 +588,7 @@ async function Hs_Anx(req, res) {
       return res.status(404).json({ success: false, message: 'No se encontraron documentos' });
     }
 
-    // === Agrupar resultados ===
+    // Agrupar resultados
     const agruparPorFactura = Boolean(numeroFactura) && String(numeroFactura) !== '0';
 
     const resultadoFinal = {};
