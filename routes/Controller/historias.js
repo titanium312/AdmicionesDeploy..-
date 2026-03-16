@@ -7,51 +7,21 @@ const { ConsultaId } = require('./Base/consultaid');
 const { instituciones } = require('./Base/Instituciones');
 
 /* =========================
- *  Mapeos y constantes
+ *  Mapeos y constantes - PREFIJOS FIJOS para TODAS las EPS
  * ========================= */
-const PREFIJOS_NUEVA_EPS = {
-  factura_electronica: 'FEV',
-  factura: 'FAT',
-  detalle_factura: 'DFV',
-  prefacturas: 'DFV',
-  nota_credito_debito: 'NDC',
-  formato_ami: 'AMI',
-  lista_precios: 'LDP',
-  comprobante_recibo_usuario: 'CRC',
-  historia: 'HAU',
-  evolucion: 'HEV',
-  epicrisis: 'EPI',
-  enfermeria: 'NOT',           // Cambiado de HAM a NOT
-  hoja_medicamentos: 'HAM',
-  hoja_procedimientos: 'PDX',
-  descripcion_quirurgica: 'DQX',
-  registro_anestesia: 'RAN',
-  ordenmedica: 'OPF',
-  traslado_asistencial: 'TAP',
-  transporte_no_asistencial: 'TNA',
-  acta_junta_nutricion: 'JNM',
-  consentimiento_nutricion: 'CNM',
-  factura_material_osteosintesis: 'FMO',
-  anexo: 'ANX',
-  admisiones: 'HAD',           // Cambiado de ADM a HAD
-  hoja_gastos: 'INS',          // Cambiado de LDP a INS
-  historia_asistencial: 'HAU', // Para auditoría
-};
-
-const CODIGOS_SALUD_TOTAL = {
-  factura: 'prefacura',
-  anexo: 'anexoDos',
-  historia: 'historia',
-  enfermeria: 'enfermeria',
-  epicrisis: 'epicrisis',
-  evolucion: 'evolucion',
-  ordenmedica: 'ordenMedica',
-  admisiones: 'admisiones',
-  prefacturas: 'prefacturas',
-  hoja_procedimientos: 'hojaProcedimientos',
-  hoja_medicamentos: 'hojaMedicamentos',
-  hoja_gastos: 'hojaGastos',
-  historia_asistencial: 'historiaAsistencial',
+const PREFIJOS_RENOMBRES = {
+  Epicrisis: 'EPI',
+  HojaMedicamentos: 'HAM',
+  HistoriaClinica: 'HAU',
+  Evoluciones: 'HEV',
+  OrdenesMedicas: 'CRC',      // Fijo CRC para todas
+  HojaAdmision: 'HAD',
+  Prefactura: 'PRE',
+  NotasEnfermeria: 'NOT',
+  HojaInsumos: 'INS',
+  HistoriaClinicaAuditoria: 'HAU',
+  FacturaElectronica: 'FEV',
+  Anexo: 'ANX',               // Agregado para completar
 };
 
 const FECHA_FIJA_REPORTS = new Set([
@@ -62,48 +32,34 @@ const FECHA_FIJA_REPORTS = new Set([
 ]);
 
 const reportMapping = [
-  { param: 'idsHistorias',       report: 'ListadoHistoriasClinicasDetallado3',                 nombre: 'historia' },                    // → HAU
-  { param: 'idAnexosDos',        report: 'ListadoanexoDosDetallado',                           nombre: 'anexo' },                        // → ANX
-  { param: 'idEgresos',          report: 'ListadoEpicrisis',                                   nombre: 'epicrisis' },                    // → EPI
-  { param: 'idsEvoluciones',     report: 'ListadoEvolucionDestallado',                         nombre: 'evolucion' },                    // → HEV
-  { param: 'idsNotasEnfermeria', report: 'ListadoNotasEnfermeriaDestallado',                   nombre: 'enfermeria' },                   // → NOT
-  { param: 'idsAdmisiones',      report: 'ListadoAdmisionesDetallado',                         nombre: 'admisiones' },                   // → HAD
-  { param: 'idAdmisiones',       report: 'ListadoPrefacturasDetallado',                        nombre: 'prefacturas' },                  // → DFV
-  { param: 'idsOrdenMedicas',    report: 'ListadoOrdenMedicasDestallado',                      nombre: 'ordenmedica' },                  // → OPF/CRC
-  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionProcedimientos', nombre: 'hoja_procedimientos' },          // → PDX
-  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionMedicamentos',   nombre: 'hoja_medicamentos' },            // → HAM
-  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaGastos',                       nombre: 'hoja_gastos' },                  // → INS
-  { param: 'idHistorias',        report: 'ListadoHistoriasAsistencialesDestallado',            nombre: 'historia_asistencial' },         // → HAU (auditoría)
+  { param: 'idsHistorias',       report: 'ListadoHistoriasClinicasDetallado3',                 nombre: 'HistoriaClinica' },
+  { param: 'idAnexosDos',        report: 'ListadoanexoDosDetallado',                           nombre: 'Anexo' },
+  { param: 'idEgresos',          report: 'ListadoEpicrisis',                                   nombre: 'Epicrisis' },
+  { param: 'idsEvoluciones',     report: 'ListadoEvolucionDestallado',                         nombre: 'Evoluciones' },
+  { param: 'idsNotasEnfermeria', report: 'ListadoNotasEnfermeriaDestallado',                   nombre: 'NotasEnfermeria' },
+  { param: 'idsAdmisiones',      report: 'ListadoAdmisionesDetallado',                         nombre: 'HojaAdmision' },
+  { param: 'idAdmisiones',       report: 'ListadoPrefacturasDetallado',                        nombre: 'Prefactura' },
+  { param: 'idsOrdenMedicas',    report: 'ListadoOrdenMedicasDestallado',                      nombre: 'OrdenesMedicas' },
+  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionProcedimientos', nombre: 'HojaProcedimientos' },
+  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionMedicamentos',   nombre: 'HojaMedicamentos' },
+  { param: 'idsHistorias',       report: 'ListadoAsistencialHojaGastos',                       nombre: 'HojaInsumos' },
+  { param: 'idHistorias',        report: 'ListadoHistoriasAsistencialesDestallado',            nombre: 'HistoriaClinicaAuditoria' },
 ];
 
 const CODE_TO_REPORTS = {
   HAU:  ['ListadoHistoriasClinicasDetallado3', 'ListadoHistoriasAsistencialesDestallado'],
   HEV:  ['ListadoEvolucionDestallado'],
   EPI:  ['ListadoEpicrisis'],
-  NOT:  ['ListadoNotasEnfermeriaDestallado'],    // Nuevo código para enfermería
+  NOT:  ['ListadoNotasEnfermeriaDestallado'],
   HAM:  ['ListadoAsistencialHojaAdministracionMedicamentos'],
   PDX:  ['ListadoAsistencialHojaAdministracionProcedimientos'],
   OPF:  ['ListadoOrdenMedicasDestallado'],
-  HAD:  ['ListadoAdmisionesDetallado'],          // Nuevo código para admisiones
+  HAD:  ['ListadoAdmisionesDetallado'],
   DFV:  ['ListadoPrefacturasDetallado'],
-  INS:  ['ListadoAsistencialHojaGastos'],        // Nuevo código para hoja de gastos
+  INS:  ['ListadoAsistencialHojaGastos'],
   ANX:  ['ListadoanexoDosDetallado'],
-  CRC:  ['ListadoOrdenMedicasDestallado'],       // Para Mutualser
+  CRC:  ['ListadoOrdenMedicasDestallado'],
   PREF: ['ListadoPrefacturasDetallado'],
-  HAP:  ['ListadoAsistencialHojaAdministracionProcedimientos'],
-  HMD:  ['ListadoAsistencialHojaAdministracionMedicamentos'],
-  HGA:  ['ListadoAsistencialHojaGastos'],
-  NDC:  ['*'],
-  AMI:  ['*'],
-  DQX:  ['*'],
-  RAN:  ['*'],
-  LDP:  ['*'],
-  JNM:  ['*'],
-  CNM:  ['*'],
-  FAT:  ['*'],
-  FMO:  ['*'],
-  TAP:  ['*'],
-  TNA:  ['*'],
   TODO: ['*'],
 };
 
@@ -126,45 +82,6 @@ function getModulo(reportName) {
     ListadoHistoriasAsistencialesDestallado: 'Asistencial',
   };
   return moduloMapping[reportName] || 'Asistencial';
-}
-
-function obtenerNombrePorEPS(eps, nombreBase) {
-  const nombresPorEPS = {
-    NUEVA_EPS: {
-      historia: 'HistoriaClinicaNuevaEPS',
-      anexo: 'AnexoNuevaEPS',
-      epicrisis: 'EpicrisisNuevaEPS',
-      evolucion: 'EvolucionNuevaEPS',
-      enfermeria: 'NotasEnfermeriaNuevaEPS',
-      admisiones: 'HojaAdmisionNuevaEPS',
-      prefacturas: 'PrefacturasNuevaEPS',
-      ordenmedica: 'OrdenMedicaNuevaEPS',
-      hoja_procedimientos: 'HojaProcedimientosNuevaEPS',
-      hoja_medicamentos: 'HojaMedicamentosNuevaEPS',
-      hoja_gastos: 'HojaInsumosNuevaEPS',
-      historia_asistencial: 'HistoriaClinicaAuditoriaNuevaEPS',
-    },
-    SALUD_TOTAL: {
-      historia: 'HistoriaSaludTotal',
-      anexo: 'AnexoSaludTotal',
-      epicrisis: 'EpicrisisSaludTotal',
-      evolucion: 'EvolucionSaludTotal',
-      enfermeria: 'NotasEnfermeriaSaludTotal',
-      admisiones: 'HojaAdmisionSaludTotal',
-      prefacturas: 'PrefacturasSaludTotal',
-      ordenmedica: 'OrdenMedicaSaludTotal',
-      hoja_procedimientos: 'HojaProcedimientosSaludTotal',
-      hoja_medicamentos: 'HojaMedicamentosSaludTotal',
-      hoja_gastos: 'HojaInsumosSaludTotal',
-      historia_asistencial: 'HistoriaClinicaAuditoriaSaludTotal',
-    },
-    MUTUALSER: {
-      ordenmedica: 'OrdenMedicaMutualser',
-    }
-  };
-  
-  const epsNombres = nombresPorEPS[eps] || {};
-  return epsNombres[nombreBase.toLowerCase()] || nombreBase;
 }
 
 function formatDateDDMMYYYY(date) {
@@ -257,31 +174,29 @@ function esCapita({ modalidad, ids }) {
   return cand.some(v => v.includes('cápita') || v.includes('capita') || v.includes('cap'));
 }
 
-function generarNombreArchivo(eps, tipoDocumento, ctx, options = {}) {
-  const { tipoId, numId, nit } = ctx;
+/**
+ * Genera nombre de archivo usando SIEMPRE los prefijos fijos
+ * SIN importar qué EPS llegue como parámetro
+ */
+function generarNombreArchivo(tipoDocumento, ctx, options = {}) {
+  const { nit } = ctx;
   const factura = options.facturaPorDoc || ctx.factura || '0';
+  
+  // Determinar el número para renombrar (con o sin identificación)
   const numeroParaRenombrar = options.esCapita ? 
-    `${factura}_${tipoId}${numId}` : 
+    `${factura}_${ctx.tipoId}${ctx.numId}` : 
     factura;
 
-  // MUTUALSER tiene tratamiento especial para OrdenesMedicas
-  if (eps === 'MUTUALSER' && tipoDocumento === 'ordenmedica') {
-    return `CRC_${nit}_${numeroParaRenombrar}.pdf`;
+  // Obtener el prefijo fijo según el tipo de documento
+  const prefijo = PREFIJOS_RENOMBRES[tipoDocumento];
+  
+  // Si no hay prefijo definido, usar el tipoDocumento como prefijo
+  if (!prefijo) {
+    return `${tipoDocumento}_${nit}_${numeroParaRenombrar}.pdf`;
   }
 
-  if (eps === 'NUEVA_EPS') {
-    const prefijo = PREFIJOS_NUEVA_EPS[tipoDocumento] || tipoDocumento.toUpperCase();
-    return `${prefijo}_${nit}_${numeroParaRenombrar}.pdf`;
-  }
-
-  if (eps === 'SALUD_TOTAL') {
-    const codigo = CODIGOS_SALUD_TOTAL[tipoDocumento] || 'soportes';
-    return `${nit}_FEH_${factura}_${codigo}_1.pdf`;
-  }
-
-  // Formato por defecto
-  const id = options.id != null ? String(options.id) : '';
-  return `${tipoDocumento}-${id}.pdf`;
+  // Formato estándar: PREFIJO_NIT_NUMERO.pdf
+  return `${prefijo}_${nit}_${numeroParaRenombrar}.pdf`;
 }
 
 /* =========================
@@ -451,7 +366,7 @@ async function Hs_Anx(req, res) {
       idAdmision: idAdmisionRaw,
       institucionId,
       idUser,
-      eps,
+      eps,      // Se recibe pero NO se usa para nombres de archivo
       tipos,
       docs,
       tipo,
@@ -462,7 +377,6 @@ async function Hs_Anx(req, res) {
     const missing = [];
     if (!institucionId) missing.push('institucionId');
     if (!idUser) missing.push('idUser');
-    if (!eps) missing.push('eps');
 
     const anyKey = clave ?? numeroFactura ?? numeroAdmision ?? idAdmisionRaw;
     if (!anyKey) missing.push('clave|numeroFactura|numeroAdmision|idAdmision');
@@ -541,7 +455,6 @@ async function Hs_Anx(req, res) {
       if (!lista || !lista.length) continue;
 
       const modulo = getModulo(report);
-      const nombreEPS = obtenerNombrePorEPS(eps, nombre);
 
       for (const id of lista) {
         const tokenReporte = createToken(report, Number(institucionId), 83, Number(idUser));
@@ -567,8 +480,10 @@ async function Hs_Anx(req, res) {
         }
 
         const facturaPorDoc = resolverFacturaParaDocumento(ids, nombre, String(id), ctx.factura);
+        
+        // Generar nombre de archivo usando SIEMPRE los prefijos fijos
+        // El parámetro eps se recibe pero NO se usa
         const nombreArchivoFinal = generarNombreArchivo(
-          eps,
           nombre,
           ctx,
           { id, facturaPorDoc, esCapita: es_capita }
@@ -577,7 +492,7 @@ async function Hs_Anx(req, res) {
         trabajos.push({
           numeroAdmision: String(numeroAdmision ?? idAdmisionRaw ?? resolvedAdmisionId),
           numeroFactura: String(numeroFactura ?? ctx.factura ?? '0'),
-          nombreArchivo: nombreEPS,
+          nombreArchivo: nombre,  // Nombre del tipo de documento
           url: `https://reportes.saludplus.co/view.aspx?${urlParams.toString()}`,
           nombrepdf: nombreArchivoFinal,
         });
