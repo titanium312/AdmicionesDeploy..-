@@ -538,3 +538,4 @@ pause
 };
 
 module.exports = { BatAuto };
+

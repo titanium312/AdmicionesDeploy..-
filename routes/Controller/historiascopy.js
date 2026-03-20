@@ -1,7 +1,7 @@
 // Archivo: routes/tuRuta.js
 
 const { createToken } = require('./Base/toke');
-const { obtenerIdsConConsultaId: obtenerIdsDesdeSeguimiento } = require('./Base/consultaidSeguimiento');
+const { ConsultaId } = require('./Base/consultaid'); 
 
 // Importar datos de instituciones
 const { instituciones } = require('./Base/Instituciones');
@@ -200,66 +200,113 @@ function generarNombreArchivo(tipoDocumento, ctx, options = {}) {
 }
 
 /* =========================
- *  Obtener IDs usando ConsultaId (NUEVA VERSIÓN - SIN TOKEN)
+ *  Obtener IDs usando ConsultaId
  * ========================= */
 async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
   try {
-    // Token fijo para usar internamente
-    const TOKEN_FIJO = "E4zDmiOYyZy8kSz18voWF21jnSB9ZCcxdPduDxK+vpA=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==";
-    
-    // Usar token fijo si no se proporciona uno
-    const tokenParaUsar = token || TOKEN_FIJO;
-    
-    // Llamar a la función desde consultaidSeguimiento.js
-    const resultado = await obtenerIdsDesdeSeguimiento({
-      clave: clave,
-      institucionId: Number(institucionId),
-      token: tokenParaUsar
-    });
+    // Validación estricta: Token debe venir por body
+    if (!token) {
+      console.error('❌ Token no proporcionado en body');
+      return null;
+    }
 
-    // Verificar si se obtuvieron resultados
-    if (!resultado || !resultado.idAdmision) {
-      console.error('No se encontraron IDs para la clave:', clave);
+    // Crear un objeto request que coincida exactamente con lo que ConsultaId espera
+    const mockReq = {
+      body: {
+        sSearch: clave,
+        idInstitucion: Number(institucionId),
+        include: [
+          'admision',
+          'egreso',
+          'evolucion',
+          'notasEnfermeria',
+          'ordenesMedicas',
+          'historias',
+          'facturas',
+          'idanexo'
+        ],
+        tokenAnexo: token.replace(/^Bearer\s+/i, '')
+      },
+      query: {
+        sSearch: clave,
+        idInstitucion: Number(institucionId)
+      },
+      headers: {}
+    };
+
+    // Variable para capturar la respuesta
+    let responseData = null;
+    let statusCode = 200;
+
+    // Crear mock response
+    const mockRes = {
+      json: function(data) {
+        responseData = data;
+        return this;
+      },
+      status: function(code) {
+        statusCode = code;
+        return this;
+      },
+      send: function(data) {
+        if (typeof data === 'string') {
+          try {
+            responseData = JSON.parse(data);
+          } catch {
+            responseData = { message: data };
+          }
+        } else {
+          responseData = data;
+        }
+        return this;
+      },
+      statusCode: 200
+    };
+
+    // Llamar a ConsultaId como middleware
+    await ConsultaId(mockReq, mockRes);
+
+    // Verificar respuesta
+    if (!responseData?.ok) {
+      console.error('Error en ConsultaId:', responseData);
       return null;
     }
 
     console.log('✅ Respuesta de ConsultaId:', {
-      idAdmision: resultado.idAdmision,
-      idHistoria: resultado.idHistoria,
-      idOrden: resultado.idOrden,
-      idEvolucion: resultado.idEvolucion,
-      idEpicrisis: resultado.idEpicrisis,
-      idNotas: resultado.idNotas?.length || 0
+      ok: responseData.ok,
+      numeroBusqueda: responseData.numeroBusqueda,
+      ids: responseData.resultados?.ids
     });
 
-    // TRANSFORMAR al formato esperado por tuRuta.js (arrays de IDs)
+    const ids = responseData.resultados?.ids || {};
+    
     const transformIds = {
       // ID individuales
-      id_admision: resultado.idAdmision || null,
-      id_egreso: resultado.idEpicrisis || null,
-      id_factura: null,
+      id_admision: ids.admision?.[0] || null,
+      id_egreso: ids.egreso?.[0] || null,
+      id_factura: ids.factura?.[0] || null,
       
-      // Arrays de IDs (el resto del código espera arrays)
-      idsAdmisiones: resultado.idAdmision ? [resultado.idAdmision] : [],
-      idEgresos: resultado.idEpicrisis ? [resultado.idEpicrisis] : [],
-      idsEvoluciones: resultado.idEvolucion ? [resultado.idEvolucion] : [],
-      idsNotasEnfermeria: resultado.idNotas || [],
-      idsOrdenMedicas: resultado.idOrden ? [resultado.idOrden] : [],
-      idsHistorias: resultado.idHistoria ? [resultado.idHistoria] : [],
-      idAnexosDos: [],
+      // Arrays de IDs
+      idsAdmisiones: ids.admision || [],
+      idEgresos: ids.egreso || [],
+      idsEvoluciones: ids.evolucion || [],
+      idsNotasEnfermeria: ids.notasEnfermeria || [],
+      idsOrdenMedicas: ids.ordenesMedicas || [],
+      idsHistorias: ids.historiasClinicas || [],
+      idAnexosDos: ids.idanexo || [],
       
       // Información de búsqueda
-      numeroFactura: clave,
+      numeroFactura: responseData.numeroBusqueda || clave,
       
       // Información del paciente
       tipoDocumento: 'CC',
       numero_documento: clave,
       
       // Totales
-      totales: {
-        notasEnfermeria: (resultado.idNotas || []).length,
-        ordenesMedicas: resultado.idOrden ? 1 : 0,
-        historiasClinicas: resultado.idHistoria ? 1 : 0,
+      totales: responseData.resultados?.totales || {
+        notasEnfermeria: ids.notasEnfermeria?.length || 0,
+        ordenesMedicas: ids.ordenesMedicas?.length || 0,
+        historiasClinicas: ids.historiasClinicas?.length || 0,
       },
       
       // Información adicional
@@ -267,8 +314,11 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       regimen: '',
       
       // Datos de facturación
-      facturasDetalle: [],
-      facturasPorDocumento: {}
+      facturasDetalle: ids.factura ? ids.factura.map(id => ({
+        id_factura: id,
+        numero_factura: responseData.numeroBusqueda || clave,
+        id_admision: ids.admision?.[0] || null
+      })) : []
     };
 
     console.log('🔄 IDs transformados:', {
@@ -295,13 +345,20 @@ async function obtenerIdsPorAdmision({ institucionId, idAdmision, token }) {
 }
 
 /* =========================
- *  Controller principal (SIN VALIDACIÓN DE TOKEN)
+ *  Controller principal
  * ========================= */
 async function Hs_Anx(req, res) {
   try {
-    // YA NO SE VALIDA EL TOKEN - Se elimina la validación
-    // El token es opcional, se usará uno fijo internamente si no se proporciona
+    // Validación explícita y exclusiva del token en body
+    const { token } = req.body;
     
+    if (!token || typeof token !== 'string' || token.trim() === '') {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Token de autorización requerido EXCLUSIVAMENTE en body' 
+      });
+    }
+
     const {
       clave,
       numeroFactura,
@@ -314,8 +371,7 @@ async function Hs_Anx(req, res) {
       docs,
       tipo,
       modalidad,
-      token,    // Opcional, si viene se usa, si no se usa el fijo
-    } = req.query;  // Ahora el token también puede venir en query
+    } = req.query;
 
     // Validaciones mínimas
     const missing = [];
@@ -333,7 +389,7 @@ async function Hs_Anx(req, res) {
     const tiposRaw = tipos ?? docs ?? tipo;
     const reportesSeleccionados = parseTiposParam(tiposRaw);
 
-    // Resolver IDs usando ConsultaId (el token es opcional)
+    // Resolver IDs usando ConsultaId
     const claveFinal = String(anyKey);
     let ids;
     
@@ -341,13 +397,13 @@ async function Hs_Anx(req, res) {
       ids = await obtenerIdsPorAdmision({
         institucionId: Number(institucionId),
         idAdmision: Number(idAdmisionRaw),
-        token  // Token opcional
+        token
       });
     } else {
       ids = await obtenerIdsConConsultaId({
         clave: claveFinal,
         institucionId: Number(institucionId),
-        token  // Token opcional
+        token
       });
     }
 
@@ -426,6 +482,7 @@ async function Hs_Anx(req, res) {
         const facturaPorDoc = resolverFacturaParaDocumento(ids, nombre, String(id), ctx.factura);
         
         // Generar nombre de archivo usando SIEMPRE los prefijos fijos
+        // El parámetro eps se recibe pero NO se usa
         const nombreArchivoFinal = generarNombreArchivo(
           nombre,
           ctx,

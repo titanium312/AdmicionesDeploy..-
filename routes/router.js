@@ -7,7 +7,7 @@ const { FacturaElectronica } = require('./Controller/facuraelectronica');
 const { obtenerDatosLogin } = require('./Controller/Base/Loguin');
 const { BatAuto } = require('./descargar/descargar');
 const {ConsultaId}  = require('./Controller/Base/consultaid');
-
+const {ConsultaIdSeguiminto}  = require('./Controller/Base/consultaidSeguimiento');
 // AMICIONES -----------------------------------------------------------
 const { cambiarFechaEmision  } = require('./Controller/otro/Admiciones/cambiarF');
 const { NumeroFactura  } = require('./Controller/otro/Admiciones/generarNumeroFactura');
@@ -27,7 +27,7 @@ router.get('/Hs_Anx', Hs_Anx);
 router.get('/facturaElectronica', FacturaElectronica);
 router.post('/descargar', BatAuto);
 router.post('/ConsultaId', ConsultaId);
-
+router.post('/ConsultaIdSeguiminto', ConsultaIdSeguiminto);
 
 
 
