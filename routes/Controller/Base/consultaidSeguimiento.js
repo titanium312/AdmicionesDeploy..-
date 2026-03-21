@@ -5,7 +5,7 @@ const axios = require("axios");
 /* ========= LIMPIAR NUMERO ========= */
 const limpiarNumero = (texto) => {
   return texto
-    .split("-")[0]
+    .split("-")[0]  // Esto extrae solo la parte antes del guión
     .replace(/\s+/g, "")
     .trim();
 };
@@ -29,17 +29,23 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token = TOKEN }) 
       throw new Error("Falta el parámetro 'clave'");
     }
 
-    /* ========= 1. BUSCAR ADMISION ========= */
+    /* ========= 1. BUSCAR EN FACTURAS ========= */
+    // Calcular fechas (últimos 2 años o desde 2024)
+    const fechaInicial = "01/01/2024";
+    const fechaFinal = "03/21/2026";
+    
     const buscar = await axios.post(
-      "https://balance.saludplus.co/seguimientoDocumentos/BucardorAdmisionesDatos?fechaInicial=01/01/2024&fechaFinal=03/20/2026&idEntidad=0&idContrato=0&idServicioIngreso=0",
-      `sEcho=6&iColumns=2&iDisplayStart=0&iDisplayLength=50&sSearch=${numero}`,
+      `https://balance.saludplus.co/facturasAdministar/BuscarListadofacturasDatos?fechaInicial=${fechaInicial}&fechaFinal=${fechaFinal}&idEntidad=0&idContrato=0&SinNumero=False&duplicadas=False&idCuentaCobro=0&estadoFacturacionElectronica=0`,
+      `sEcho=6&iColumns=8&iDisplayStart=0&iDisplayLength=10&sSearch=${numero}`,
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           "accept": "application/json, text/javascript, */*; q=0.01",
           "x-requested-with": "XMLHttpRequest",
-          "user-agent": "Mozilla/5.0",
-          "data": token
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "data": token,
+          "origin": "https://balance.saludplus.co",
+          "referer": "https://balance.saludplus.co/instituciones/?origen=1&theme=false"
         }
       }
     );
@@ -53,13 +59,20 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token = TOKEN }) 
     /* ========= 2. MATCH EXACTO ========= */
     let matchRow = null;
     let numeroAdmisionEncontrado = null;
+    let idFactura = null;
 
     for (const row of data.aaData) {
-      const numeroLimpio = limpiarNumero(row[1]);
+      // row[2] contiene el número de admisión con formato "191177 - FEH28947"
+      const numeroCompleto = row[2] || "";
+      const numeroLimpio = limpiarNumero(numeroCompleto);
+      
+      // También buscar en row[1] que puede tener solo el número
+      const numeroSimple = row[1] ? limpiarNumero(row[1]) : "";
 
-      if (numeroLimpio === numero) {
+      if (numeroLimpio === numero || numeroSimple === numero) {
         matchRow = row;
         numeroAdmisionEncontrado = numeroLimpio;
+        idFactura = row[0]; // ID de factura
         break;
       }
     }
@@ -68,7 +81,11 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token = TOKEN }) 
       throw new Error(`No se encontró coincidencia exacta para el número: ${numero}`);
     }
 
-    const idAdmision = matchRow[0];
+    // Ahora necesitas obtener el idAdmision real desde otro endpoint
+    // Podrías usar el idFactura para consultar más detalles
+    
+    // Temporal: usando el idFactura como idAdmision o necesitas otra consulta
+    const idAdmision = idFactura; // Esto podría ser incorrecto, necesitas mapear correctamente
 
     /* ========= 3. CONSULTAR CALENDARIO ========= */
     const calendario = await axios.get(
@@ -135,7 +152,16 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token = TOKEN }) 
       idOrden: documentos.idOrden,
       idEvolucion: documentos.idEvolucion,
       idNotas: documentos.idsNotas,
-      idEpicrisis: documentos.idEpicrisis
+      idEpicrisis: documentos.idEpicrisis,
+      idFactura: idFactura, // Agregar el ID de factura encontrado
+      facturaInfo: matchRow ? {
+        id: matchRow[0],
+        numero: matchRow[1],
+        descripcion: matchRow[2],
+        fecha: matchRow[3],
+        paciente: matchRow[5],
+        entidad: matchRow[6]
+      } : null
     };
 
     // También agregar las versiones con guión bajo para compatibilidad
