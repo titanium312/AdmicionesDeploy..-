@@ -3,17 +3,15 @@ const router = express.Router();
 
 // AUDITORIA -----------------------------------------------------------
 const { Hs_Anx } = require('./Controller/historias');
-const { FacturaElectronica } = require('./Controller/facuraelectronica');
 const { obtenerDatosLogin } = require('./Controller/Base/Loguin');
 const { BatAuto } = require('./descargar/descargar');
-const {ConsultaId}  = require('./Controller/Base/consultaid');
-const {ConsultaIdSeguiminto}  = require('./Controller/Base/consultaidSeguimiento');
+
+const {ConsultaIdIntermedio}  = require('./Controller/Base/ids/ConsultaIdIntermedio');
+
 // AMICIONES -----------------------------------------------------------
 const { cambiarFechaEmision  } = require('./Controller/otro/Admiciones/cambiarF');
 const { NumeroFactura  } = require('./Controller/otro/Admiciones/generarNumeroFactura');
 const { EnviarADian } = require('./Controller/otro/Admiciones/EnviarAdian');
-const { buscarFactura } = require('./Controller/Base/ids/buscarIdFactura');
-const { BuscarAnexo } = require('./Controller/Base/ids/buscarIdAnexo');
 const { buscarFacturaDb } = require('./Controller/otro/Admiciones/BuscarDB');
 
 // LABORATORIO -----------------------------------------------------------
@@ -24,19 +22,14 @@ const { buscarFechaNacimiento } = require('./Controller/otro/LABORATORIO/herrami
 
 // AUDITORIA -----------------------------------------------------------
 router.get('/Hs_Anx', Hs_Anx);
-router.get('/facturaElectronica', FacturaElectronica);
 router.post('/descargar', BatAuto);
-router.post('/ConsultaId', ConsultaId);
-router.post('/ConsultaIdSeguiminto', ConsultaIdSeguiminto);
-
+router.post('/ConsultaIdIntermedio', ConsultaIdIntermedio);
 
 
 // AMICIONES -----------------------------------------------------------
 router.post('/cambiar-fecha', cambiarFechaEmision);
 router.get('/GenerarNumeroFactura', NumeroFactura);
 router.post('/EnviarDian', EnviarADian);
-router.post('/BuscarIdFactura', buscarFactura);
-router.post('/BuscarIdAnexo', BuscarAnexo);
 router.post('/BuscarIdFacturaDb', buscarFacturaDb);
 
 

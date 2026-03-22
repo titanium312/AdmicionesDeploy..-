@@ -3,18 +3,19 @@ import styles from './EstiloAdmiciones.js';
 
 // Mapeo con nombres legibles para el usuario
 const TIPOS = [
-  { code: 'HT',   name: 'Historia Clínica' },
+  { code: 'HAU',   name: 'Historia Clínica' },
   { code: 'ANX',  name: 'Anexo 2' },
   { code: 'EPI',  name: 'Epicrisis' },
-  { code: 'EVL',  name: 'Evolución' },
-  { code: 'ENF',  name: 'Notas de Enfermería' },
-  { code: 'ADM',  name: 'Admisiones' },
+  { code: 'HEV',  name: 'Evolución' },
+  { code: 'NOT',  name: 'Notas de Enfermería' },
+  { code: 'HAD',  name: 'Admisiones' },
   { code: 'PREF', name: 'Prefacturas' },
-  { code: 'OM',   name: 'Órdenes Médicas' },
-  { code: 'HAP',  name: 'Hoja Adm. de Procedimientos' },
-  { code: 'HMD',  name: 'Hoja Adm. de Medicamentos' },
-  { code: 'HGA',  name: 'Hoja de Gastos/Artículos' },
-  { code: 'HAA',  name: 'Historia Asistencial' },
+  { code: 'CRC',  name: 'Órdenes Médicas' },
+  { code: 'PDX',  name: 'Hoja Adm. de Procedimientos' },
+  { code: 'HAM',  name: 'Hoja Adm. de Medicamentos' },
+  { code: 'INS',  name: 'Hoja de Gastos/Artículos' },
+  { code: 'HAU',  name: 'Historia Asistencial (Auditoría)' },
+  { code: 'FEV',  name: 'Factura Electrónica' }, // ✅ AGREGADO: Factura Electrónica
 ];
 
 export class AdmicionesArchivos extends LitElement {
@@ -23,7 +24,6 @@ export class AdmicionesArchivos extends LitElement {
     numeros: { type: String },
     eps: { type: String },
     modalidad: { type: String },
-    incluirFactura: { type: Boolean },
     tiposSeleccionados: { type: Array },
     usarTodos: { type: Boolean },
     _cargando: { type: Boolean, state: true },
@@ -40,7 +40,6 @@ export class AdmicionesArchivos extends LitElement {
     this.numeros = '';
     this.eps = 'NUEVA_EPS';
     this.modalidad = 'evento';
-    this.incluirFactura = true;
     this.tiposSeleccionados = [];
     this.usarTodos = false;
     this._cargando = false;
@@ -101,7 +100,10 @@ export class AdmicionesArchivos extends LitElement {
     set.has(code) ? set.delete(code) : set.add(code);
     this.tiposSeleccionados = Array.from(set);
   }
-  _activarTodos() { this.usarTodos = !this.usarTodos; if (this.usarTodos) this.tiposSeleccionados = []; }
+  _activarTodos() { 
+    this.usarTodos = !this.usarTodos; 
+    if (this.usarTodos) this.tiposSeleccionados = []; 
+  }
 
   _limpiar = () => {
     this.numeros = '';
@@ -109,7 +111,6 @@ export class AdmicionesArchivos extends LitElement {
     this.usarTodos = false;
     this.eps = 'NUEVA_EPS';
     this.modalidad = 'evento';
-    this.incluirFactura = true;
     this._error = ''; this._pct = 0; this._msg = '';
   };
 
@@ -131,13 +132,13 @@ export class AdmicionesArchivos extends LitElement {
       institucionId,
       idUser,
       eps: this.eps,
-      tipos,
+      tipos: tipos,  // ✅ Ahora envía los códigos correctos (HAU, FEV, etc.)
       modalidad: this.modalidad,
-      includeFactura: !!this.incluirFactura
+      // ❌ ELIMINADO: includeFactura - ya no es necesario porque la factura viene en tipos
     };
 
     try {
-      this._startSim('Generando BAT…');
+      this._startSim('Generando BAT con documentos seleccionados…');
 
       // ✅ FETCH DIRECTO AL SERVIDOR USANDO RUTA RELATIVA
       const blob = await this._fetchWithAuth('/descargar', {
@@ -145,8 +146,8 @@ export class AdmicionesArchivos extends LitElement {
         body: payload
       });
 
-      this._finishSim('BAT generado');
-      this._saveBlob(blob, 'descargas-admisiones.bat');
+      this._finishSim('BAT generado correctamente');
+      this._saveBlob(blob, `descargas-${ids.length}-admisiones.bat`);
     } catch (err) {
       this._error = err?.message || 'No se pudo generar el BAT.';
       this._finishSim('Error');
@@ -213,6 +214,9 @@ export class AdmicionesArchivos extends LitElement {
     const institucionId = this.loginData?.institucion?.idInstitucion;
     const sesionOk = Boolean(idUser && institucionId && this.loginData?.token);
 
+    // Verificar si se seleccionó factura electrónica
+    const facturaSeleccionada = this.tiposSeleccionados.includes('FEV') || this.usarTodos;
+
     return html`
       <div class="wrap">
         <header class="header">
@@ -224,7 +228,7 @@ export class AdmicionesArchivos extends LitElement {
             <div class="col-12">
               <label>
                 Números de admisión
-                <textarea .value=${this.numeros} @input=${e => this.numeros = e.target.value} placeholder="Ej: 123, 456"></textarea>
+                <textarea .value=${this.numeros} @input=${e => this.numeros = e.target.value} placeholder="Ej: 123, 456&#10;O varios: 123, 456, 789" rows="3"></textarea>
                 <div class="help">${ids.length} ID(s) detectado(s)</div>
               </label>
             </div>
@@ -234,6 +238,7 @@ export class AdmicionesArchivos extends LitElement {
                 <select .value=${this.eps} @change=${e => this.eps = e.target.value}>
                   <option value="NUEVA_EPS">NUEVA_EPS</option>
                   <option value="SALUD_TOTAL">SALUD_TOTAL</option>
+                  <option value="MUTUALSER">MUTUALSER</option>
                 </select>
               </label>
             </div>
@@ -241,8 +246,8 @@ export class AdmicionesArchivos extends LitElement {
             <div class="col-4">
               <label> Modalidad
                 <select .value=${this.modalidad} @change=${e => this.modalidad = e.target.value}>
-                  <option value="evento">evento</option>
-                  <option value="capita">capita</option>
+                  <option value="evento">Evento</option>
+                  <option value="capita">Cápita</option>
                 </select>
               </label>
             </div>
@@ -250,15 +255,30 @@ export class AdmicionesArchivos extends LitElement {
             <div class="col-12">
               <label>Tipos de documento</label>
               ${this._renderChips()}
+              ${facturaSeleccionada ? html`
+                <div class="help success" style="margin-top: 8px; color: #2e7d32;">
+                  ✅ La factura electrónica se generará automáticamente con el reporte ListadoFacturasDetallado
+                </div>
+              ` : ''}
             </div>
 
             <div class="col-12 row">
-              <label class="row" style="gap:8px;"><input type="checkbox" .checked=${this.incluirFactura} @change=${e => this.incluirFactura = e.target.checked} /> Incluir factura</label>
-              <button class="btn primary" ?disabled=${this._cargando || !sesionOk} type="submit">Generar BAT</button>
+              <button class="btn primary" ?disabled=${this._cargando || !sesionOk} type="submit">
+                ${this._cargando ? 'Generando...' : 'Generar BAT'}
+              </button>
+              <button type="button" class="btn secondary" @click=${this._limpiar} ?disabled=${this._cargando}>
+                Limpiar
+              </button>
             </div>
 
             ${this._renderProgreso()}
             ${this._error ? html`<div class="col-12 err">⚠️ ${this._error}</div>` : null}
+            
+            ${!sesionOk ? html`
+              <div class="col-12 warn">
+                ⚠️ Sesión incompleta. Verifique que haya iniciado sesión correctamente.
+              </div>
+            ` : null}
           </div>
         </form>
       </div>

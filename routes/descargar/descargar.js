@@ -34,58 +34,6 @@ function getBaseURL(req) {
   return `${proto}://${host}${prefix}`;
 }
 
-// URL absoluta para factura electrónica
-function buildFacturaURLAbsolute(req, { numeroAdmision, institucionId }) {
-  const base = getBaseURL(req);
-  const qs = new URLSearchParams({
-    sSearch: String(numeroAdmision || ""),
-    idInstitucion: String(institucionId),
-  });
-  return `${base}/facturaElectronica?${qs.toString()}`;
-}
-
-// ───────── Validar si factura existe ─────────
-async function verificarFacturaExiste(req, { numeroAdmision, institucionId }) {
-  try {
-    const facturaUrl = buildFacturaURLAbsolute(req, { numeroAdmision, institucionId });
-    const respuesta = await fetch(facturaUrl);
-
-    if (!respuesta.ok) {
-      return { existe: false, error: `HTTP ${respuesta.status}` };
-    }
-
-    const contentType = respuesta.headers.get("content-type") || "";
-
-    // ✅ CASO CORRECTO: ES UN PDF
-    if (contentType.includes("application/pdf")) {
-      return { existe: true, url: facturaUrl };
-    }
-
-    // ⚠️ CASO JSON (no existe factura)
-    if (contentType.includes("application/json")) {
-      const data = await respuesta.json();
-
-      if (data.ok === false) {
-        return {
-          existe: false,
-          mensaje: data.message || data.detalle || "Factura no encontrada"
-        };
-      }
-    }
-
-    // ⚠️ Cualquier otro content-type inesperado
-    return {
-      existe: false,
-      error: `Respuesta inesperada (${contentType})`
-    };
-
-  } catch (error) {
-    console.error(`[ERROR] Validando factura para admisión ${numeroAdmision}:`, error.message);
-    return { existe: false, error: error.message };
-  }
-}
-
-
 // ───────── Bloques BAT ─────────
 function makeBlock({ folder, url, pdfName }) {
   const FLAG = `${safeWinName(deaccent(folder))}_${safeWinName(deaccent(pdfName)).replace(/\.pdf$/i, "")}_OK`;
@@ -117,43 +65,6 @@ if not "!${FLAG}!"=="1" (
     )
 ) else (
     echo [SKIP] ${pdfName} ya estaba descargado.
-)`.trim(),
-  };
-}
-
-// ───────── CORREGIDO: Usa el mismo formato que FacturaElectronica ─────────
-function makeFacturaBlock({ folder, facturaUrl, admNumber, nitInstitucion }) {
-  const FLAG = `${safeWinName(deaccent(folder))}_FACTURA_OK`;
-  // Mismo formato que FacturaElectronica: FEV_NIT_NUMERO.pdf
-  const pdfName = `FEV_${nitInstitucion}_${admNumber}.pdf`;
-  const out = `${folder}\\${pdfName}`;
-  const curlBase = 'curl -L --retry 3 --retry-all-errors --retry-delay 3 --connect-timeout 15 --max-time 180 -A "!UA!" -H "Accept: application/pdf"';
-  const urlEsc = escapeForBat(facturaUrl);
-
-  return {
-    flagInit: `echo ${FLAG}=0`,
-    block: `
-:: ====== Descargar FACTURA ELECTRONICA → ${folder} ======
-if not "!${FLAG}!"=="1" (
-    if not exist "${folder}" mkdir "${folder}"
-    echo Descargando Factura Electronica ...
-    set "URL=${urlEsc}"
-    set "OUT=${out}"
-    ${curlBase} -C - "!URL!" --output "!OUT!" --silent
-    if not !errorlevel! equ 0 (
-        echo  [WARN] Reintentando sin reanudacion...
-        ${curlBase} "!URL!" --output "!OUT!" --silent
-    )
-    if !errorlevel! equ 0 (
-        echo  [OK] Factura Electronica (${pdfName})
-        > "!progresoFile!.tmp" findstr /v /b "${FLAG}=" "!progresoFile!" 2>nul
-        >> "!progresoFile!.tmp" echo ${FLAG}=1
-        move /Y "!progresoFile!.tmp" "!progresoFile!" >nul
-    ) else (
-        echo  [ERROR] Factura Electronica
-    )
-) else (
-    echo [SKIP] Factura Electronica ya estaba descargada.
 )`.trim(),
   };
 }
@@ -253,7 +164,6 @@ const BatAuto = async (req, res) => {
       numeroAdmision, idAdmision, numeroFactura, clave,
       institucionId, idUser, eps,
       tipos, modalidad,
-      includeFactura = false,
     } = req.body || {};
 
     // Normalizar modalidad
@@ -298,11 +208,6 @@ const BatAuto = async (req, res) => {
         error: `Faltan parámetros: ${missing.join(", ")}` 
       });
     }
-
-    // --- Obtener NIT de la institución para el formato de factura ---
-    const infoInstitucion = instituciones.find(inst => inst.idInstitucion === Number(institucionId));
-    const nitInstitucion = infoInstitucion ? infoInstitucion.nit : "000000000";
-    // ----------------------------------------------------------------
 
     // Construir consultas
     const queries = [];
@@ -354,50 +259,6 @@ const BatAuto = async (req, res) => {
       });
     }
 
-    // ───────── Preparar set de carpetas para factura ─────────
-    const facturaFolders = new Set();
-    const facturaExisteCache = new Map(); // Cache para evitar verificaciones repetidas
-    
-    if (includeFactura) {
-      // Verificar existencia de facturas antes de agregarlas
-      const admisionesParaVerificar = [];
-      
-      if (admList.length > 0) {
-        admList.forEach(adm => {
-          const folderName = safeWinName(deaccent(`admision-${adm}`));
-          admisionesParaVerificar.push({ adm, folderName });
-        });
-      } else if (numeroAdmision) {
-        const folderName = safeWinName(deaccent(`admision-${numeroAdmision}`));
-        admisionesParaVerificar.push({ adm: numeroAdmision, folderName });
-      } else if (idAdmision) {
-        const folderName = safeWinName(deaccent(`admision-${idAdmision}`));
-        admisionesParaVerificar.push({ adm: idAdmision, folderName });
-      }
-      
-      // Verificar facturas en paralelo
-      const verificaciones = await Promise.allSettled(
-        admisionesParaVerificar.map(async ({ adm, folderName }) => {
-          try {
-            const resultado = await verificarFacturaExiste(req, {
-              numeroAdmision: adm,
-              institucionId,
-            });
-            
-            if (resultado.existe) {
-              facturaFolders.add(folderName);
-              facturaExisteCache.set(folderName, resultado.url);
-              console.log(`[INFO] Factura encontrada para admisión ${adm}`);
-            } else {
-              console.log(`[INFO] No se agregará factura para admisión ${adm}: ${resultado.mensaje || resultado.error || 'No encontrada'}`);
-            }
-          } catch (error) {
-            console.error(`[ERROR] Verificando factura para admisión ${adm}:`, error.message);
-          }
-        })
-      );
-    }
-
     // ───────── Construcción de bloques BAT ─────────
     const blocks = [];
     const flagsInit = [];
@@ -418,45 +279,17 @@ const BatAuto = async (req, res) => {
         "echo."
       ].join("\r\n"));
 
-// Lista de nombres
-for (const j of jobs) {
-  blocks.push(`echo  ${j.nombreArchivo || j.pdfName}`);
-}
-
-// ✅ Mostrar factura electrónica en la lista si existe
-if (includeFactura && facturaFolders.has(folder)) {
-  blocks.push(`echo  Factura Electronica (FEV_${nitInstitucion}_${folder.replace(/^admisi[oó]n[-_ ]*/i, "")}.pdf)`);
-}
-
-blocks.push("echo.");
+      // Lista de nombres
+      for (const j of jobs) {
+        blocks.push(`echo  ${j.nombreArchivo || j.pdfName}`);
+      }
+      blocks.push("echo.");
 
       // Bloques de descarga
       for (const j of jobs) {
         const { flagInit, block } = makeBlock(j);
         flagsInit.push(flagInit);
         blocks.push(block);
-      }
-
-      // Factura electrónica si existe
-      if (includeFactura && facturaFolders.has(folder)) {
-        const admNumber = folder.replace(/^admisi[oó]n[-_ ]*/i, "");
-        const facturaUrl = facturaExisteCache.get(folder) || 
-                          buildFacturaURLAbsolute(req, {
-                            numeroAdmision: admNumber,
-                            institucionId,
-                          });
-        
-        const { flagInit, block } = makeFacturaBlock({
-          folder: safeWinName(deaccent(folder)),
-          facturaUrl,
-          admNumber,
-          nitInstitucion,  // ← Pasamos el NIT para el formato correcto
-        });
-        flagsInit.push(flagInit);
-        blocks.push(block);
-      } else if (includeFactura && facturaFolders.size > 0) {
-        // Solo mostrar mensaje si estamos incluyendo facturas pero esta carpeta no tiene
-        console.log(`[INFO] Carpeta ${folder} no tendrá factura (no existe o no se encontró)`);
       }
 
       blocks.push("");
@@ -538,4 +371,3 @@ pause
 };
 
 module.exports = { BatAuto };
-

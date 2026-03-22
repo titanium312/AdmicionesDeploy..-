@@ -1,7 +1,7 @@
 // Archivo: routes/tuRuta.js
 
 const { createToken } = require('./Base/toke');
-const { obtenerIdsConConsultaId: obtenerIdsDesdeSeguimiento } = require('./Base/consultaidSeguimiento');
+const { ConsultaIdIntermedio } = require('./Base/ids/ConsultaIdIntermedio');
 
 // Importar datos de instituciones
 const { instituciones } = require('./Base/Instituciones');
@@ -21,7 +21,7 @@ const PREFIJOS_RENOMBRES = {
   HojaInsumos: 'INS',
   HistoriaClinicaAuditoria: 'HAU',
   FacturaElectronica: 'FEV',
-  Anexo: 'ANX',               // Agregado para completar
+  Anexo: 'ANX',
 };
 
 const FECHA_FIJA_REPORTS = new Set([
@@ -44,6 +44,8 @@ const reportMapping = [
   { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionMedicamentos',   nombre: 'HojaMedicamentos' },
   { param: 'idsHistorias',       report: 'ListadoAsistencialHojaGastos',                       nombre: 'HojaInsumos' },
   { param: 'idHistorias',        report: 'ListadoHistoriasAsistencialesDestallado',            nombre: 'HistoriaClinicaAuditoria' },
+  // ✅ CORREGIDO: FacturaElectronica usa el idFactura real
+  { param: 'idFacturas',         report: 'ListadoFacturasDetallado',                           nombre: 'FacturaElectronica' },
 ];
 
 const CODE_TO_REPORTS = {
@@ -60,6 +62,7 @@ const CODE_TO_REPORTS = {
   ANX:  ['ListadoanexoDosDetallado'],
   CRC:  ['ListadoOrdenMedicasDestallado'],
   PREF: ['ListadoPrefacturasDetallado'],
+  FEV:  ['ListadoFacturasDetallado'],
   TODO: ['*'],
 };
 
@@ -80,6 +83,7 @@ function getModulo(reportName) {
     ListadoAsistencialHojaAdministracionMedicamentos: 'Asistencial',
     ListadoAsistencialHojaGastos: 'Asistencial',
     ListadoHistoriasAsistencialesDestallado: 'Asistencial',
+    ListadoFacturasDetallado: 'Facturacion',
   };
   return moduloMapping[reportName] || 'Asistencial';
 }
@@ -125,15 +129,8 @@ function construirContextoRenombramiento(ids, { idAdmision, institucionId }) {
   const tipoId = (ids?.tipoDocumento || 'CC').toString().toUpperCase();
   const numId = (ids?.numero_documento || '0000000000').toString();
 
+  // Usar el número de factura real si existe
   let numeroFactura = ids?.numeroFactura || '0';
-  if (Array.isArray(ids?.facturasDetalle) && idAdmision) {
-    const match = ids.facturasDetalle.find(
-      f => String(f.id_admision || f.admisionId || ids.id_admision) === String(idAdmision)
-    );
-    if (match && (match.numero_factura || match.numeroFactura)) {
-      numeroFactura = String(match.numero_factura || match.numeroFactura);
-    }
-  }
 
   return {
     nit: String(nit),
@@ -176,16 +173,12 @@ function esCapita({ modalidad, ids }) {
 
 /**
  * Genera nombre de archivo usando SIEMPRE los prefijos fijos
- * SIN importar qué EPS llegue como parámetro
+ * El número para renombrar es el numeroFactura (como en la lógica original)
  */
 function generarNombreArchivo(tipoDocumento, ctx, options = {}) {
   const { nit } = ctx;
-  const factura = options.facturaPorDoc || ctx.factura || '0';
-  
-  // Determinar el número para renombrar (con o sin identificación)
-  const numeroParaRenombrar = options.esCapita ? 
-    `${factura}_${ctx.tipoId}${ctx.numId}` : 
-    factura;
+  // Siempre usar numeroFactura como base para el nombre
+  const numeroParaRenombrar = ctx.factura || '0';
 
   // Obtener el prefijo fijo según el tipo de documento
   const prefijo = PREFIJOS_RENOMBRES[tipoDocumento];
@@ -195,61 +188,68 @@ function generarNombreArchivo(tipoDocumento, ctx, options = {}) {
     return `${tipoDocumento}_${nit}_${numeroParaRenombrar}.pdf`;
   }
 
-  // Formato estándar: PREFIJO_NIT_NUMERO.pdf
+  // Formato estándar: PREFIJO_NIT_NUMERO_FACTURA.pdf
   return `${prefijo}_${nit}_${numeroParaRenombrar}.pdf`;
 }
 
 /* =========================
- *  Obtener IDs usando ConsultaId (NUEVA VERSIÓN - SIN TOKEN)
+ *  Obtener IDs usando ConsultaIdIntermedio
  * ========================= */
 async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
   try {
-    // Token fijo para usar internamente
-    const TOKEN_FIJO = "E4zDmiOYyZy8kSz18voWF21jnSB9ZCcxdPduDxK+vpA=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==";
+    const mockReq = {
+      body: { documento: clave }
+    };
     
-    // Usar token fijo si no se proporciona uno
-    const tokenParaUsar = token || TOKEN_FIJO;
+    let resultadoIntermedio = null;
     
-    // Llamar a la función desde consultaidSeguimiento.js
-    const resultado = await obtenerIdsDesdeSeguimiento({
-      clave: clave,
-      institucionId: Number(institucionId),
-      token: tokenParaUsar
+    await new Promise((resolve, reject) => {
+      const mockRes = {
+        status: (code) => ({
+          json: (data) => {
+            resultadoIntermedio = data;
+            resolve(data);
+          }
+        })
+      };
+      
+      ConsultaIdIntermedio(mockReq, mockRes).catch(reject);
     });
-
-    // Verificar si se obtuvieron resultados
-    if (!resultado || !resultado.idAdmision) {
-      console.error('No se encontraron IDs para la clave:', clave);
+    
+    if (!resultadoIntermedio || !resultadoIntermedio.ok) {
+      console.error('Error en ConsultaIdIntermedio:', resultadoIntermedio?.message || 'No se encontraron resultados');
       return null;
     }
 
-    console.log('✅ Respuesta de ConsultaId:', {
-      idAdmision: resultado.idAdmision,
-      idHistoria: resultado.idHistoria,
-      idOrden: resultado.idOrden,
-      idEvolucion: resultado.idEvolucion,
-      idEpicrisis: resultado.idEpicrisis,
-      idNotas: resultado.idNotas?.length || 0
+    console.log('✅ Respuesta de ConsultaIdIntermedio:', {
+      idAdmision: resultadoIntermedio.idAdmision,
+      idHistoria: resultadoIntermedio.idHistoria,
+      idOrden: resultadoIntermedio.idOrden,
+      idEvolucion: resultadoIntermedio.idEvolucion,
+      idNotas: resultadoIntermedio.idNotas?.length || 0,
+      idFactura: resultadoIntermedio.idFactura,
+      numeroFactura: resultadoIntermedio.numeroFactura
     });
 
-    // TRANSFORMAR al formato esperado por tuRuta.js (arrays de IDs)
+    // TRANSFORMAR al formato esperado por el resto del código
     const transformIds = {
       // ID individuales
-      id_admision: resultado.idAdmision || null,
-      id_egreso: resultado.idEpicrisis || null,
-      id_factura: null,
+      id_admision: resultadoIntermedio.idAdmision || null,
+      id_egreso: resultadoIntermedio.idEgresos?.[0] || null,
       
-      // Arrays de IDs (el resto del código espera arrays)
-      idsAdmisiones: resultado.idAdmision ? [resultado.idAdmision] : [],
-      idEgresos: resultado.idEpicrisis ? [resultado.idEpicrisis] : [],
-      idsEvoluciones: resultado.idEvolucion ? [resultado.idEvolucion] : [],
-      idsNotasEnfermeria: resultado.idNotas || [],
-      idsOrdenMedicas: resultado.idOrden ? [resultado.idOrden] : [],
-      idsHistorias: resultado.idHistoria ? [resultado.idHistoria] : [],
-      idAnexosDos: [],
+      // Arrays de IDs
+      idsAdmisiones: resultadoIntermedio.idAdmision ? [resultadoIntermedio.idAdmision] : [],
+      idEgresos: resultadoIntermedio.idEgresos || [],
+      idsEvoluciones: resultadoIntermedio.idEvolucion ? [resultadoIntermedio.idEvolucion] : [],
+      idsNotasEnfermeria: resultadoIntermedio.idNotas || [],
+      idsOrdenMedicas: resultadoIntermedio.idOrden ? [resultadoIntermedio.idOrden] : [],
+      idsHistorias: resultadoIntermedio.idHistoria ? [resultadoIntermedio.idHistoria] : [],
+      idAnexosDos: resultadoIntermedio.idAnexosDos || [],
+      // ✅ CORREGIDO: Para facturas, usar el idFactura REAL
+      idFacturas: resultadoIntermedio.idFactura ? [resultadoIntermedio.idFactura] : [],
       
       // Información de búsqueda
-      numeroFactura: clave,
+      numeroFactura: resultadoIntermedio.numeroFactura || clave,
       
       // Información del paciente
       tipoDocumento: 'CC',
@@ -257,9 +257,10 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       
       // Totales
       totales: {
-        notasEnfermeria: (resultado.idNotas || []).length,
-        ordenesMedicas: resultado.idOrden ? 1 : 0,
-        historiasClinicas: resultado.idHistoria ? 1 : 0,
+        notasEnfermeria: (resultadoIntermedio.idNotas || []).length,
+        ordenesMedicas: resultadoIntermedio.idOrden ? 1 : 0,
+        historiasClinicas: resultadoIntermedio.idHistoria ? 1 : 0,
+        facturas: resultadoIntermedio.idFactura ? 1 : 0,
       },
       
       // Información adicional
@@ -275,7 +276,9 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       id_admision: transformIds.id_admision,
       idsHistorias: transformIds.idsHistorias,
       idsNotasEnfermeria: transformIds.idsNotasEnfermeria,
-      idsOrdenMedicas: transformIds.idsOrdenMedicas
+      idsOrdenMedicas: transformIds.idsOrdenMedicas,
+      idFacturas: transformIds.idFacturas,
+      numeroFactura: transformIds.numeroFactura
     });
 
     return transformIds;
@@ -295,13 +298,10 @@ async function obtenerIdsPorAdmision({ institucionId, idAdmision, token }) {
 }
 
 /* =========================
- *  Controller principal (SIN VALIDACIÓN DE TOKEN)
+ *  Controller principal
  * ========================= */
 async function Hs_Anx(req, res) {
   try {
-    // YA NO SE VALIDA EL TOKEN - Se elimina la validación
-    // El token es opcional, se usará uno fijo internamente si no se proporciona
-    
     const {
       clave,
       numeroFactura,
@@ -309,15 +309,14 @@ async function Hs_Anx(req, res) {
       idAdmision: idAdmisionRaw,
       institucionId,
       idUser,
-      eps,      // Se recibe pero NO se usa para nombres de archivo
+      eps,
       tipos,
       docs,
       tipo,
       modalidad,
-      token,    // Opcional, si viene se usa, si no se usa el fijo
-    } = req.query;  // Ahora el token también puede venir en query
+      token,
+    } = req.query;
 
-    // Validaciones mínimas
     const missing = [];
     if (!institucionId) missing.push('institucionId');
     if (!idUser) missing.push('idUser');
@@ -329,11 +328,9 @@ async function Hs_Anx(req, res) {
       return res.status(400).send(`❌ Faltan parámetros: ${missing.join(', ')}`);
     }
 
-    // Filtro de tipos
     const tiposRaw = tipos ?? docs ?? tipo;
     const reportesSeleccionados = parseTiposParam(tiposRaw);
 
-    // Resolver IDs usando ConsultaId (el token es opcional)
     const claveFinal = String(anyKey);
     let ids;
     
@@ -341,13 +338,13 @@ async function Hs_Anx(req, res) {
       ids = await obtenerIdsPorAdmision({
         institucionId: Number(institucionId),
         idAdmision: Number(idAdmisionRaw),
-        token  // Token opcional
+        token
       });
     } else {
       ids = await obtenerIdsConConsultaId({
         clave: claveFinal,
         institucionId: Number(institucionId),
-        token  // Token opcional
+        token
       });
     }
 
@@ -358,7 +355,6 @@ async function Hs_Anx(req, res) {
       });
     }
 
-    // Admision resuelta
     const resolvedAdmisionId = (
       Number(ids?.id_admision) ||
       Number(idAdmisionRaw) ||
@@ -366,13 +362,12 @@ async function Hs_Anx(req, res) {
       (Number.isFinite(Number(claveFinal)) ? Number(claveFinal) : 0)
     );
 
-    // Contexto de renombramiento con NIT correcto
     const ctx = construirContextoRenombramiento(ids, {
       idAdmision: resolvedAdmisionId,
       institucionId,
     });
 
-    // Normalizar colecciones
+    // ✅ CORREGIDO: Normalizar colecciones - idFacturas ahora usa el ID real
     const normalized = {
       idsHistorias:       toArray(ids.idsHistorias || ids.id_historia),
       idAnexosDos:        toArray(ids.idAnexosDos || ids.anexo2),
@@ -383,9 +378,9 @@ async function Hs_Anx(req, res) {
       idAdmisiones:       toArray(resolvedAdmisionId),
       idsOrdenMedicas:    toArray(ids.idsOrdenMedicas || ids.ordenes_medicas),
       idHistorias:        toArray(ids.idHistorias || ids.id_historia),
+      idFacturas:         toArray(ids.idFacturas), // ✅ Ahora usa el idFactura real
     };
 
-    // Construir items
     const trabajos = [];
     const FECHA_INICIAL_FIJA = '01/01/2023';
     const FECHA_FINAL_HOY = formatDateDDMMYYYY(new Date());
@@ -425,7 +420,6 @@ async function Hs_Anx(req, res) {
 
         const facturaPorDoc = resolverFacturaParaDocumento(ids, nombre, String(id), ctx.factura);
         
-        // Generar nombre de archivo usando SIEMPRE los prefijos fijos
         const nombreArchivoFinal = generarNombreArchivo(
           nombre,
           ctx,
@@ -435,7 +429,7 @@ async function Hs_Anx(req, res) {
         trabajos.push({
           numeroAdmision: String(numeroAdmision ?? idAdmisionRaw ?? resolvedAdmisionId),
           numeroFactura: String(numeroFactura ?? ctx.factura ?? '0'),
-          nombreArchivo: nombre,  // Nombre del tipo de documento
+          nombreArchivo: nombre,
           url: `https://reportes.saludplus.co/view.aspx?${urlParams.toString()}`,
           nombrepdf: nombreArchivoFinal,
         });
@@ -446,7 +440,6 @@ async function Hs_Anx(req, res) {
       return res.status(404).json({ success: false, message: 'No se encontraron documentos' });
     }
 
-    // Agrupar resultados
     const agruparPorFactura = Boolean(numeroFactura) && String(numeroFactura) !== '0';
 
     const resultadoFinal = {};

@@ -1,7 +1,7 @@
 const fetch = require("node-fetch");
-const token = require("../otro/LABORATORIO/herramientas/token");
+const token = require("../../../otro/LABORATORIO/herramientas/token");
 
-async function ConsultaId(req, res) {
+async function ConsultaIdanexo(req, res) {
   try {
     const authToken = token.getToken();
 
@@ -54,4 +54,4 @@ return res.json({
   }
 }
 
-module.exports = ConsultaId;
+module.exports = ConsultaIdanexo;
