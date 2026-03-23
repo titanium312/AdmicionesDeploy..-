@@ -3,7 +3,7 @@ const CryptoJS = require('crypto-js');
 // Ahora recibe el userId como parámetro, no intenta importar nada
 function createToken(reportName, institucionId, idCaracteristica, userId) {
   let now = new Date();
-  let dateini = new Date(now.getTime() + 15 * 60000); // Expira en 15 minutos
+let dateini = new Date(now.getTime() + 86400000); // 24 horas
 
   let tokenOut = reportName;
   if (tokenOut.length < 16) {
