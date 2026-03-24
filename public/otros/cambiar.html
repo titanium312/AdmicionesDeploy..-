@@ -3,354 +3,283 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gestión de Facturas — Multi Admisiones</title>
-
+  <title>CORE_INVOICE.v3.2 — Adaptive Control</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; }
-    table { border-collapse: separate; border-spacing: 0; }
-
-    .fade-in {
-      animation: fadeIn 0.35s ease-out forwards;
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+    
+    body { 
+      font-family: 'JetBrains Mono', monospace; 
+      background: #050505; 
+      color: #00ff41; 
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .processing {
-      position: relative;
-      overflow: hidden;
-      pointer-events: none;
-      opacity: 0.7;
-    }
-    .processing::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      animation: shimmer 1.5s infinite;
-    }
-    @keyframes shimmer {
-      to { left: 100%; }
+    
+    .glass-panel {
+      background: rgba(15, 15, 15, 0.9);
+      border: 1px solid #1a1a1a;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
 
-    .spinner {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border: 2px solid rgba(14, 165, 233, 0.2);
-      border-top-color: #0ea5e9;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    .step-indicator { width: 10px; height: 10px; border: 1px solid #333; transition: all 0.2s; }
+    .step-active { background: #00ff41; box-shadow: 0 0 8px #00ff41; border: none; animation: pulse 1s infinite; }
+    .step-done { background: #008f11; border: none; }
+    .step-error { background: #ff3131; border: none; box-shadow: 0 0 8px #ff3131; }
 
-    .header-gradient {
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      border-bottom: 1px solid #e2e8f0;
-    }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-    .card-shadow {
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
+    input, textarea, select {
+      background: #0a0a0a !important;
+      color: #00ff41 !important;
+      border: 1px solid #1a1a1a !important;
     }
-    .card-shadow:hover {
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .progress-bar {
-      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .badge-animate {
-      animation: badgePop 0.3s ease-out;
-    }
-    @keyframes badgePop {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      padding: 12px 20px;
-      border-radius: 8px;
-      color: white;
-      font-size: 14px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-      animation: toastSlide 0.3s ease-out;
-      z-index: 1000;
-      opacity: 1;
-      transition: opacity 0.5s ease;
-    }
-    @keyframes toastSlide {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
+    input:focus, textarea:focus { border-color: #00ff41 !important; outline: none; }
+    
+    /* Estilo para que el textarea se vea más limpio al pegar */
+    #admisionLista::placeholder { color: #1a3a1a; }
   </style>
 </head>
+<body class="p-4 md:p-8">
 
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 min-h-screen pb-20">
-
-<div class="max-w-6xl mx-auto p-6">
-
-<header class="mb-8 header-gradient rounded-lg p-6 card-shadow">
-  <div class="flex items-center justify-between">
+<div class="max-w-5xl mx-auto">
+  
+  <header class="mb-8 border-b border-zinc-800 pb-4 flex justify-between items-end">
     <div>
-      <h1 class="text-3xl font-bold text-slate-900 mb-2">Gestión de Facturas</h1>
-      <p class="text-sm text-slate-600">
-        Flujo: <span class="font-medium text-slate-700">Buscar → Cambiar Fecha → Generar → DIAN</span>
-      </p>
+      <h1 class="text-2xl font-black tracking-tighter uppercase italic">
+        System_Invoice_<span class="text-white">v3.2</span>
+      </h1>
+      <p class="text-[10px] text-zinc-500 tracking-[0.2em]">LIMPIEZA AUTOMÁTICA Y FECHA DINÁMICA</p>
     </div>
-    <div class="hidden md:flex items-center gap-2 px-4 py-2 bg-sky-50 rounded-lg border border-sky-100">
-      <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-      <span id="hostIndicator" class="text-sm font-medium text-sky-700 font-mono">Cargando servidor...</span>
+    <div class="text-right">
+      <p id="apiIndicator" class="text-[9px] font-bold text-zinc-600 uppercase italic tracking-tighter">Kernel Status: Active</p>
     </div>
-  </div>
-</header>
+  </header>
 
-<main class="grid gap-6">
-
-  <section class="bg-white rounded-xl shadow-sm p-6 card-shadow">
-    <div class="grid md:grid-cols-2 gap-8">
-      
-      <div class="space-y-5">
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-2">Institución</label>
-          <select id="selInstitucion" class="w-full rounded-lg border-2 border-slate-200 p-3 bg-white focus:border-sky-400 outline-none">
-            <option value="20">🏥 ESE HOSPITAL SAN JORGE AYAPEL (ID: 20)</option>
-            <option value="14">🏥 CENTRO DE SALUD SAN JOSE DE TOLUVIEJO (ID: 14)</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-2">Números de Admisión (uno por línea)</label>
-          <textarea id="admisionLista" class="w-full rounded-lg border-2 border-slate-200 p-4 h-40 mono text-sm focus:border-sky-400 outline-none resize-none" placeholder="39842&#10;178947"></textarea>
-        </div>
-      </div>
-
-      <div class="space-y-5">
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-2">Nueva Fecha (DD/MM/YYYY)</label>
-          <input id="fechaInput" type="text" class="w-full rounded-lg border-2 border-slate-200 p-3 focus:border-sky-400 outline-none" placeholder="19/11/2025" />
-        </div>
-
-        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
-          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones Secuenciales</p>
-          <label class="flex items-center gap-3 cursor-pointer group">
-            <input id="chkCambiar" type="checkbox" class="h-5 w-5 rounded border-slate-300 text-sky-600" checked />
-            <span class="text-sm font-medium text-slate-700">1. Cambiar fecha de emisión</span>
-          </label>
-          <label class="flex items-center gap-3 cursor-pointer group">
-            <input id="chkGenerar" type="checkbox" class="h-5 w-5 rounded border-slate-300 text-sky-600" />
-            <span class="text-sm font-medium text-slate-700">2. Generar número de factura</span>
-          </label>
-          <label class="flex items-center gap-3 cursor-pointer group">
-            <input id="chkEnviar" type="checkbox" class="h-5 w-5 rounded border-slate-300 text-sky-600" />
-            <span class="text-sm font-medium text-slate-700">3. Enviar a DIAN</span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-8 flex flex-wrap gap-3 pt-6 border-t border-slate-100">
-      <button id="ejecutarBtn" class="px-8 py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow-md font-bold flex items-center gap-2 transition-all active:scale-95">
-        Ejecutar Procesamiento
-      </button>
-      <button id="limpiarBtn" class="px-6 py-3 border-2 border-slate-200 hover:bg-slate-50 rounded-lg text-slate-600 font-medium">
-        Limpiar campos
-      </button>
-      <button id="vaciarTablaBtn" class="px-6 py-3 border-2 border-red-100 text-red-500 hover:bg-red-50 rounded-lg font-medium ml-auto">
-        Vaciar tabla
-      </button>
-    </div>
-  </section>
-
-  <section class="bg-white rounded-xl shadow-sm p-6 card-shadow">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-bold text-slate-800">Progreso y Resultados</h3>
-      <span id="progressPct" class="text-sm font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full">0%</span>
-    </div>
+  <div class="grid lg:grid-cols-12 gap-6">
     
-    <div class="w-full bg-slate-100 rounded-full h-3 mb-6 overflow-hidden">
-      <div id="progressBar" class="h-full bg-sky-500 progress-bar" style="width: 0%"></div>
-    </div>
+    <aside class="lg:col-span-4 space-y-4">
+      <div class="glass-panel rounded-lg p-5">
+        <div class="flex justify-between items-center mb-2">
+            <label class="text-[10px] font-bold text-zinc-500 uppercase">Input_Data_Stream</label>
+            <button onclick="limpiarCaja()" class="text-[9px] text-zinc-600 hover:text-red-500 underline uppercase">Limpiar</button>
+        </div>
+        <textarea id="admisionLista" 
+          class="w-full h-32 rounded p-3 text-xs outline-none resize-none mb-4" 
+          placeholder="Pega aquí: 275572, 275573 - 275574..."></textarea>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="text-[9px] font-bold text-zinc-600 block uppercase mb-1">Target_Institución</label>
+            <select id="selInstitucion" class="w-full rounded p-2 text-xs outline-none cursor-pointer">
+              <option value="14">C.S. SAN JOSE DE TOLUVIEJO (14)</option>
+              <option value="20">E.S.E. HOSPITAL SAN JORGE (20)</option>
+            </select>
+          </div>
 
-    <div class="overflow-x-auto border border-slate-100 rounded-lg">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-slate-50 text-slate-600 font-semibold">
-          <tr>
-            <th class="px-4 py-3 border-b">Admisión</th>
-            <th class="px-4 py-3 border-b">ID Factura</th>
-            <th class="px-4 py-3 border-b">Nº Factura</th>
-            <th class="px-4 py-3 border-b">Estado / Pasos</th>
-            <th class="px-4 py-3 border-b text-center">Acción</th>
-          </tr>
-        </thead>
-        <tbody id="resultsTableBody" class="divide-y divide-slate-50"></tbody>
-      </table>
-    </div>
-  </section>
+          <div>
+            <label class="text-[9px] font-bold text-zinc-600 block uppercase mb-1">Processing_Date (Editable)</label>
+            <input id="fechaInput" type="text" maxlength="10"
+              class="w-full rounded p-2 text-xs outline-none font-bold tracking-widest">
+          </div>
+        </div>
 
-</main>
+        <div class="grid grid-cols-1 gap-2 mt-6">
+          <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
+            <input type="checkbox" id="chkCambiar" checked class="opacity-30 checked:opacity-100"> 01_SET_DATE
+          </label>
+          <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
+            <input type="checkbox" id="chkGenerar" checked class="opacity-30 checked:opacity-100"> 02_GEN_PREFIX
+          </label>
+          <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
+            <input type="checkbox" id="chkEnviar" class="opacity-30 checked:opacity-100"> 03_DIAN_PUSH
+          </label>
+        </div>
+
+        <button id="ejecutarBtn" class="w-full mt-8 py-3 bg-white text-black font-black text-xs uppercase hover:bg-green-500 transition-all">
+          Execute_Sequence
+        </button>
+      </div>
+    </aside>
+
+    <main class="lg:col-span-8 space-y-4">
+      
+      <div class="glass-panel rounded-lg p-5 flex justify-between items-center border-l-4 border-l-white">
+        <div>
+          <p class="text-[9px] font-bold text-zinc-500 uppercase">System_Output</p>
+          <h2 id="summary" class="text-sm font-bold text-white tracking-widest uppercase">Kernel_Ready</h2>
+        </div>
+        <div class="text-right">
+          <span id="progressPct" class="text-3xl font-black italic">0%</span>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-lg overflow-hidden">
+        <div class="overflow-y-auto max-h-[450px]">
+          <table class="w-full text-[10px] text-left">
+            <thead class="bg-zinc-900 text-zinc-500 uppercase font-black border-b border-zinc-800">
+              <tr>
+                <th class="p-3">Admission</th>
+                <th class="p-3 text-center">Process_Map</th>
+                <th class="p-3 text-right">Result_Log</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody" class="divide-y divide-zinc-900">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="flex justify-between items-center px-1">
+        <button onclick="document.getElementById('resultsTableBody').innerHTML=''" class="text-[8px] font-bold text-zinc-700 hover:text-red-500 uppercase">Reset_Monitor</button>
+        <div class="h-1 bg-zinc-900 flex-1 mx-6 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-white transition-all duration-700" style="width: 0%"></div>
+        </div>
+      </div>
+    </main>
+
+  </div>
 </div>
 
-<div id="toastContainer"></div>
-
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Referencias
-    const btnEjecutar = document.getElementById('ejecutarBtn');
-    const btnLimpiar = document.getElementById('limpiarBtn');
-    const btnVaciar = document.getElementById('vaciarTablaBtn');
-    const txtAdmisiones = document.getElementById('admisionLista');
-    const inputFecha = document.getElementById('fechaInput');
-    const selInstitucion = document.getElementById('selInstitucion');
-    const tableBody = document.getElementById('resultsTableBody');
-    const progressBar = document.getElementById('progressBar');
-    const progressPct = document.getElementById('progressPct');
-    const hostIndicator = document.getElementById('hostIndicator');
+  const API_BASE = window.location.origin;
 
-    // DINÁMICO: Toma la URL de donde se cargó el archivo
-    const API_BASE = window.location.origin; 
-    hostIndicator.innerText = `Servidor: ${API_BASE}`;
+  // 1. CARGAR FECHA DE HOY AUTOMÁTICAMENTE
+  window.onload = () => {
+    const hoy = new Date();
+    const d = String(hoy.getDate()).padStart(2, '0');
+    const m = String(hoy.getMonth() + 1).padStart(2, '0');
+    const y = hoy.getFullYear();
+    document.getElementById('fechaInput').value = `${d}/${m}/${y}`;
+  };
 
-    function notify(msg, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type === 'error' ? 'bg-red-500' : 'bg-slate-800'}`;
-        toast.innerText = msg;
-        document.getElementById('toastContainer').appendChild(toast);
-        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
+  function limpiarCaja() {
+    document.getElementById('admisionLista').value = '';
+  }
+
+  // 2. LIMPIEZA AGRESIVA DE LISTA (Regex mejorada)
+  function limpiarLista(texto) {
+    // Busca cualquier grupo de números y los extrae como array, ignorando comas, guiones, espacios, etc.
+    return texto.match(/\d+/g) || [];
+  }
+
+  function crearFila(id) {
+    const tr = document.createElement('tr');
+    tr.id = `r-${id}`;
+    tr.className = "hover:bg-zinc-900/50 transition-colors";
+    tr.innerHTML = `
+      <td class="p-3 border-r border-zinc-900">
+        <span class="font-bold text-white">#${id}</span>
+        <div id="idf-${id}" class="text-[8px] text-zinc-600 mt-0.5 tracking-tighter">UUID: SEARCHING...</div>
+      </td>
+      <td class="p-3">
+        <div class="flex justify-center gap-4">
+          <div id="s1-${id}" class="step-indicator" title="Find"></div>
+          <div id="s2-${id}" class="step-indicator" title="Date"></div>
+          <div id="s3-${id}" class="step-indicator" title="Prefix"></div>
+          <div id="s4-${id}" class="step-indicator" title="Push"></div>
+        </div>
+      </td>
+      <td class="p-3 text-right border-l border-zinc-900 font-bold">
+        <span id="msg-${id}" class="text-zinc-600 italic">STANDBY</span>
+      </td>
+    `;
+    document.getElementById('resultsTableBody').prepend(tr);
+  }
+
+  function updateStep(id, step, status) {
+    const dot = document.getElementById(`s${step}-${id}`);
+    if(dot) {
+      dot.className = `step-indicator ${status === 'active' ? 'step-active' : status === 'done' ? 'step-done' : 'step-error'}`;
     }
+  }
 
-    function createRow(admision) {
-        const tr = document.createElement('tr');
-        tr.className = 'fade-in hover:bg-slate-50 transition-colors';
-        tr.id = `row-${admision}`;
-        tr.innerHTML = `
-            <td class="px-4 py-4 font-mono font-bold text-slate-700">${admision}</td>
-            <td class="px-4 py-4 text-slate-500" id="idF-${admision}">-</td>
-            <td class="px-4 py-4 font-medium text-sky-700" id="numF-${admision}">-</td>
-            <td class="px-4 py-4"><div id="status-${admision}" class="text-xs flex flex-wrap gap-1"><span class="text-slate-400 italic">Esperando...</span></div></td>
-            <td class="px-4 py-4 text-center"><button onclick="this.closest('tr').remove()" class="text-slate-300 hover:text-red-500">✕</button></td>
-        `;
-        tableBody.prepend(tr);
-    }
+  document.getElementById('ejecutarBtn').addEventListener('click', async () => {
+    const rawText = document.getElementById('admisionLista').value;
+    const list = limpiarLista(rawText);
+    const fechaDirecta = document.getElementById('fechaInput').value.trim();
+    const inst = document.getElementById('selInstitucion').value;
+    const btn = document.getElementById('ejecutarBtn');
 
-    function addBadge(admision, text, theme) {
-        const container = document.getElementById(`status-${admision}`);
-        if (container.querySelector('span.italic')) container.innerHTML = '';
-        const themes = {
-            success: 'bg-green-100 text-green-700 border-green-200',
-            info: 'bg-blue-100 text-blue-700 border-blue-200',
-            error: 'bg-red-100 text-red-700 border-red-200',
-            process: 'bg-sky-50 text-sky-700 border-sky-100'
-        };
-        const span = document.createElement('span');
-        span.className = `px-2 py-0.5 rounded border text-[10px] font-bold uppercase badge-animate ${themes[theme]}`;
-        span.innerText = text;
-        container.appendChild(span);
-    }
-
-    async function processInvoice(admision, idInstitucion, nuevaFecha) {
-        const idFacturaCell = document.getElementById(`idF-${admision}`);
-        const numFacturaCell = document.getElementById(`numF-${admision}`);
+    if (!list.length) return alert("EMPTY_STREAM: No se detectaron números");
+    
+    btn.disabled = true;
+    btn.innerText = "BUSY_PROCESS...";
+    
+    for (let i = 0; i < list.length; i++) {
+        const idAdm = list[i];
+        crearFila(idAdm);
         
         try {
-            // 0. BUSCAR FACTURA
-            addBadge(admision, 'Buscando...', 'process');
-            const resSearch = await fetch(`${API_BASE}/buscarFactura?numero=${admision}&idInstitucion=${idInstitucion}`, { method: 'POST' });
-            const dataSearch = await resSearch.json();
-
-            if (!dataSearch.ok || !dataSearch.idFactura) throw new Error("No existe");
+            // STEP 1: SEARCH
+            updateStep(idAdm, 1, 'active');
+            const resS = await fetch(`${API_BASE}/buscarFactura?numero=${idAdm}&idInstitucion=${inst}`, { method: 'POST' });
+            const dataS = await resS.json();
+            if(!dataS.ok) throw new Error("NOT_FOUND");
             
-            const idFactura = dataSearch.idFactura;
-            idFacturaCell.innerText = idFactura;
-            addBadge(admision, 'ID: OK', 'info');
+            const idFactura = dataS.idFactura;
+            document.getElementById(`idf-${idAdm}`).innerText = `UUID: ${idFactura}`;
+            updateStep(idAdm, 1, 'done');
 
-            // 1. CAMBIAR FECHA
-            if (document.getElementById('chkCambiar').checked) {
-                if (!nuevaFecha) throw new Error("Falta fecha");
-                const resDate = await fetch(`${API_BASE}/cambiar-fecha`, {
+            // STEP 2: DATE
+            if(document.getElementById('chkCambiar').checked) {
+                updateStep(idAdm, 2, 'active');
+                await fetch(`${API_BASE}/cambiar-fecha`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ idFactura: idFactura, fechaEmision: nuevaFecha })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ idFactura, fechaEmision: fechaDirecta })
                 });
-                const dataDate = await resDate.json();
-                if (dataDate.ok) addBadge(admision, 'Fecha OK', 'success');
+                updateStep(idAdm, 2, 'done');
             }
 
-            // 2. GENERAR NÚMERO
-            if (document.getElementById('chkGenerar').checked) {
-                const resNum = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${idInstitucion}`);
-                const dataNum = await resNum.json();
-                if (dataNum.resultado && dataNum.resultado.numeroFactura) {
-                    numFacturaCell.innerText = dataNum.resultado.numeroFactura;
-                    addBadge(admision, `Fact: ${dataNum.resultado.numeroFactura}`, 'success');
+            // STEP 3: PREFIX (Smart Validation)
+            if(document.getElementById('chkGenerar').checked) {
+                updateStep(idAdm, 3, 'active');
+                const resG = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${inst}`);
+                const dataG = await resG.json();
+                
+                if(dataG.resultado?.valorRetorno === -1 && dataG.resultado.mensajeRetorno.includes("no se puede cambiae el número")) {
+                    document.getElementById(`msg-${idAdm}`).innerText = "ALREADY_SIGNED";
+                } else if(dataG.resultado?.numeroFactura) {
+                    document.getElementById(`msg-${idAdm}`).innerText = dataG.resultado.numeroFactura;
+                } else {
+                    throw new Error("GEN_ERR");
                 }
+                updateStep(idAdm, 3, 'done');
             }
 
-            // 3. ENVIAR DIAN
-            if (document.getElementById('chkEnviar').checked) {
-                const resDian = await fetch(`${API_BASE}/EnviarDian`, {
+            // STEP 4: DIAN
+            if(document.getElementById('chkEnviar').checked) {
+                updateStep(idAdm, 4, 'active');
+                await fetch(`${API_BASE}/EnviarDian`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ idFacturas: idFactura.toString() })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ idFacturas: idFactura })
                 });
-                const dataDian = await resDian.json();
-                if (dataDian.valorRetorno === 1) addBadge(admision, 'DIAN OK', 'success');
-                else throw new Error(dataDian.mensajeRetorno || "Error DIAN");
+                updateStep(idAdm, 4, 'done');
             }
 
-        } catch (err) {
-            addBadge(admision, err.message, 'error');
+            const msgEl = document.getElementById(`msg-${idAdm}`);
+            msgEl.classList.replace('text-zinc-600', 'text-white');
+            if(msgEl.innerText === 'STANDBY') msgEl.innerText = "DONE";
+
+        } catch (e) {
+            document.getElementById(`msg-${idAdm}`).innerText = e.message;
+            document.getElementById(`msg-${idAdm}`).className = "text-red-500 italic";
+            for(let s=1; s<=4; s++) {
+                const d = document.getElementById(`s${s}-${idAdm}`);
+                if(!d.classList.contains('step-done')) updateStep(idAdm, s, 'error');
+            }
         }
+
+        const pct = Math.round(((i + 1) / list.length) * 100);
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('progressPct').innerText = pct + '%';
+        document.getElementById('summary').innerText = `EXECUTING_${i+1}_OF_${list.length}`;
     }
 
-    btnEjecutar.addEventListener('click', async () => {
-        const lineas = txtAdmisiones.value.split('\n').map(l => l.trim()).filter(l => l !== "");
-        if (lineas.length === 0) return notify("Lista vacía", "error");
-
-        const idInst = selInstitucion.value;
-        const fecha = inputFecha.value;
-
-        btnEjecutar.classList.add('processing');
-        btnEjecutar.innerText = "Procesando...";
-
-        let count = 0;
-        for (const adm of lineas) {
-            createRow(adm);
-            await processInvoice(adm, idInst, fecha);
-            count++;
-            const pct = Math.round((count / lineas.length) * 100);
-            progressBar.style.width = pct + '%';
-            progressPct.innerText = pct + '%';
-        }
-
-        btnEjecutar.classList.remove('processing');
-        btnEjecutar.innerText = "Ejecutar Procesamiento";
-        notify(`Terminado: ${count} registros.`);
-    });
-
-    btnLimpiar.addEventListener('click', () => {
-        txtAdmisiones.value = "";
-        inputFecha.value = "";
-    });
-
-    btnVaciar.addEventListener('click', () => {
-        tableBody.innerHTML = "";
-        progressBar.style.width = '0%';
-        progressPct.innerText = '0%';
-    });
-});
+    btn.disabled = false;
+    btn.innerText = "EXECUTE_SEQUENCE";
+    document.getElementById('summary').innerText = "SEQUENCE_TERMINATED";
+  });
 </script>
 
 </body>

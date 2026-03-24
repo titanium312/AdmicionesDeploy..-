@@ -2,9 +2,22 @@
 const axios = require('axios');
 const querystring = require('querystring');
 
-// POST /facturas/cambiar-fecha
-// Recibe: { idFactura: "5607145", fechaEmision: "11/01/2025" }
-// Envia la fecha tal cual: "11/01/2025"
+/**
+ * Convierte una fecha de YYYY/MM/DD a MM/DD/YYYY
+ * @param {string} fechaStr - Ejemplo: "2026/03/24"
+ * @returns {string} - Ejemplo: "03/24/2026"
+ */
+function formatearFechaParaAPI(fechaStr) {
+  if (!fechaStr) return "";
+  // Reemplazamos guiones por slashes por si acaso y dividimos
+  const partes = fechaStr.replace(/-/g, '/').split('/');
+  
+  if (partes.length !== 3) return fechaStr; // Retorna original si no tiene el formato esperado
+
+  const [anio, mes, dia] = partes;
+  return `${mes}/${dia}/${anio}`;
+}
+
 async function cambiarFechaEmision(req, res) {
   try {
     const { idFactura, fechaEmision } = req.body;
@@ -16,14 +29,13 @@ async function cambiarFechaEmision(req, res) {
       });
     }
 
-    // NO convertir fecha → se envía tal cual
-    const fechaFormateada = fechaEmision;
+    // TRANSFORMACIÓN: De "2026/03/24" a "03/24/2026"
+    const fechaFormateada = formatearFechaParaAPI(fechaEmision);
 
-    const uri =
-      "https://balance.saludplus.co/facturasAdministar/cambiarfechaEmisionAccion";
+    const uri = "https://balance.saludplus.co/facturasAdministar/cambiarfechaEmisionAccion";
 
     const body = querystring.stringify({
-      idFacturas: idFactura.trim(), // Se limpia espacio accidental
+      idFacturas: idFactura.toString().trim(), 
       fechaEmision: fechaFormateada,
     });
 
@@ -40,7 +52,8 @@ async function cambiarFechaEmision(req, res) {
       ok: true,
       data,
       debug: {
-        fechaEnviada: fechaFormateada,
+        fechaRecibida: fechaEmision, // 2026/03/24
+        fechaEnviada: fechaFormateada, // 03/24/2026
       },
     });
   } catch (error) {
