@@ -8,16 +8,30 @@ const { BatAuto } = require('./descargar/descargar');
 
 const {ConsultaIdIntermedio}  = require('./Controller/Base/ids/ConsultaIdIntermedio');
 
+
+
+
+
+
+
+
 // AMICIONES -----------------------------------------------------------
 const { cambiarFechaEmision  } = require('./Controller/otro/Admiciones/cambiarF');
 const { NumeroFactura  } = require('./Controller/otro/Admiciones/generarNumeroFactura');
 const { EnviarADian } = require('./Controller/otro/Admiciones/EnviarAdian');
-const { buscarFacturaDb } = require('./Controller/otro/Admiciones/BuscarDB');
+const { buscarFactura } = require('./Controller/otro/Admiciones/buscarFactura');
+
+
+
 
 // LABORATORIO -----------------------------------------------------------
 const { DescargarLaboratorio,DescargarLaboratorioTest } = require('./Controller/otro/LABORATORIO/laboratorio');
 const { buscarPaciente } = require('./Controller/otro/LABORATORIO/herramientas/buscarPaciente');
 const { buscarFechaNacimiento } = require('./Controller/otro/LABORATORIO/herramientas/BuscarPacienteFecha');
+
+
+
+
 //Router<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // AUDITORIA -----------------------------------------------------------
@@ -26,11 +40,17 @@ router.post('/descargar', BatAuto);
 router.post('/ConsultaIdIntermedio', ConsultaIdIntermedio);
 
 
+
+
+
 // AMICIONES -----------------------------------------------------------
 router.post('/cambiar-fecha', cambiarFechaEmision);
 router.get('/GenerarNumeroFactura', NumeroFactura);
 router.post('/EnviarDian', EnviarADian);
-router.post('/BuscarIdFacturaDb', buscarFacturaDb);
+router.post('/buscarFactura', buscarFactura);
+
+
+
 
 
 // LABORATORIO -----------------------------------------------------------

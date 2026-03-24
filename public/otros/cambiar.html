@@ -5,15 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gestión de Facturas — Multi Admisiones</title>
 
-  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; }
-    .overlay { backdrop-filter: blur(2px); background-color: rgba(0,0,0,0.32); }
     table { border-collapse: separate; border-spacing: 0; }
 
-    /* Animaciones mejoradas */
     .fade-in {
       animation: fadeIn 0.35s ease-out forwards;
     }
@@ -22,10 +19,11 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Efecto de pulso para botones activos */
     .processing {
       position: relative;
       overflow: hidden;
+      pointer-events: none;
+      opacity: 0.7;
     }
     .processing::after {
       content: '';
@@ -41,13 +39,12 @@
       to { left: 100%; }
     }
 
-    /* Spinner para botones */
     .spinner {
       display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(14, 165, 233, 0.2);
+      border-top-color: #0ea5e9;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -55,47 +52,23 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Efecto de éxito */
-    .success-pulse {
-      animation: successPulse 0.6s ease-out;
-    }
-    @keyframes successPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-
-    /* Gradiente sutil en header */
     .header-gradient {
       background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
       border-bottom: 1px solid #e2e8f0;
     }
 
-    /* Sombras mejoradas */
     .card-shadow {
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-      transition: box-shadow 0.3s ease;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
     }
     .card-shadow:hover {
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    /* Transiciones suaves */
-    button, input, select, textarea {
-      transition: all 0.2s ease;
-    }
-
-    /* Efecto de hover mejorado */
-    .hover-lift:hover {
-      transform: translateY(-1px);
-    }
-
-    /* Barra de progreso animada */
     .progress-bar {
       transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Badge con animación */
     .badge-animate {
       animation: badgePop 0.3s ease-out;
     }
@@ -104,51 +77,28 @@
       100% { transform: scale(1); opacity: 1; }
     }
 
-    /* Efecto ripple para filas de tabla */
-    .table-row {
-      transition: background-color 0.2s ease;
-    }
-    .table-row:hover {
-      background-color: #f8fafc;
-    }
-
-    /* Toast notification */
     .toast {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      padding: 16px 24px;
+      padding: 12px 20px;
       border-radius: 8px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      color: white;
+      font-size: 14px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
       animation: toastSlide 0.3s ease-out;
       z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
     }
     @keyframes toastSlide {
       from { transform: translateX(400px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-    .toast-exit {
-      animation: toastExit 0.3s ease-out forwards;
-    }
-    @keyframes toastExit {
-      to { transform: translateX(400px); opacity: 0; }
-    }
-
-    /* Input focus mejorado */
-    input:focus, select:focus, textarea:focus {
-      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-      border-color: #0ea5e9;
-    }
-
-    /* Checkbox personalizado */
-    input[type="checkbox"]:checked {
-      background-color: #0ea5e9;
-      border-color: #0ea5e9;
-    }
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 min-h-screen">
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 min-h-screen pb-20">
 
 <div class="max-w-6xl mx-auto p-6">
 
@@ -157,600 +107,250 @@
     <div>
       <h1 class="text-3xl font-bold text-slate-900 mb-2">Gestión de Facturas</h1>
       <p class="text-sm text-slate-600">
-        <span class="inline-flex items-center gap-2">
-          <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-          Flujo automatizado: <span class="font-medium text-slate-700">Cambiar fecha → Generar número → Enviar a DIAN</span>
-        </span>
+        Flujo: <span class="font-medium text-slate-700">Buscar → Cambiar Fecha → Generar → DIAN</span>
       </p>
     </div>
     <div class="hidden md:flex items-center gap-2 px-4 py-2 bg-sky-50 rounded-lg border border-sky-100">
-      <div class="w-2 h-2 bg-sky-500 rounded-full animate-pulse"></div>
-      <span class="text-sm font-medium text-sky-700">Sistema activo</span>
+      <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+      <span id="hostIndicator" class="text-sm font-medium text-sky-700 font-mono">Cargando servidor...</span>
     </div>
   </div>
 </header>
 
 <main class="grid gap-6">
 
-<!-- ENTRADAS -->
-<section class="bg-white rounded-xl shadow-sm p-6 card-shadow">
-  <div class="flex items-center gap-2 mb-5">
-    <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-    </svg>
-    <h2 class="text-xl font-semibold text-slate-900">Configuración de entrada</h2>
-  </div>
-
-  <!-- SELECT DE INSTITUCIÓN -->
-  <div class="bg-gradient-to-r from-slate-50 to-white border border-slate-200 rounded-lg p-5 mb-5 hover:border-slate-300 transition-colors">
-
-    <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3">
-      <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-      </svg>
-      Selecciona institución
-    </label>
-
-    <select id="selInstitucion"
-      class="w-full max-w-md rounded-lg border-2 border-slate-200 p-3 bg-white hover:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 cursor-pointer">
-
-      <option value="20">
-        🏥 ESE HOSPITAL SAN JORGE AYAPEL (ID: 20)
-      </option>
-
-      <option value="14">
-        🏥 CENTRO DE SALUD SAN JOSE DE TOLUVIEJO ESE (ID: 14)
-      </option>
-
-    </select>
-
-    <p class="text-xs text-slate-500 mt-3 flex items-start gap-2">
-      <svg class="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-      </svg>
-      <span>Este valor se enviará como <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">idInstitucion</code> en las peticiones de API</span>
-    </p>
-  </div>
-
-  <div class="space-y-4">
-    <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
-      <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-      </svg>
-      Lista de números de admisión
-    </label>
-
-    <textarea id="admisionLista"
-      class="w-full rounded-lg border-2 border-slate-200 p-4 h-36 placeholder-slate-400 mono hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 resize-none"
-      placeholder="178947
-178849
-178989"></textarea>
-    <p class="text-xs text-slate-500">💡 Ingresa un número de admisión por línea</p>
-  </div>
-
-  <div class="mt-6 grid md:grid-cols-2 gap-6">
-
-    <div class="space-y-2">
-      <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
-        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-        Nueva fecha de emisión
-      </label>
-      <input id="fechaInput"
-        class="w-full rounded-lg border-2 border-slate-200 p-3 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400"
-        placeholder="19/11/2025" />
-      <p class="text-xs text-slate-500 flex items-center gap-1">
-        <span class="text-amber-500">⚠️</span>
-        Formato: <code class="bg-slate-100 px-1.5 py-0.5 rounded">dd/mm/yyyy</code> (se convertirá a MM/DD/YYYY)
-      </p>
-    </div>
-
-    <div class="space-y-3">
-      <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
-        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-        </svg>
-        Acciones a realizar
-      </label>
+  <section class="bg-white rounded-xl shadow-sm p-6 card-shadow">
+    <div class="grid md:grid-cols-2 gap-8">
       
-      <div class="space-y-2 bg-slate-50 rounded-lg p-4 border border-slate-200">
+      <div class="space-y-5">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Institución</label>
+          <select id="selInstitucion" class="w-full rounded-lg border-2 border-slate-200 p-3 bg-white focus:border-sky-400 outline-none">
+            <option value="20">🏥 ESE HOSPITAL SAN JORGE AYAPEL (ID: 20)</option>
+            <option value="14">🏥 CENTRO DE SALUD SAN JOSE DE TOLUVIEJO (ID: 14)</option>
+          </select>
+        </div>
 
-        <label class="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors group">
-          <input id="chkCambiar" type="checkbox" class="h-5 w-5 rounded border-slate-300 cursor-pointer" />
-          <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900 flex items-center gap-2">
-            <span class="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-xs font-bold">1</span>
-            Cambiar fecha de emisión
-          </span>
-        </label>
-
-        <label class="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors group">
-          <input id="chkGenerar" type="checkbox" class="h-5 w-5 rounded border-slate-300 cursor-pointer" />
-          <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900 flex items-center gap-2">
-            <span class="w-6 h-6 flex items-center justify-center bg-green-100 text-green-600 rounded-full text-xs font-bold">2</span>
-            Generar número de factura
-          </span>
-        </label>
-
-        <label class="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors group">
-          <input id="chkEnviar" type="checkbox" class="h-5 w-5 rounded border-slate-300 cursor-pointer" />
-          <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900 flex items-center gap-2">
-            <span class="w-6 h-6 flex items-center justify-center bg-purple-100 text-purple-600 rounded-full text-xs font-bold">3</span>
-            Enviar a DIAN
-          </span>
-        </label>
-
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Números de Admisión (uno por línea)</label>
+          <textarea id="admisionLista" class="w-full rounded-lg border-2 border-slate-200 p-4 h-40 mono text-sm focus:border-sky-400 outline-none resize-none" placeholder="39842&#10;178947"></textarea>
+        </div>
       </div>
-      <p class="text-xs text-slate-500 flex items-center gap-1">
-        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-        </svg>
-        Las acciones se ejecutan en orden secuencial
-      </p>
+
+      <div class="space-y-5">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Nueva Fecha (DD/MM/YYYY)</label>
+          <input id="fechaInput" type="text" class="w-full rounded-lg border-2 border-slate-200 p-3 focus:border-sky-400 outline-none" placeholder="19/11/2025" />
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones Secuenciales</p>
+          <label class="flex items-center gap-3 cursor-pointer group">
+            <input id="chkCambiar" type="checkbox" class="h-5 w-5 rounded border-slate-300 text-sky-600" checked />
+            <span class="text-sm font-medium text-slate-700">1. Cambiar fecha de emisión</span>
+          </label>
+          <label class="flex items-center gap-3 cursor-pointer group">
+            <input id="chkGenerar" type="checkbox" class="h-5 w-5 rounded border-slate-300 text-sky-600" />
+            <span class="text-sm font-medium text-slate-700">2. Generar número de factura</span>
+          </label>
+          <label class="flex items-center gap-3 cursor-pointer group">
+            <input id="chkEnviar" type="checkbox" class="h-5 w-5 rounded border-slate-300 text-sky-600" />
+            <span class="text-sm font-medium text-slate-700">3. Enviar a DIAN</span>
+          </label>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="mt-6 flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-200">
-    <div class="flex flex-wrap gap-3">
-      <button id="ejecutarBtn"
-        class="px-6 py-3 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-700 hover:to-sky-600 text-white rounded-lg shadow-md hover:shadow-lg font-medium flex items-center gap-2 hover-lift">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span id="btnText">Ejecutar acciones</span>
+    <div class="mt-8 flex flex-wrap gap-3 pt-6 border-t border-slate-100">
+      <button id="ejecutarBtn" class="px-8 py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow-md font-bold flex items-center gap-2 transition-all active:scale-95">
+        Ejecutar Procesamiento
       </button>
-
-      <button id="limpiarBtn"
-        class="px-6 py-3 border-2 border-slate-300 hover:border-slate-400 rounded-lg text-slate-700 hover:bg-slate-50 font-medium flex items-center gap-2 hover-lift">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        Limpiar
+      <button id="limpiarBtn" class="px-6 py-3 border-2 border-slate-200 hover:bg-slate-50 rounded-lg text-slate-600 font-medium">
+        Limpiar campos
       </button>
-
-      <button id="vaciarTablaBtn"
-        class="px-6 py-3 border-2 border-red-200 hover:border-red-300 text-red-600 hover:bg-red-50 rounded-lg font-medium flex items-center gap-2 hover-lift">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-        </svg>
+      <button id="vaciarTablaBtn" class="px-6 py-3 border-2 border-red-100 text-red-500 hover:bg-red-50 rounded-lg font-medium ml-auto">
         Vaciar tabla
       </button>
     </div>
+  </section>
 
-    <div class="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg">
-      <div id="statusIndicator" class="w-2 h-2 bg-slate-400 rounded-full"></div>
-      <span id="summary" class="text-sm font-medium text-slate-700">Listo para procesar</span>
+  <section class="bg-white rounded-xl shadow-sm p-6 card-shadow">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold text-slate-800">Progreso y Resultados</h3>
+      <span id="progressPct" class="text-sm font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full">0%</span>
     </div>
-  </div>
-</section>
-
-<!-- PROGRESO Y TABLA -->
-<section class="bg-white rounded-xl shadow-sm p-6 card-shadow">
-  <div class="flex items-center justify-between mb-4">
-    <div class="flex items-center gap-2">
-      <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-      </svg>
-      <h3 class="text-xl font-semibold text-slate-900">Progreso y resultados</h3>
-    </div>
-    <div class="flex items-center gap-2 px-3 py-1.5 bg-sky-50 rounded-lg border border-sky-100">
-      <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-      </svg>
-      <span id="progressPct" class="text-sm font-bold text-sky-700">0%</span>
-    </div>
-  </div>
-
-  <div class="mt-3 bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner">
-    <div id="progressBar" class="h-4 bg-gradient-to-r from-sky-500 to-sky-400 progress-bar shadow-sm" style="width:0%"></div>
-  </div>
-
-  <div class="mt-6">
-    <div class="flex items-center justify-between mb-3">
-      <h4 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
-        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-        </svg>
-        Tabla de resultados
-      </h4>
-      <span id="rowCount" class="text-xs text-slate-500 px-2 py-1 bg-slate-100 rounded">0 registros</span>
+    
+    <div class="w-full bg-slate-100 rounded-full h-3 mb-6 overflow-hidden">
+      <div id="progressBar" class="h-full bg-sky-500 progress-bar" style="width: 0%"></div>
     </div>
 
-    <div class="overflow-auto border-2 border-slate-100 rounded-lg max-h-96">
-      <table class="min-w-full text-sm">
-        <thead class="bg-gradient-to-r from-slate-100 to-slate-50 sticky top-0 z-10">
-          <tr class="text-slate-700">
-            <th class="px-4 py-3 text-left font-semibold border-b-2 border-slate-200">Admisión</th>
-            <th class="px-4 py-3 text-left font-semibold border-b-2 border-slate-200">ID Factura</th>
-            <th class="px-4 py-3 text-left font-semibold border-b-2 border-slate-200">Nº Admisión</th>
-            <th class="px-4 py-3 text-left font-semibold border-b-2 border-slate-200">Nº Factura</th>
-            <th class="px-4 py-3 text-left font-semibold border-b-2 border-slate-200">Acciones</th>
-            <th class="px-4 py-3 text-left font-semibold border-b-2 border-slate-200">Estado</th>
-            <th class="px-4 py-3 text-center font-semibold border-b-2 border-slate-200">Opciones</th>
+    <div class="overflow-x-auto border border-slate-100 rounded-lg">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 text-slate-600 font-semibold">
+          <tr>
+            <th class="px-4 py-3 border-b">Admisión</th>
+            <th class="px-4 py-3 border-b">ID Factura</th>
+            <th class="px-4 py-3 border-b">Nº Factura</th>
+            <th class="px-4 py-3 border-b">Estado / Pasos</th>
+            <th class="px-4 py-3 border-b text-center">Acción</th>
           </tr>
         </thead>
-        <tbody id="resultsTableBody" class="bg-white divide-y divide-slate-100"></tbody>
+        <tbody id="resultsTableBody" class="divide-y divide-slate-50"></tbody>
       </table>
     </div>
-  </div>
-</section>
+  </section>
 
 </main>
 </div>
 
-<!-- Toast Container -->
 <div id="toastContainer"></div>
 
 <script>
-/* ================= CONFIG ================= */
-const BASE = "https://total-oeyx.onrender.com";
-const API_BUSCAR_SSEARCH = `${BASE}/BuscarIdFactura`;
+document.addEventListener('DOMContentLoaded', () => {
+    // Referencias
+    const btnEjecutar = document.getElementById('ejecutarBtn');
+    const btnLimpiar = document.getElementById('limpiarBtn');
+    const btnVaciar = document.getElementById('vaciarTablaBtn');
+    const txtAdmisiones = document.getElementById('admisionLista');
+    const inputFecha = document.getElementById('fechaInput');
+    const selInstitucion = document.getElementById('selInstitucion');
+    const tableBody = document.getElementById('resultsTableBody');
+    const progressBar = document.getElementById('progressBar');
+    const progressPct = document.getElementById('progressPct');
+    const hostIndicator = document.getElementById('hostIndicator');
 
-/* ================= ELEMENTOS ================= */
-const admisionListaEl = document.getElementById('admisionLista');
-const fechaInputEl = document.getElementById('fechaInput');
-const chkCambiarEl = document.getElementById('chkCambiar');
-const chkGenerarEl = document.getElementById('chkGenerar');
-const chkEnviarEl = document.getElementById('chkEnviar');
-const ejecutarBtn = document.getElementById('ejecutarBtn');
-const btnText = document.getElementById('btnText');
-const limpiarBtn = document.getElementById('limpiarBtn');
-const vaciarTablaBtn = document.getElementById('vaciarTablaBtn');
-const selInstitucion = document.getElementById('selInstitucion');
+    // DINÁMICO: Toma la URL de donde se cargó el archivo
+    const API_BASE = window.location.origin; 
+    hostIndicator.innerText = `Servidor: ${API_BASE}`;
 
-const resultsBody = document.getElementById('resultsTableBody');
-const progressBar = document.getElementById('progressBar');
-const progressPct = document.getElementById('progressPct');
-const summary = document.getElementById('summary');
-const statusIndicator = document.getElementById('statusIndicator');
-const rowCount = document.getElementById('rowCount');
-const toastContainer = document.getElementById('toastContainer');
-
-/* ================= UTIL ================= */
-function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
-
-function setProgress(p){
-  progressBar.style.width = p + "%";
-  progressPct.textContent = Math.round(p) + "%";
-}
-
-function updateRowCount() {
-  const count = resultsBody.children.length;
-  rowCount.textContent = `${count} registro${count !== 1 ? 's' : ''}`;
-}
-
-function showToast(message, type = 'info') {
-  const toast = document.createElement('div');
-  const colors = {
-    success: 'bg-green-500 text-white',
-    error: 'bg-red-500 text-white',
-    info: 'bg-blue-500 text-white',
-    warning: 'bg-amber-500 text-white'
-  };
-  
-  const icons = {
-    success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>'
-  };
-  
-  toast.className = `toast ${colors[type]} flex items-center gap-3 font-medium`;
-  toast.innerHTML = `${icons[type]} <span>${message}</span>`;
-  toastContainer.appendChild(toast);
-  
-  setTimeout(() => {
-    toast.classList.add('toast-exit');
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
-}
-
-function setButtonProcessing(isProcessing) {
-  if (isProcessing) {
-    ejecutarBtn.classList.add('processing');
-    btnText.innerHTML = '<span class="spinner"></span> Procesando...';
-    ejecutarBtn.disabled = true;
-    statusIndicator.classList.remove('bg-slate-400');
-    statusIndicator.classList.add('bg-sky-500', 'animate-pulse');
-  } else {
-    ejecutarBtn.classList.remove('processing');
-    btnText.textContent = 'Ejecutar acciones';
-    ejecutarBtn.disabled = false;
-    statusIndicator.classList.remove('bg-sky-500', 'animate-pulse');
-    statusIndicator.classList.add('bg-green-500');
-    setTimeout(() => {
-      statusIndicator.classList.remove('bg-green-500');
-      statusIndicator.classList.add('bg-slate-400');
-    }, 2000);
-  }
-}
-
-function convertirFechaDDMMaMMDD(fecha) {
-  const partes = fecha.split("/");
-  if (partes.length !== 3) return null;
-  const [dd, mm, yyyy] = partes.map(p => p.trim());
-  return `${mm}/${dd}/${yyyy}`;
-}
-
-/* ================= BUSCAR FACTURA (CON SELECT) ================= */
-async function buscarPorAdmision(num) {
-  const idInst = selInstitucion.value;
-
-  const res = await fetch(API_BUSCAR_SSEARCH, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sSearch: num,
-      idInstitucion: Number(idInst)
-    })
-  });
-
-  if (!res.ok) throw new Error(`BuscarIdFactura HTTP ${res.status}`);
-
-  const json = await res.json();
-
-  return {
-    idFactura: String(json.id || ""),
-    numeroAdmision: String(json.numero || num),
-    numeroFactura: null,
-    institucion: Number(idInst),
-    raw: json
-  };
-}
-
-/* ================= ACCIONES ================= */
-async function accionCambiarFecha(idFactura, fechaDDMMYYYY) {
-  const fecha = convertirFechaDDMMaMMDD(fechaDDMMYYYY);
-  if (!fecha) return { ok:false, mensaje:"Fecha inválida" };
-
-  const res = await fetch(`${BASE}/cambiar-fecha`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idFactura, fechaEmision: fecha })
-  });
-
-  return await res.json();
-}
-
-async function accionGenerarNumero(idFactura) {
-  const idInst = selInstitucion.value;
-
-  const url =
-   `${BASE}/GenerarNumeroFactura?idFacturas=${encodeURIComponent(idFactura)}&Idinstitucion=${idInst}`;
-
-  const res = await fetch(url);
-  return await res.json();
-}
-
-async function accionEnviarDian(idFactura) {
-  const res = await fetch(`${BASE}/EnviarDian`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idFacturas: idFactura })
-  });
-
-  return await res.json();
-}
-
-/* ================= TABLA ================= */
-function addTableRow({ admision, idFactura, numeroAdmision, numeroFactura, acciones, resultado, level }) {
-
-  const tr = document.createElement('tr');
-  tr.className = 'align-top fade-in table-row';
-
-  const badges = {
-    ok: '<span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Exitoso</span>',
-    err: '<span class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>Error</span>'
-  };
-
-  const color =
-    level === 'ok' ? 'bg-green-50/50' :
-    level === 'err' ? 'bg-red-50/50' : '';
-
-  tr.innerHTML = `
-    <td class="px-4 py-3 ${color}"><span class="font-semibold text-slate-900">${admision}</span></td>
-    <td class="px-4 py-3 ${color} mono text-slate-600">${idFactura || '-'}</td>
-    <td class="px-4 py-3 ${color} text-slate-700">${numeroAdmision || '-'}</td>
-    <td class="px-4 py-3 ${color} font-medium text-slate-900">${numeroFactura || '-'}</td>
-    <td class="px-4 py-3 ${color}"><span class="text-xs text-slate-600">${acciones}</span></td>
-    <td class="px-4 py-3 ${color}">${badges[level] || resultado}</td>
-    <td class="px-4 py-3 ${color} text-center">
-      <button class="text-sm text-red-600 hover:text-red-800 hover:underline font-medium btn-delete flex items-center gap-1 mx-auto">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-        </svg>
-        Eliminar
-      </button>
-    </td>
-  `;
-
-  tr.querySelector('.btn-delete').addEventListener('click', () => {
-    if (confirm(`¿Eliminar registro de admisión ${admision}?`)) {
-      tr.style.opacity = '0';
-      tr.style.transform = 'translateX(-20px)';
-      setTimeout(() => {
-        tr.remove();
-        updateRowCount();
-        showToast('Registro eliminado', 'info');
-      }, 200);
-    }
-  });
-
-  resultsBody.appendChild(tr);
-  updateRowCount();
-}
-
-/* ================= FLUJO PRINCIPAL ================= */
-async function ejecutarAcciones() {
-
-  const listaTexto = admisionListaEl.value.trim();
-  const fecha = fechaInputEl.value.trim();
-
-  const accCambiar = chkCambiarEl.checked;
-  const accGenerar = chkGenerarEl.checked;
-  const accEnviar = chkEnviarEl.checked;
-
-  if (!listaTexto) { 
-    showToast('Por favor ingresa al menos una admisión', 'warning');
-    return; 
-  }
-  if (!accCambiar && !accGenerar && !accEnviar) {
-    showToast('Selecciona al menos una acción a realizar', 'warning');
-    return;
-  }
-
-  const lista = listaTexto
-    .split(/[\n,;]+/)
-    .map(x => x.trim())
-    .filter(x => x);
-
-  setButtonProcessing(true);
-  showToast(`Iniciando procesamiento de ${lista.length} admisión${lista.length !== 1 ? 'es' : ''}...`, 'info');
-
-  const total = lista.length;
-  let done = 0;
-  let exitos = 0;
-  let errores = 0;
-
-  for (const admision of lista) {
-
-    let info;
-    try {
-      info = await buscarPorAdmision(admision);
-    } catch (e) {
-      addTableRow({
-        admision,
-        idFactura:"-",
-        numeroAdmision:"-",
-        numeroFactura:"-",
-        acciones:"Búsqueda",
-        resultado:"Error de conexión",
-        level:"err"
-      });
-      errores++;
-      done++;
-      setProgress(done/total*100);
-      continue;
+    function notify(msg, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type === 'error' ? 'bg-red-500' : 'bg-slate-800'}`;
+        toast.innerText = msg;
+        document.getElementById('toastContainer').appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
     }
 
-    const idFactura = info.idFactura;
-    let numeroFactura = "-";
-    let acciones = [];
-    let resultado = [];
-
-    if (!idFactura) {
-      addTableRow({
-        admision,
-        idFactura:"-",
-        numeroAdmision: info.numeroAdmision,
-        numeroFactura:"-",
-        acciones:"Búsqueda",
-        resultado:"No encontrada",
-        level:"err"
-      });
-      errores++;
-      done++;
-      setProgress(done/total*100);
-      continue;
+    function createRow(admision) {
+        const tr = document.createElement('tr');
+        tr.className = 'fade-in hover:bg-slate-50 transition-colors';
+        tr.id = `row-${admision}`;
+        tr.innerHTML = `
+            <td class="px-4 py-4 font-mono font-bold text-slate-700">${admision}</td>
+            <td class="px-4 py-4 text-slate-500" id="idF-${admision}">-</td>
+            <td class="px-4 py-4 font-medium text-sky-700" id="numF-${admision}">-</td>
+            <td class="px-4 py-4"><div id="status-${admision}" class="text-xs flex flex-wrap gap-1"><span class="text-slate-400 italic">Esperando...</span></div></td>
+            <td class="px-4 py-4 text-center"><button onclick="this.closest('tr').remove()" class="text-slate-300 hover:text-red-500">✕</button></td>
+        `;
+        tableBody.prepend(tr);
     }
 
-    if (accCambiar) {
-      acciones.push("📅 Fecha");
-      await accionCambiarFecha(idFactura, fecha);
-      resultado.push("Fecha: OK");
+    function addBadge(admision, text, theme) {
+        const container = document.getElementById(`status-${admision}`);
+        if (container.querySelector('span.italic')) container.innerHTML = '';
+        const themes = {
+            success: 'bg-green-100 text-green-700 border-green-200',
+            info: 'bg-blue-100 text-blue-700 border-blue-200',
+            error: 'bg-red-100 text-red-700 border-red-200',
+            process: 'bg-sky-50 text-sky-700 border-sky-100'
+        };
+        const span = document.createElement('span');
+        span.className = `px-2 py-0.5 rounded border text-[10px] font-bold uppercase badge-animate ${themes[theme]}`;
+        span.innerText = text;
+        container.appendChild(span);
     }
 
-    if (accGenerar) {
-      acciones.push("🔢 Número");
-      const r = await accionGenerarNumero(idFactura);
-      if (r?.resultado?.numeroFactura !== undefined)
-        numeroFactura = String(r.resultado.numeroFactura);
-      resultado.push("Generar: OK");
+    async function processInvoice(admision, idInstitucion, nuevaFecha) {
+        const idFacturaCell = document.getElementById(`idF-${admision}`);
+        const numFacturaCell = document.getElementById(`numF-${admision}`);
+        
+        try {
+            // 0. BUSCAR FACTURA
+            addBadge(admision, 'Buscando...', 'process');
+            const resSearch = await fetch(`${API_BASE}/buscarFactura?numero=${admision}&idInstitucion=${idInstitucion}`, { method: 'POST' });
+            const dataSearch = await resSearch.json();
+
+            if (!dataSearch.ok || !dataSearch.idFactura) throw new Error("No existe");
+            
+            const idFactura = dataSearch.idFactura;
+            idFacturaCell.innerText = idFactura;
+            addBadge(admision, 'ID: OK', 'info');
+
+            // 1. CAMBIAR FECHA
+            if (document.getElementById('chkCambiar').checked) {
+                if (!nuevaFecha) throw new Error("Falta fecha");
+                const resDate = await fetch(`${API_BASE}/cambiar-fecha`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idFactura: idFactura, fechaEmision: nuevaFecha })
+                });
+                const dataDate = await resDate.json();
+                if (dataDate.ok) addBadge(admision, 'Fecha OK', 'success');
+            }
+
+            // 2. GENERAR NÚMERO
+            if (document.getElementById('chkGenerar').checked) {
+                const resNum = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${idInstitucion}`);
+                const dataNum = await resNum.json();
+                if (dataNum.resultado && dataNum.resultado.numeroFactura) {
+                    numFacturaCell.innerText = dataNum.resultado.numeroFactura;
+                    addBadge(admision, `Fact: ${dataNum.resultado.numeroFactura}`, 'success');
+                }
+            }
+
+            // 3. ENVIAR DIAN
+            if (document.getElementById('chkEnviar').checked) {
+                const resDian = await fetch(`${API_BASE}/EnviarDian`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idFacturas: idFactura.toString() })
+                });
+                const dataDian = await resDian.json();
+                if (dataDian.valorRetorno === 1) addBadge(admision, 'DIAN OK', 'success');
+                else throw new Error(dataDian.mensajeRetorno || "Error DIAN");
+            }
+
+        } catch (err) {
+            addBadge(admision, err.message, 'error');
+        }
     }
 
-    if (accEnviar) {
-      acciones.push("📤 DIAN");
-      await accionEnviarDian(idFactura);
-      resultado.push("DIAN: OK");
-    }
+    btnEjecutar.addEventListener('click', async () => {
+        const lineas = txtAdmisiones.value.split('\n').map(l => l.trim()).filter(l => l !== "");
+        if (lineas.length === 0) return notify("Lista vacía", "error");
 
-    addTableRow({
-      admision,
-      idFactura,
-      numeroAdmision: info.numeroAdmision,
-      numeroFactura,
-      acciones: acciones.join(" • "),
-      resultado: "OK",
-      level: "ok"
+        const idInst = selInstitucion.value;
+        const fecha = inputFecha.value;
+
+        btnEjecutar.classList.add('processing');
+        btnEjecutar.innerText = "Procesando...";
+
+        let count = 0;
+        for (const adm of lineas) {
+            createRow(adm);
+            await processInvoice(adm, idInst, fecha);
+            count++;
+            const pct = Math.round((count / lineas.length) * 100);
+            progressBar.style.width = pct + '%';
+            progressPct.innerText = pct + '%';
+        }
+
+        btnEjecutar.classList.remove('processing');
+        btnEjecutar.innerText = "Ejecutar Procesamiento";
+        notify(`Terminado: ${count} registros.`);
     });
 
-    exitos++;
-    done++;
-    setProgress(done/total*100);
-    summary.textContent = `Procesando: ${done}/${total}`;
-    await sleep(200);
-  }
+    btnLimpiar.addEventListener('click', () => {
+        txtAdmisiones.value = "";
+        inputFecha.value = "";
+    });
 
-  setButtonProcessing(false);
-  setProgress(100);
-  summary.textContent = `✓ Completado: ${exitos} exitoso${exitos !== 1 ? 's' : ''}, ${errores} error${errores !== 1 ? 'es' : ''}`;
-  
-  if (errores === 0) {
-    showToast(`¡Proceso completado! ${exitos} admisión${exitos !== 1 ? 'es' : ''} procesada${exitos !== 1 ? 's' : ''} exitosamente`, 'success');
-  } else {
-    showToast(`Proceso finalizado: ${exitos} exitoso${exitos !== 1 ? 's' : ''}, ${errores} con errores`, 'warning');
-  }
-}
-
-/* ================= EVENTOS ================= */
-ejecutarBtn.addEventListener('click', () => {
-  ejecutarBtn.classList.add('success-pulse');
-  setTimeout(() => ejecutarBtn.classList.remove('success-pulse'), 600);
-  ejecutarAcciones();
+    btnVaciar.addEventListener('click', () => {
+        tableBody.innerHTML = "";
+        progressBar.style.width = '0%';
+        progressPct.innerText = '0%';
+    });
 });
-
-limpiarBtn.addEventListener('click', () => {
-  limpiarBtn.classList.add('success-pulse');
-  setTimeout(() => limpiarBtn.classList.remove('success-pulse'), 600);
-  
-  admisionListaEl.value = "";
-  fechaInputEl.value = "";
-  chkCambiarEl.checked = false;
-  chkGenerarEl.checked = false;
-  chkEnviarEl.checked = false;
-  setProgress(0);
-  summary.textContent = "Listo para procesar";
-  showToast('Formulario limpiado', 'info');
-});
-
-vaciarTablaBtn.addEventListener('click', () => {
-  if (confirm("¿Estás seguro de que deseas vaciar toda la tabla de resultados?")) {
-    vaciarTablaBtn.classList.add('success-pulse');
-    setTimeout(() => vaciarTablaBtn.classList.remove('success-pulse'), 600);
-    
-    resultsBody.innerHTML = "";
-    setProgress(0);
-    updateRowCount();
-    showToast('Tabla vaciada correctamente', 'info');
-  }
-});
-
-// Efectos visuales en inputs
-[admisionListaEl, fechaInputEl, selInstitucion].forEach(el => {
-  el.addEventListener('focus', () => {
-    el.parentElement.classList.add('ring-2', 'ring-sky-200');
-  });
-  el.addEventListener('blur', () => {
-    el.parentElement.classList.remove('ring-2', 'ring-sky-200');
-  });
-});
-
-setProgress(0);
-summary.textContent = "Listo para procesar";
-updateRowCount();
 </script>
 
 </body>
