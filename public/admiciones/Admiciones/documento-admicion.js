@@ -14,8 +14,7 @@ const TIPOS = [
   { code: 'PDX',  name: 'Hoja Adm. de Procedimientos' },
   { code: 'HAM',  name: 'Hoja Adm. de Medicamentos' },
   { code: 'INS',  name: 'Hoja de Gastos/Artículos' },
-  { code: 'HAU',  name: 'Historia Asistencial (Auditoría)' },
-  { code: 'FEV',  name: 'Factura Electrónica' }, // ✅ AGREGADO: Factura Electrónica
+  { code: 'FEV',  name: 'Factura Electrónica' },
 ];
 
 export class AdmicionesArchivos extends LitElement {
@@ -30,6 +29,7 @@ export class AdmicionesArchivos extends LitElement {
     _pct: { type: Number, state: true },
     _msg: { type: String, state: true },
     _error: { type: String, state: true },
+    _sesionStatus: { type: Object, state: true }, // Nuevo: para mostrar estado de sesión
   };
 
   static styles = styles;
@@ -46,12 +46,55 @@ export class AdmicionesArchivos extends LitElement {
     this._pct = 0;
     this._msg = '';
     this._error = '';
+    this._sesionStatus = {
+      tieneToken: false,
+      tieneUsuario: false,
+      tieneIdUsuario: false,
+      tieneInstitucion: false,
+      tieneIdInstitucion: false,
+      detalles: {}
+    };
     this._simTimer = null;
+  }
+
+  updated(changedProperties) {
+    if (changedProperties.has('loginData')) {
+      this._actualizarEstadoSesion();
+    }
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._stopSim();
+  }
+
+  // ---- Método para analizar estado de sesión ----
+  _actualizarEstadoSesion() {
+    const login = this.loginData || {};
+    const usuario = login.usuario || {};
+    const institucion = login.institucion || {};
+    
+    const estado = {
+      tieneToken: !!login.token,
+      tieneUsuario: !!login.usuario,
+      tieneIdUsuario: !!usuario.id_usuario,
+      tieneInstitucion: !!login.institucion,
+      tieneIdInstitucion: !!institucion.idInstitucion,
+      detalles: {
+        token: login.token ? 'Presente' : 'Faltante',
+        usuario: login.usuario ? 'Presente' : 'Faltante',
+        id_usuario: usuario.id_usuario || 'Faltante',
+        institucion: login.institucion ? 'Presente' : 'Faltante',
+        idInstitucion: institucion.idInstitucion || 'Faltante'
+      }
+    };
+    
+    this._sesionStatus = estado;
+    
+    // Si hay error anterior relacionado con sesión, limpiarlo
+    if (this._error && this._error.includes('sesión')) {
+      this._error = '';
+    }
   }
 
   // ---- helpers ----
@@ -69,29 +112,65 @@ export class AdmicionesArchivos extends LitElement {
   _validar() {
     const ids = this._parseIds();
     const idUser = this.loginData?.usuario?.id_usuario;
-    const institucionId = this.loginData?.institucion?.idInstitucion; 
+    const institucionId = this.loginData?.institucion?.idInstitucion;
+    const token = this.loginData?.token;
     const tipos = this._getTiposParaPayload();
 
-    if (!idUser || !institucionId) return { 
+    // Validación detallada de sesión
+    if (!token) return { 
       ok: false, 
-      msg: `Faltan datos de sesión. Usuario: ${idUser ? 'OK' : 'Falta'}, Institución: ${institucionId ? 'OK' : 'Falta'}`
+      msg: '❌ Token de autenticación no disponible. Por favor, inicie sesión nuevamente.'
     };
-    if (ids.length === 0) return { ok: false, msg: 'Ingrese al menos un número de admisión.' };
-    if (!tipos) return { ok: false, msg: 'Seleccione al menos un tipo o "Todos".' };
     
-    return { ok: true, ids, idUser, institucionId, tipos };
+    if (!idUser) return { 
+      ok: false, 
+      msg: '❌ ID de usuario no disponible. Verifique que los datos de sesión sean correctos.'
+    };
+    
+    if (!institucionId) return { 
+      ok: false, 
+      msg: '❌ ID de institución no disponible. Verifique que los datos de sesión sean correctos.'
+    };
+    
+    if (ids.length === 0) { 
+      return { ok: false, msg: '📝 Ingrese al menos un número de admisión.' };
+    }
+    
+    if (!tipos) { 
+      return { ok: false, msg: '📄 Seleccione al menos un tipo de documento o "Todos".' };
+    }
+    
+    return { ok: true, ids, idUser, institucionId, tipos, token };
   }
 
   // ---- progreso simulado ----
   _startSim(msg='Procesando…') {
-    this._cargando = true; this._pct = 0; this._msg = msg; this._stopSim();
+    this._cargando = true; 
+    this._pct = 0; 
+    this._msg = msg; 
+    this._stopSim();
     this._simTimer = setInterval(() => {
       const inc = this._pct < 60 ? 6 : this._pct < 85 ? 3 : 1;
       this._pct = Math.min(90, this._pct + inc);
     }, 160);
   }
-  _finishSim(msg='Listo') { this._msg = msg; this._pct = 100; this._cargando = false; this._stopSim(); }
-  _stopSim() { if (this._simTimer) { clearInterval(this._simTimer); this._simTimer = null; } }
+  
+  _finishSim(msg='Listo') { 
+    this._msg = msg; 
+    this._pct = 100; 
+    this._cargando = false; 
+    this._stopSim();
+    setTimeout(() => {
+      if (this._msg === msg) this._msg = '';
+    }, 2000);
+  }
+  
+  _stopSim() { 
+    if (this._simTimer) { 
+      clearInterval(this._simTimer); 
+      this._simTimer = null; 
+    } 
+  }
 
   // ---- UI ----
   _toggleChip(code) {
@@ -100,6 +179,7 @@ export class AdmicionesArchivos extends LitElement {
     set.has(code) ? set.delete(code) : set.add(code);
     this.tiposSeleccionados = Array.from(set);
   }
+  
   _activarTodos() { 
     this.usarTodos = !this.usarTodos; 
     if (this.usarTodos) this.tiposSeleccionados = []; 
@@ -111,7 +191,9 @@ export class AdmicionesArchivos extends LitElement {
     this.usarTodos = false;
     this.eps = 'NUEVA_EPS';
     this.modalidad = 'evento';
-    this._error = ''; this._pct = 0; this._msg = '';
+    this._error = ''; 
+    this._pct = 0; 
+    this._msg = '';
   };
 
   // ---- red ----
@@ -121,36 +203,36 @@ export class AdmicionesArchivos extends LitElement {
 
     this._error = '';
     const val = this._validar();
-    if (!val.ok) { this._error = val.msg; return; }
-    if (!this.loginData?.token) { this._error = 'Sesión inválida: token no disponible'; return; }
+    if (!val.ok) { 
+      this._error = val.msg; 
+      return; 
+    }
 
-    const { ids, idUser, institucionId, tipos } = val;
+    const { ids, idUser, institucionId, tipos, token } = val;
     
     const payload = {
-      token: this.loginData.token,
+      token: token,
       admisiones: ids,
       institucionId,
       idUser,
       eps: this.eps,
-      tipos: tipos,  // ✅ Ahora envía los códigos correctos (HAU, FEV, etc.)
+      tipos: tipos,
       modalidad: this.modalidad,
-      // ❌ ELIMINADO: includeFactura - ya no es necesario porque la factura viene en tipos
     };
 
     try {
       this._startSim('Generando BAT con documentos seleccionados…');
 
-      // ✅ FETCH DIRECTO AL SERVIDOR USANDO RUTA RELATIVA
       const blob = await this._fetchWithAuth('/descargar', {
         method: 'POST',
         body: payload
       });
 
-      this._finishSim('BAT generado correctamente');
-      this._saveBlob(blob, `descargas-${ids.length}-admisiones.bat`);
+      this._finishSim('✅ BAT generado correctamente');
+      this._saveBlob(blob, `descargas-${ids.length}-admisiones-${Date.now()}.bat`);
     } catch (err) {
       this._error = err?.message || 'No se pudo generar el BAT.';
-      this._finishSim('Error');
+      this._finishSim('❌ Error');
       console.error('[descargarBat] error', err);
     }
   }
@@ -165,8 +247,15 @@ export class AdmicionesArchivos extends LitElement {
 
     const response = await fetch(url, init);
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText || 'Error del servidor'}`);
+      let errorMsg = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.message || errorData.error || errorMsg;
+      } catch {
+        const errorText = await response.text();
+        if (errorText) errorMsg = errorText;
+      }
+      throw new Error(errorMsg);
     }
     return await response.blob();
   }
@@ -174,25 +263,32 @@ export class AdmicionesArchivos extends LitElement {
   _saveBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = filename;
+    a.href = url; 
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  // ---- render ----
+  // ---- Render métodos auxiliares ----
   _renderChips() {
     return html`
       <div class="chips" role="group" aria-label="Tipos de documento">
         ${TIPOS.map(t => html`
-          <button type="button" class="chip" aria-pressed=${this.tiposSeleccionados.includes(t.code)} @click=${() => this._toggleChip(t.code)}>
+          <button type="button" 
+                  class="chip ${this.tiposSeleccionados.includes(t.code) ? 'active' : ''}" 
+                  aria-pressed=${this.tiposSeleccionados.includes(t.code)} 
+                  @click=${() => this._toggleChip(t.code)}>
             <span class="name">${t.name}</span>
             <span class="code">${t.code}</span>
           </button>
         `)}
-        <button type="button" class="chip all" aria-pressed=${this.usarTodos} @click=${this._activarTodos}>
-          <span class="name">Todos los tipos</span>
+        <button type="button" 
+                class="chip all ${this.usarTodos ? 'active' : ''}" 
+                aria-pressed=${this.usarTodos} 
+                @click=${this._activarTodos}>
+          <span class="name">✅ Todos los tipos</span>
         </button>
       </div>
     `;
@@ -202,17 +298,64 @@ export class AdmicionesArchivos extends LitElement {
     if (!this._cargando && this._pct === 0) return null;
     return html`
       <div class="col-12">
-        <div class="progress"><div class="bar" style="--w:${this._pct}%"></div></div>
-        <div class="status"><span>${this._msg}</span><span>${this._pct}%</span></div>
+        <div class="progress">
+          <div class="bar" style="width: ${this._pct}%"></div>
+        </div>
+        <div class="status">
+          <span>${this._msg}</span>
+          <span>${Math.round(this._pct)}%</span>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderSesionStatus() {
+    const { tieneToken, tieneUsuario, tieneIdUsuario, tieneInstitucion, tieneIdInstitucion, detalles } = this._sesionStatus;
+    const todosOk = tieneToken && tieneUsuario && tieneIdUsuario && tieneInstitucion && tieneIdInstitucion;
+    
+    if (todosOk) return null;
+    
+    return html`
+      <div class="col-12 sesion-warning">
+        <div class="warning-header">
+          ⚠️ <strong>Sesión incompleta</strong> - Faltan los siguientes datos:
+        </div>
+        <ul class="warning-list">
+          ${!tieneToken ? html`<li>🔑 Token de autenticación</li>` : ''}
+          ${!tieneUsuario ? html`<li>👤 Objeto usuario</li>` : ''}
+          ${!tieneIdUsuario ? html`<li>🆔 ID de usuario (valor actual: ${detalles.id_usuario})</li>` : ''}
+          ${!tieneInstitucion ? html`<li>🏢 Objeto institución</li>` : ''}
+          ${!tieneIdInstitucion ? html`<li>🏛️ ID de institución (valor actual: ${detalles.idInstitucion})</li>` : ''}
+        </ul>
+        <div class="warning-details">
+          <details>
+            <summary>🔍 Ver detalles completos de sesión</summary>
+            <pre class="debug-data">${JSON.stringify({
+              token: detalles.token,
+              usuario: detalles.usuario,
+              id_usuario: detalles.id_usuario,
+              institucion: detalles.institucion,
+              idInstitucion: detalles.idInstitucion,
+              loginData_completo: this.loginData
+            }, null, 2)}</pre>
+          </details>
+        </div>
+        <div class="warning-action">
+          <button type="button" class="btn small" @click=${this._actualizarEstadoSesion}>
+            🔄 Revisar sesión
+          </button>
+        </div>
       </div>
     `;
   }
 
   render() {
     const ids = this._parseIds();
-    const idUser = this.loginData?.usuario?.id_usuario;
-    const institucionId = this.loginData?.institucion?.idInstitucion;
-    const sesionOk = Boolean(idUser && institucionId && this.loginData?.token);
+    const sesionOk = this._sesionStatus.tieneToken && 
+                     this._sesionStatus.tieneUsuario && 
+                     this._sesionStatus.tieneIdUsuario && 
+                     this._sesionStatus.tieneInstitucion && 
+                     this._sesionStatus.tieneIdInstitucion;
 
     // Verificar si se seleccionó factura electrónica
     const facturaSeleccionada = this.tiposSeleccionados.includes('FEV') || this.usarTodos;
@@ -221,6 +364,15 @@ export class AdmicionesArchivos extends LitElement {
       <div class="wrap">
         <header class="header">
           <h1 class="title">⬇️ Descarga BAT de Admisiones</h1>
+          ${!sesionOk ? html`
+            <div class="sesion-badge">
+              🔴 Sesión incompleta
+            </div>
+          ` : html`
+            <div class="sesion-badge ok">
+              🟢 Sesión válida
+            </div>
+          `}
         </header>
 
         <form class="card" @submit=${this._descargarBat}>
@@ -228,14 +380,18 @@ export class AdmicionesArchivos extends LitElement {
             <div class="col-12">
               <label>
                 Números de admisión
-                <textarea .value=${this.numeros} @input=${e => this.numeros = e.target.value} placeholder="Ej: 123, 456&#10;O varios: 123, 456, 789" rows="3"></textarea>
-                <div class="help">${ids.length} ID(s) detectado(s)</div>
+                <textarea .value=${this.numeros} 
+                          @input=${e => this.numeros = e.target.value} 
+                          placeholder="Ej: 123, 456&#10;O varios: 123, 456, 789" 
+                          rows="3"
+                          ?disabled=${!sesionOk}></textarea>
+                <div class="help">📊 ${ids.length} ID(s) detectado(s)</div>
               </label>
             </div>
 
             <div class="col-4">
               <label> EPS
-                <select .value=${this.eps} @change=${e => this.eps = e.target.value}>
+                <select .value=${this.eps} @change=${e => this.eps = e.target.value} ?disabled=${!sesionOk}>
                   <option value="NUEVA_EPS">NUEVA_EPS</option>
                   <option value="SALUD_TOTAL">SALUD_TOTAL</option>
                   <option value="MUTUALSER">MUTUALSER</option>
@@ -245,7 +401,7 @@ export class AdmicionesArchivos extends LitElement {
 
             <div class="col-4">
               <label> Modalidad
-                <select .value=${this.modalidad} @change=${e => this.modalidad = e.target.value}>
+                <select .value=${this.modalidad} @change=${e => this.modalidad = e.target.value} ?disabled=${!sesionOk}>
                   <option value="evento">Evento</option>
                   <option value="capita">Cápita</option>
                 </select>
@@ -262,21 +418,23 @@ export class AdmicionesArchivos extends LitElement {
               ` : ''}
             </div>
 
+            ${this._renderSesionStatus()}
+
             <div class="col-12 row">
               <button class="btn primary" ?disabled=${this._cargando || !sesionOk} type="submit">
-                ${this._cargando ? 'Generando...' : 'Generar BAT'}
+                ${this._cargando ? '🔄 Generando...' : '📥 Generar BAT'}
               </button>
               <button type="button" class="btn secondary" @click=${this._limpiar} ?disabled=${this._cargando}>
-                Limpiar
+                🧹 Limpiar
               </button>
             </div>
 
             ${this._renderProgreso()}
-            ${this._error ? html`<div class="col-12 err">⚠️ ${this._error}</div>` : null}
             
-            ${!sesionOk ? html`
-              <div class="col-12 warn">
-                ⚠️ Sesión incompleta. Verifique que haya iniciado sesión correctamente.
+            ${this._error ? html`
+              <div class="col-12 error-message">
+                <div class="error-icon">❌</div>
+                <div class="error-text">${this._error}</div>
               </div>
             ` : null}
           </div>

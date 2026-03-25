@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import '../Admiciones/documento-admicion.js';
-import '../Loguin/loguin.js'; // 👈 para poder renderizar el login
+import '../Loguin/loguin.js'; 
 import styles from './main-styles.js';
 
 class Main extends LitElement {
@@ -23,7 +23,6 @@ class Main extends LitElement {
 
   logout() {
     try {
-      // Limpiar ambos storages
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_token_exp');
       localStorage.removeItem('auth_payload_b64');
@@ -35,32 +34,27 @@ class Main extends LitElement {
     } catch (err) {
       console.warn('No se pudo limpiar el almacenamiento', err);
     }
-    this.loginData = null; // 👈 vuelve a null para renderizar el login
+    this.loginData = null;
   }
 
   render() {
-    // Si no hay loginData, mostrar login directamente
     if (!this.loginData) {
       return html`<loguin-main @login-success=${e => this.loginData = e.detail}></loguin-main>`;
     }
 
-    // ACCEDER A LAS PROPIEDADES CORRECTAMENTE según la respuesta del curl
     const usuario = this.loginData?.usuario || {};
     const institucion = this.loginData?.institucion || {};
     
     const nombre = usuario.nombre || 'Usuario invitado';
-    const perfilesUsuario = Array.isArray(usuario.perfiles) 
-      ? usuario.perfiles 
-      : [];
-    const perfilesGenerales = Array.isArray(this.loginData.perfiles)
-      ? this.loginData.perfiles
-      : [];
     
-    // Combinar perfiles (pueden venir de dos lugares diferentes)
+    // USANDO ESPECÍFICAMENTE id_usuario
+    const idUsuario = usuario.id_usuario || 'Sin ID'; 
+
+    const perfilesUsuario = Array.isArray(usuario.perfiles) ? usuario.perfiles : [];
+    const perfilesGenerales = Array.isArray(this.loginData.perfiles) ? this.loginData.perfiles : [];
+    
     const todosPerfiles = [...new Set([...perfilesUsuario, ...perfilesGenerales])];
-    const perfilesTexto = todosPerfiles.length > 0 
-      ? todosPerfiles.join(', ') 
-      : 'Sin perfil asignado';
+    const perfilesTexto = todosPerfiles.length > 0 ? todosPerfiles.join(', ') : 'Sin perfil asignado';
     
     const nombreInstitucion = institucion.nombre || 'Institución no especificada';
     const idInstitucion = institucion.idInstitucion || '';
@@ -73,7 +67,7 @@ class Main extends LitElement {
           <button class="logout-btn" @click=${this.logout}>⎋ Cerrar sesión</button>
         </header>
 
-        ${this._card(nombre, perfilesTexto, nombreInstitucion, idInstitucion)}
+        ${this._card(nombre, perfilesTexto, nombreInstitucion, idInstitucion, idUsuario)}
 
         <section class="section">
           <h3 class="section-title">Módulos de Admisiones</h3>
@@ -85,7 +79,7 @@ class Main extends LitElement {
     `;
   }
 
-  _card(nombre, perfiles, nombreInstitucion, idInstitucion) {
+  _card(nombre, perfiles, nombreInstitucion, idInstitucion, idUsuario) {
     const inicial = this._initial(nombre);
     return html`
       <article class="user-card">
@@ -99,6 +93,7 @@ class Main extends LitElement {
         </div>
         <div class="info-grid">
           ${this._infoItem('👤', 'Nombre completo', nombre)}
+          ${this._infoItem('🆔', 'ID de Usuario', idUsuario)} 
           ${this._infoItem('💼', 'Perfiles asignados', perfiles)}
           ${this._infoItem('🏢', 'Institución', nombreInstitucion)}
           ${idInstitucion ? this._infoItem('🔢', 'ID Institución', idInstitucion) : ''}

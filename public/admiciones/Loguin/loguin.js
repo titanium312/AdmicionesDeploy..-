@@ -1,4 +1,4 @@
-// loguin-main.js — Interfaz de login (corregido con fetch nativo)
+// loguin-main.js — Interfaz de login (corregido)
 import { LitElement, html } from 'lit';
 import '../Main/main.js';
 import styles from './loguin-styles.js';
@@ -109,6 +109,7 @@ class Loguin extends LitElement {
     safeDel(localStorage, KEYS.TOKEN_EXP);
     safeDel(localStorage, KEYS.PAYLOAD_LS);
   }
+  
   #clearSession() {
     safeDel(sessionStorage, SESSION.TOKEN);
     safeDel(sessionStorage, SESSION.PAYLOAD);
@@ -158,11 +159,20 @@ class Loguin extends LitElement {
     this.loading = true;
 
     try {
+        // Validar que los campos no estén vacíos
+        if (!this.username.trim()) {
+          throw new Error('Por favor ingrese su usuario');
+        }
+        if (!this.password) {
+          throw new Error('Por favor ingrese su contraseña');
+        }
+
         // Usamos fetch nativo (API del navegador)
-        const response = await fetch('/Loguin', {
+        const response = await fetch('http://localhost:3000/Loguin', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({ 
                 username: this.username.trim(), 
@@ -178,12 +188,21 @@ class Loguin extends LitElement {
 
         const payload = await response.json();
 
+        // Validar la estructura de la respuesta según tu servidor
         if (!payload || !payload.token) {
             throw new Error('Respuesta inválida del servidor (falta token)');
         }
 
-        // Lógica de éxito
-        this.loginData = payload;
+        // Construir el objeto loginData con la estructura esperada
+        const loginData = {
+            token: payload.token,
+            usuario: payload.usuario,
+            institucion: payload.institucion,
+            // Incluir cualquier otro dato que necesites
+            ...payload
+        };
+        
+        this.loginData = loginData;
         
         this.dispatchEvent(new CustomEvent('login-success', {
             detail: this.loginData, 
@@ -193,7 +212,7 @@ class Loguin extends LitElement {
 
         // Persistencia
         if (storageOK()) {
-            const payloadB64 = b64encode(JSON.stringify(this.loginData));
+            const payloadB64 = b64encode(JSON.stringify(loginData));
             if (this.remember) {
                 const exp = nowMs() + ONE_HOUR_MS;
                 safeSet(localStorage, KEYS.TOKEN_LS, b64encode(payload.token));
@@ -203,7 +222,7 @@ class Loguin extends LitElement {
                 safeSet(localStorage, KEYS.REMEMBER_FLAG, '1');
                 this.#clearSession();
             } else {
-                safeSet(sessionStorage, SESSION.TOKEN, this.loginData.token);
+                safeSet(sessionStorage, SESSION.TOKEN, loginData.token);
                 safeSet(sessionStorage, SESSION.PAYLOAD, payloadB64);
                 this.#clearPersistent();
                 safeSet(localStorage, KEYS.REMEMBER_FLAG, '0');
@@ -211,7 +230,9 @@ class Loguin extends LitElement {
             }
         }
 
-        this.password = ''; 
+        // Limpiar contraseña después del login exitoso
+        this.password = '';
+        
     } catch (err) {
         this.errorMessage = err?.message || 'Login incorrecto o error del servidor';
         console.error('[login] error:', err);

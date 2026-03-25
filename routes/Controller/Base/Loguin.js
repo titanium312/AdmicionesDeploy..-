@@ -29,48 +29,50 @@ async function obtenerDatosLogin(req, res) {
     =========================== */
     const loginResponse = await fetch(LOGIN_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Accept': 'application/json' 
+      },
       body: JSON.stringify({ username, password })
     });
 
-    const loginData = await loginResponse.json();
+    const data = await loginResponse.json();
 
-    if (!loginResponse.ok) {
-      return res.status(loginResponse.status).json({
-        error: loginData.error || 'Credenciales incorrectas'
+    // Validamos si la respuesta de SaludPlus fue exitosa según su esquema
+    if (!loginResponse.ok || !data.isSuccessful) {
+      return res.status(loginResponse.status || 401).json({
+        error: data.messages || 'Credenciales incorrectas'
       });
     }
 
-    if (!loginData.id) {
-      return res.status(400).json({ error: 'No se recibió ID de usuario' });
+    // Extraemos la información desde el objeto "result"
+    const { result } = data;
+
+    if (!result || !result.id) {
+      return res.status(400).json({ error: 'No se recibió ID de usuario en la respuesta' });
     }
 
     /* ==========================
        2. INSTITUCIÓN
     =========================== */
-    const institucion = await obtenerInstitucionPorUsuario(loginData.id);
+    const institucion = await obtenerInstitucionPorUsuario(result.id);
     if (!institucion) {
-      return res.status(404).json({ error: 'El usuario no tiene institución asignada' });
+      return res.status(404).json({ error: 'El usuario no tiene institución asignada en el sistema local' });
     }
 
     /* ==========================
-       3. OBJETO USUARIO
+       3. RESPUESTA FINAL (Mapeada)
     =========================== */
-    const usuario = {
-      id_usuario: loginData.id,
-      nombre: loginData.nombre,
-      usuario: loginData.usuario,
-      perfiles: loginData.perfiles || []
-    };
-
-    /* ==========================
-       4. RESPUESTA FINAL
-    =========================== */
+    // Nota: Se eliminaron los campos de "perfiles" según tu instrucción
     return res.json({
-      token: loginData.token || null,
-      usuario,
-      institucion,
-      perfiles: loginData.perfiles || []
+      token: result.token || null,
+      usuario: {
+        id_usuario: result.id,
+        nombre: result.nombre,
+        usuario: result.usuario,
+        email: result.email
+      },
+      institucion
     });
 
   } catch (error) {
@@ -80,5 +82,3 @@ async function obtenerDatosLogin(req, res) {
 }
 
 module.exports = { obtenerDatosLogin };
-
-
