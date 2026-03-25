@@ -168,17 +168,18 @@ class Loguin extends LitElement {
         }
 
         // Usamos fetch nativo (API del navegador)
-        const response = await fetch('http://localhost:3000/Loguin', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ 
-                username: this.username.trim(), 
-                password: this.password 
-            })
-        });
+// CORRECCIÓN
+const response = await fetch('/Loguin', { // Endpoint al mismo servidor
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    body: JSON.stringify({ 
+        username: this.username.trim(), 
+        password: this.password 
+    })
+});
 
         // Verificamos si la respuesta es correcta (status 200-299)
         if (!response.ok) {
