@@ -72,11 +72,10 @@ if not "!${FLAG}!"=="1" (
 // ───────── Adaptador para llamar a Hs_Anx ─────────
 async function callHsAnxAsFunction(query, authToken) {
   return new Promise((resolve, reject) => {
-    // Crear un objeto request que cumpla con lo que espera Hs_Anx
     const req = {
-      query,  // Parámetros por query string
+      query,
       body: {
-        token: authToken  // 🔴 Token EXCLUSIVAMENTE en body
+        token: authToken
       },
       headers: {}
     };
@@ -111,7 +110,17 @@ async function callHsAnxAsFunction(query, authToken) {
 }
 
 // Obtener trabajos desde Hs_Anx
-async function getTrabajosViaController(params, authToken) {
+async function getTrabajosViaController(params, authToken, sendProgress) {
+  if (sendProgress) {
+    const queryInfo = params.numeroAdmision || params.numeroFactura || params.clave || 'desconocido';
+    sendProgress({
+      type: 'query_start',
+      query: queryInfo,
+      message: `🔍 Consultando documentos para: ${queryInfo}`,
+      timestamp: new Date().toISOString()
+    });
+  }
+  
   const data = await callHsAnxAsFunction({
     clave: params.clave,
     numeroFactura: params.numeroFactura,
@@ -127,7 +136,7 @@ async function getTrabajosViaController(params, authToken) {
   const jobs = [];
   if (!data || typeof data !== "object") return jobs;
 
-  // Hs_Anx devuelve un objeto agrupado por clave
+  let totalEncontrados = 0;
   for (const [folder, items] of Object.entries(data)) {
     if (!Array.isArray(items)) continue;
     
@@ -135,28 +144,40 @@ async function getTrabajosViaController(params, authToken) {
       const url = String(item.url || "");
       if (!url) continue;
       
-      // Usar nombrepdf que ya viene formateado correctamente
       const pdfName = guessFileName(item.nombrepdf || "documento.pdf");
       jobs.push({ 
         folder: safeWinName(deaccent(folder)), 
         url, 
         pdfName,
-        // Información adicional para mostrar
         nombreArchivo: item.nombreArchivo || pdfName
       });
+      totalEncontrados++;
     }
   }
+  
+  if (sendProgress) {
+    const queryInfo = params.numeroAdmision || params.numeroFactura || params.clave || 'desconocido';
+    sendProgress({
+      type: 'query_result',
+      query: queryInfo,
+      total_encontrados: totalEncontrados,
+      message: totalEncontrados > 0 
+        ? `✅ Encontrados ${totalEncontrados} documentos para: ${queryInfo}`
+        : `⚠️ No se encontraron documentos para: ${queryInfo}`,
+      timestamp: new Date().toISOString()
+    });
+  }
+  
   return jobs;
 }
 
-// ───────── Helpers de presentación ─────────
 function displayTitleFromFolder(folder) {
   const clean = String(folder).replace(/^(factura|admision)[-_]/i, "");
   const m = clean.match(/(\d{3,})/);
   return m ? `${folder.startsWith('factura') ? 'FACTURA' : 'ADMISION'} ${m[1]}` : folder.toUpperCase();
 }
 
-// ───────── Controller principal (genera el .BAT) ─────────
+// Controller principal con soporte SSE
 const BatAuto = async (req, res) => {
   try {
     const {
@@ -164,9 +185,9 @@ const BatAuto = async (req, res) => {
       numeroAdmision, idAdmision, numeroFactura, clave,
       institucionId, idUser, eps,
       tipos, modalidad,
+      stream = false // Nuevo: si es true, usa SSE
     } = req.body || {};
 
-    // Normalizar modalidad
     const normalizeModalidad = (m) => {
       if (!m) return "";
       const s = String(m).trim().toLowerCase();
@@ -178,8 +199,6 @@ const BatAuto = async (req, res) => {
     };
     
     const modalidadNorm = normalizeModalidad(modalidad);
-    
-    // 🔴 Obtener token de autenticación EXCLUSIVAMENTE del body
     const authToken = req.body?.token;
     
     if (!authToken) {
@@ -189,7 +208,6 @@ const BatAuto = async (req, res) => {
       });
     }
 
-    // Validaciones
     const missing = [];
     if (!institucionId) missing.push("institucionId");
     if (!idUser) missing.push("idUser");
@@ -206,6 +224,28 @@ const BatAuto = async (req, res) => {
       return res.status(400).json({ 
         success: false,
         error: `Faltan parámetros: ${missing.join(", ")}` 
+      });
+    }
+
+    // Configurar SSE si se solicita
+    let sendProgress = null;
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.flushHeaders();
+      
+      sendProgress = (data) => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      };
+      
+      sendProgress({
+        type: 'start',
+        total_queries: admList.length > 0 ? admList.length : 1,
+        admisiones: admList.length > 0 ? admList : [numeroAdmision || numeroFactura || clave],
+        message: `🚀 Iniciando descarga de documentos...`,
+        timestamp: new Date().toISOString()
       });
     }
 
@@ -236,56 +276,121 @@ const BatAuto = async (req, res) => {
       });
     }
 
-    // Acumular todos los trabajos
+    // Acumular todos los trabajos con progreso
     const allJobs = [];
+    let processedQueries = 0;
+    const totalQueries = queries.length;
+    
     for (const q of queries) {
+      processedQueries++;
+      const currentQuery = q.numeroAdmision || q.numeroFactura || q.clave || 'desconocido';
+      
+      if (sendProgress) {
+        sendProgress({
+          type: 'processing',
+          current: processedQueries,
+          total: totalQueries,
+          query: currentQuery,
+          message: `📋 Procesando admisión ${processedQueries} de ${totalQueries}: ${currentQuery}`,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       try {
-        const jobs = await getTrabajosViaController(q, authToken);
+        const jobs = await getTrabajosViaController(q, authToken, sendProgress);
         if (jobs && jobs.length > 0) {
           allJobs.push(...jobs);
-        } else {
-          console.warn(`No se encontraron trabajos para: ${JSON.stringify(q)}`);
+          
+          if (sendProgress) {
+            sendProgress({
+              type: 'documents_found',
+              query: currentQuery,
+              count: jobs.length,
+              message: `📄 Se encontraron ${jobs.length} documentos para admisión ${currentQuery}`,
+              timestamp: new Date().toISOString()
+            });
+          }
+        } else if (sendProgress) {
+          sendProgress({
+            type: 'no_documents',
+            query: currentQuery,
+            message: `⚠️ No se encontraron documentos para admisión ${currentQuery}`,
+            timestamp: new Date().toISOString()
+          });
         }
       } catch (error) {
         console.error(`Error obteniendo trabajos para consulta ${JSON.stringify(q)}:`, error);
-        // Continuar con las siguientes consultas
+        if (sendProgress) {
+          sendProgress({
+            type: 'error',
+            query: currentQuery,
+            error: error.message,
+            message: `❌ Error procesando admisión ${currentQuery}: ${error.message}`,
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     }
     
     if (!allJobs.length) {
-      return res.status(404).json({ 
-        success: false,
-        error: "No se encontraron documentos para esos parámetros" 
+      if (sendProgress) {
+        sendProgress({
+          type: 'no_documents',
+          message: '❌ No se encontraron documentos para los parámetros especificados',
+          timestamp: new Date().toISOString()
+        });
+        sendProgress({
+          type: 'end',
+          message: 'Proceso finalizado sin resultados',
+          timestamp: new Date().toISOString()
+        });
+        res.end();
+      } else {
+        return res.status(404).json({ 
+          success: false,
+          error: "No se encontraron documentos para esos parámetros" 
+        });
+      }
+      return;
+    }
+
+    if (sendProgress) {
+      const folderSummary = {};
+      for (const job of allJobs) {
+        folderSummary[job.folder] = (folderSummary[job.folder] || 0) + 1;
+      }
+      
+      sendProgress({
+        type: 'summary',
+        total_documents: allJobs.length,
+        folders: folderSummary,
+        message: `📊 Resumen: Total ${allJobs.length} documentos encontrados en ${Object.keys(folderSummary).length} carpetas`,
+        timestamp: new Date().toISOString()
       });
     }
 
-    // ───────── Construcción de bloques BAT ─────────
+    // Construcción de bloques BAT
     const blocks = [];
     const flagsInit = [];
 
-    // Agrupar jobs por carpeta
     const groups = new Map();
     for (const j of allJobs) {
       if (!groups.has(j.folder)) groups.set(j.folder, []);
       groups.get(j.folder).push(j);
     }
 
-    // Por cada carpeta: encabezado, lista, bloques de descarga
     for (const [folder, jobs] of groups.entries()) {
-      // Encabezado
       blocks.push([
         "echo.",
         `echo ////////// ${displayTitleFromFolder(folder)} //////////////////`,
         "echo."
       ].join("\r\n"));
 
-      // Lista de nombres
       for (const j of jobs) {
         blocks.push(`echo  ${j.nombreArchivo || j.pdfName}`);
       }
       blocks.push("echo.");
 
-      // Bloques de descarga
       for (const j of jobs) {
         const { flagInit, block } = makeBlock(j);
         flagsInit.push(flagInit);
@@ -295,7 +400,6 @@ const BatAuto = async (req, res) => {
       blocks.push("");
     }
 
-    // Nombre del BAT
     let label;
     if (admList.length > 0) {
       const preview = admList.slice(0, 4).map(a => String(a)).join("_");
@@ -314,7 +418,6 @@ const BatAuto = async (req, res) => {
     
     const filename = `descargas-${safeWinName(deaccent(label))}.bat`;
 
-    // Plantilla .bat
     const bat = toCRLF(`@echo off
 chcp 65001 > nul
 setlocal EnableExtensions EnableDelayedExpansion
@@ -358,9 +461,28 @@ if "!CLEANUP!"=="0" (
 pause
 `);
 
-    res.setHeader("Content-Type", "application/octet-stream");
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.send(bat);
+    if (sendProgress) {
+      sendProgress({
+        type: 'complete',
+        bat_filename: filename,
+        total_documents: allJobs.length,
+        bat_content: bat,
+        message: `✅ Proceso completado. Archivo BAT generado: ${filename}`,
+        timestamp: new Date().toISOString()
+      });
+      
+      sendProgress({
+        type: 'end',
+        message: 'Proceso finalizado exitosamente',
+        timestamp: new Date().toISOString()
+      });
+      
+      res.end();
+    } else {
+      res.setHeader("Content-Type", "application/octet-stream");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.send(bat);
+    }
   } catch (err) {
     console.error("BatAuto error:", err);
     res.status(500).json({ 

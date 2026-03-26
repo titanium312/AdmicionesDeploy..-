@@ -4,7 +4,10 @@ const router = express.Router();
 // AUDITORIA -----------------------------------------------------------
 const { Hs_Anx } = require('./Controller/historias');
 const { obtenerDatosLogin } = require('./Controller/Base/Loguin');
-const { BatAuto } = require('./descargar/descargar');
+const { 
+  BatAuto,
+
+} = require('./descargar/descargar');
 
 const {ConsultaIdIntermedio}  = require('./Controller/Base/ids/ConsultaIdIntermedio');
 
@@ -36,10 +39,10 @@ const { buscarFechaNacimiento } = require('./Controller/otro/LABORATORIO/herrami
 
 // AUDITORIA -----------------------------------------------------------
 router.get('/Hs_Anx', Hs_Anx);
-router.post('/descargar', BatAuto);
+
 router.post('/ConsultaIdIntermedio', ConsultaIdIntermedio);
 
-
+router.post('/descargar', BatAuto);
 
 
 

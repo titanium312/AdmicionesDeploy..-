@@ -1,7 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import styles from './EstiloAdmiciones.js';
 
-// Mapeo con nombres legibles para el usuario
 const TIPOS = [
   { code: 'HAU',   name: 'Historia Clínica' },
   { code: 'ANX',  name: 'Anexo 2' },
@@ -29,7 +28,11 @@ export class AdmicionesArchivos extends LitElement {
     _pct: { type: Number, state: true },
     _msg: { type: String, state: true },
     _error: { type: String, state: true },
-    _sesionStatus: { type: Object, state: true }, // Nuevo: para mostrar estado de sesión
+    _sesionStatus: { type: Object, state: true },
+    // Nuevas propiedades para progreso
+    _progresoActual: { type: Object, state: true },
+    _progresoLogs: { type: Array, state: true },
+    _mostrarLogs: { type: Boolean, state: true }
   };
 
   static styles = styles;
@@ -54,7 +57,10 @@ export class AdmicionesArchivos extends LitElement {
       tieneIdInstitucion: false,
       detalles: {}
     };
-    this._simTimer = null;
+    this._progresoActual = null;
+    this._progresoLogs = [];
+    this._mostrarLogs = false;
+    this._eventSource = null;
   }
 
   updated(changedProperties) {
@@ -65,10 +71,16 @@ export class AdmicionesArchivos extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._stopSim();
+    this._cerrarConexionSSE();
   }
 
-  // ---- Método para analizar estado de sesión ----
+  _cerrarConexionSSE() {
+    if (this._eventSource) {
+      this._eventSource.close();
+      this._eventSource = null;
+    }
+  }
+
   _actualizarEstadoSesion() {
     const login = this.loginData || {};
     const usuario = login.usuario || {};
@@ -91,13 +103,11 @@ export class AdmicionesArchivos extends LitElement {
     
     this._sesionStatus = estado;
     
-    // Si hay error anterior relacionado con sesión, limpiarlo
     if (this._error && this._error.includes('sesión')) {
       this._error = '';
     }
   }
 
-  // ---- helpers ----
   _parseIds() {
     return Array.from(new Set(String(this.numeros || '')
       .split(/[\s,;\n\t]+/).map(s => s.trim()).filter(Boolean)));
@@ -116,7 +126,6 @@ export class AdmicionesArchivos extends LitElement {
     const token = this.loginData?.token;
     const tipos = this._getTiposParaPayload();
 
-    // Validación detallada de sesión
     if (!token) return { 
       ok: false, 
       msg: '❌ Token de autenticación no disponible. Por favor, inicie sesión nuevamente.'
@@ -143,61 +152,46 @@ export class AdmicionesArchivos extends LitElement {
     return { ok: true, ids, idUser, institucionId, tipos, token };
   }
 
-  // ---- progreso simulado ----
-  _startSim(msg='Procesando…') {
-    this._cargando = true; 
-    this._pct = 0; 
-    this._msg = msg; 
-    this._stopSim();
-    this._simTimer = setInterval(() => {
-      const inc = this._pct < 60 ? 6 : this._pct < 85 ? 3 : 1;
-      this._pct = Math.min(90, this._pct + inc);
-    }, 160);
-  }
-  
-  _finishSim(msg='Listo') { 
-    this._msg = msg; 
-    this._pct = 100; 
-    this._cargando = false; 
-    this._stopSim();
-    setTimeout(() => {
-      if (this._msg === msg) this._msg = '';
-    }, 2000);
-  }
-  
-  _stopSim() { 
-    if (this._simTimer) { 
-      clearInterval(this._simTimer); 
-      this._simTimer = null; 
-    } 
-  }
-
-  // ---- UI ----
-  _toggleChip(code) {
-    if (this.usarTodos) this.usarTodos = false;
-    const set = new Set(this.tiposSeleccionados);
-    set.has(code) ? set.delete(code) : set.add(code);
-    this.tiposSeleccionados = Array.from(set);
-  }
-  
-  _activarTodos() { 
-    this.usarTodos = !this.usarTodos; 
-    if (this.usarTodos) this.tiposSeleccionados = []; 
+  _agregarLog(tipo, mensaje, data = null) {
+    const log = {
+      id: Date.now(),
+      tipo,
+      mensaje,
+      data,
+      timestamp: new Date()
+    };
+    
+    this._progresoLogs = [log, ...this._progresoLogs].slice(0, 50); // Mantener últimos 50 logs
+    
+    // Actualizar progreso actual según tipo
+    if (tipo === 'processing') {
+      this._progresoActual = {
+        tipo: 'procesando',
+        admision: data?.query,
+        actual: data?.current,
+        total: data?.total,
+        mensaje
+      };
+      this._pct = Math.floor((data?.current / data?.total) * 90);
+    } else if (tipo === 'query_result') {
+      this._progresoActual = {
+        tipo: 'resultado',
+        admision: data?.query,
+        encontrados: data?.total_encontrados,
+        mensaje
+      };
+    } else if (tipo === 'complete') {
+      this._progresoActual = {
+        tipo: 'completo',
+        mensaje
+      };
+      this._pct = 100;
+    }
+    
+    this.requestUpdate();
   }
 
-  _limpiar = () => {
-    this.numeros = '';
-    this.tiposSeleccionados = [];
-    this.usarTodos = false;
-    this.eps = 'NUEVA_EPS';
-    this.modalidad = 'evento';
-    this._error = ''; 
-    this._pct = 0; 
-    this._msg = '';
-  };
-
-  // ---- red ----
-  async _descargarBat(e) {
+  async _descargarBatConProgreso(e) {
     e?.preventDefault?.();
     if (this._cargando) return;
 
@@ -210,6 +204,15 @@ export class AdmicionesArchivos extends LitElement {
 
     const { ids, idUser, institucionId, tipos, token } = val;
     
+    this._cargando = true;
+    this._pct = 0;
+    this._msg = 'Iniciando conexión...';
+    this._progresoLogs = [];
+    this._progresoActual = null;
+    this._mostrarLogs = true;
+    
+    this._agregarLog('info', `🚀 Iniciando descarga para ${ids.length} admisión(es): ${ids.join(', ')}`);
+    
     const payload = {
       token: token,
       admisiones: ids,
@@ -218,60 +221,149 @@ export class AdmicionesArchivos extends LitElement {
       eps: this.eps,
       tipos: tipos,
       modalidad: this.modalidad,
+      stream: true // Activar SSE
     };
 
     try {
-      this._startSim('Generando BAT con documentos seleccionados…');
-
-      const blob = await this._fetchWithAuth('/descargar', {
+      const response = await fetch('/descargar', {
         method: 'POST',
-        body: payload
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
       });
 
-      this._finishSim('✅ BAT generado correctamente');
-      this._saveBlob(blob, `descargas-${ids.length}-admisiones-${Date.now()}.bat`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              this._procesarEventoSSE(data);
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
+      }
+      
     } catch (err) {
       this._error = err?.message || 'No se pudo generar el BAT.';
-      this._finishSim('❌ Error');
+      this._msg = '❌ Error';
+      this._agregarLog('error', `Error: ${this._error}`);
       console.error('[descargarBat] error', err);
+    } finally {
+      this._cargando = false;
     }
   }
 
-  async _fetchWithAuth(url, options = {}) {
-    const headers = { 'Content-Type': 'application/json', ...options.headers };
-    const init = { ...options, headers, cache: 'no-store' };
-
-    if (options.body && typeof options.body === 'object') {
-      init.body = JSON.stringify(options.body);
+  _procesarEventoSSE(data) {
+    switch(data.type) {
+      case 'start':
+        this._msg = 'Iniciando proceso...';
+        this._agregarLog('info', data.message);
+        break;
+        
+      case 'processing':
+        this._msg = `Procesando admisión ${data.current} de ${data.total}: ${data.query}`;
+        this._pct = Math.floor((data.current / data.total) * 90);
+        this._agregarLog('progreso', data.message, data);
+        break;
+        
+      case 'query_start':
+        this._agregarLog('info', data.message, data);
+        break;
+        
+      case 'query_result':
+        this._agregarLog('resultado', data.message, data);
+        break;
+        
+      case 'documents_found':
+        this._agregarLog('exito', data.message, data);
+        break;
+        
+      case 'no_documents':
+        this._agregarLog('advertencia', data.message, data);
+        break;
+        
+      case 'summary':
+        this._agregarLog('resumen', data.message, data);
+        this._msg = `📊 ${data.message}`;
+        break;
+        
+      case 'complete':
+        this._msg = '✅ Proceso completado, descargando archivo...';
+        this._pct = 100;
+        this._agregarLog('exito', data.message, data);
+        
+        // Descargar el archivo BAT
+        if (data.bat_content) {
+          const blob = new Blob([data.bat_content], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = data.bat_filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          this._agregarLog('exito', `Archivo descargado: ${data.bat_filename}`);
+        }
+        break;
+        
+      case 'error':
+        this._agregarLog('error', data.message, data);
+        break;
+        
+      case 'end':
+        this._agregarLog('info', 'Proceso finalizado');
+        break;
+        
+      default:
+        console.log('Evento no manejado:', data);
     }
-
-    const response = await fetch(url, init);
-    if (!response.ok) {
-      let errorMsg = `HTTP ${response.status}`;
-      try {
-        const errorData = await response.json();
-        errorMsg = errorData.message || errorData.error || errorMsg;
-      } catch {
-        const errorText = await response.text();
-        if (errorText) errorMsg = errorText;
-      }
-      throw new Error(errorMsg);
-    }
-    return await response.blob();
   }
 
-  _saveBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; 
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  _limpiar = () => {
+    this.numeros = '';
+    this.tiposSeleccionados = [];
+    this.usarTodos = false;
+    this.eps = 'NUEVA_EPS';
+    this.modalidad = 'evento';
+    this._error = ''; 
+    this._pct = 0; 
+    this._msg = '';
+    this._progresoLogs = [];
+    this._progresoActual = null;
+    this._mostrarLogs = false;
+  };
+
+  _toggleChip(code) {
+    if (this.usarTodos) this.usarTodos = false;
+    const set = new Set(this.tiposSeleccionados);
+    set.has(code) ? set.delete(code) : set.add(code);
+    this.tiposSeleccionados = Array.from(set);
+  }
+  
+  _activarTodos() { 
+    this.usarTodos = !this.usarTodos; 
+    if (this.usarTodos) this.tiposSeleccionados = []; 
   }
 
-  // ---- Render métodos auxiliares ----
   _renderChips() {
     return html`
       <div class="chips" role="group" aria-label="Tipos de documento">
@@ -295,7 +387,8 @@ export class AdmicionesArchivos extends LitElement {
   }
 
   _renderProgreso() {
-    if (!this._cargando && this._pct === 0) return null;
+    if (!this._cargando && this._pct === 0 && !this._mostrarLogs) return null;
+    
     return html`
       <div class="col-12">
         <div class="progress">
@@ -305,8 +398,56 @@ export class AdmicionesArchivos extends LitElement {
           <span>${this._msg}</span>
           <span>${Math.round(this._pct)}%</span>
         </div>
+        
+        ${this._progresoActual && html`
+          <div class="progreso-actual">
+            ${this._progresoActual.tipo === 'procesando' ? html`
+              <div class="progreso-admision">
+                <strong>🔄 Procesando:</strong> ${this._progresoActual.admision}
+                <span class="badge">${this._progresoActual.actual}/${this._progresoActual.total}</span>
+              </div>
+            ` : ''}
+            ${this._progresoActual.tipo === 'resultado' && this._progresoActual.encontrados ? html`
+              <div class="progreso-resultado">
+                <strong>📄 ${this._progresoActual.admision}:</strong> 
+                ${this._progresoActual.encontrados} documento(s) encontrado(s)
+              </div>
+            ` : ''}
+          </div>
+        `}
+        
+        ${this._mostrarLogs && this._progresoLogs.length > 0 ? html`
+          <details class="logs-container" ?open=${this._cargando}>
+            <summary>
+              📋 Log de progreso (${this._progresoLogs.length} eventos)
+              ${this._cargando ? html`<span class="live-badge">🔴 EN VIVO</span>` : ''}
+            </summary>
+            <div class="logs-list">
+              ${this._progresoLogs.map(log => html`
+                <div class="log-item ${log.tipo}">
+                  <span class="log-time">${log.timestamp.toLocaleTimeString()}</span>
+                  <span class="log-icon">${this._getIconForLog(log.tipo)}</span>
+                  <span class="log-message">${log.mensaje}</span>
+                </div>
+              `)}
+            </div>
+          </details>
+        ` : ''}
       </div>
     `;
+  }
+
+  _getIconForLog(tipo) {
+    const icons = {
+      'info': 'ℹ️',
+      'progreso': '🔄',
+      'resultado': '📊',
+      'exito': '✅',
+      'advertencia': '⚠️',
+      'error': '❌',
+      'resumen': '📈'
+    };
+    return icons[tipo] || '📌';
   }
 
   _renderSesionStatus() {
@@ -357,7 +498,6 @@ export class AdmicionesArchivos extends LitElement {
                      this._sesionStatus.tieneInstitucion && 
                      this._sesionStatus.tieneIdInstitucion;
 
-    // Verificar si se seleccionó factura electrónica
     const facturaSeleccionada = this.tiposSeleccionados.includes('FEV') || this.usarTodos;
 
     return html`
@@ -375,7 +515,7 @@ export class AdmicionesArchivos extends LitElement {
           `}
         </header>
 
-        <form class="card" @submit=${this._descargarBat}>
+        <form class="card" @submit=${this._descargarBatConProgreso}>
           <div class="grid">
             <div class="col-12">
               <label>
@@ -384,14 +524,14 @@ export class AdmicionesArchivos extends LitElement {
                           @input=${e => this.numeros = e.target.value} 
                           placeholder="Ej: 123, 456&#10;O varios: 123, 456, 789" 
                           rows="3"
-                          ?disabled=${!sesionOk}></textarea>
+                          ?disabled=${!sesionOk || this._cargando}></textarea>
                 <div class="help">📊 ${ids.length} ID(s) detectado(s)</div>
               </label>
             </div>
 
             <div class="col-4">
               <label> EPS
-                <select .value=${this.eps} @change=${e => this.eps = e.target.value} ?disabled=${!sesionOk}>
+                <select .value=${this.eps} @change=${e => this.eps = e.target.value} ?disabled=${!sesionOk || this._cargando}>
                   <option value="NUEVA_EPS">NUEVA_EPS</option>
                   <option value="SALUD_TOTAL">SALUD_TOTAL</option>
                   <option value="MUTUALSER">MUTUALSER</option>
@@ -401,7 +541,7 @@ export class AdmicionesArchivos extends LitElement {
 
             <div class="col-4">
               <label> Modalidad
-                <select .value=${this.modalidad} @change=${e => this.modalidad = e.target.value} ?disabled=${!sesionOk}>
+                <select .value=${this.modalidad} @change=${e => this.modalidad = e.target.value} ?disabled=${!sesionOk || this._cargando}>
                   <option value="evento">Evento</option>
                   <option value="capita">Cápita</option>
                 </select>
@@ -422,7 +562,7 @@ export class AdmicionesArchivos extends LitElement {
 
             <div class="col-12 row">
               <button class="btn primary" ?disabled=${this._cargando || !sesionOk} type="submit">
-                ${this._cargando ? '🔄 Generando...' : '📥 Generar BAT'}
+                ${this._cargando ? '🔄 Generando...' : '📥 Generar BAT con Progreso'}
               </button>
               <button type="button" class="btn secondary" @click=${this._limpiar} ?disabled=${this._cargando}>
                 🧹 Limpiar

@@ -1,0 +1,42 @@
+{
+  "idProgreso": "b9861342627844a1ff6bbdd8d1f180b1",
+  "status": "in_progress",
+  "totalJobs": 5,
+  "completedJobs": [],
+  "allJobs": [
+    {
+      "folder": "admision-246222",
+      "url": "https://reportes.saludplus.co/view.aspx?modulo=Facturacion&reporte=ListadoPrefacturasDetallado&render=pdf&hideTool=true&environment=1&userId=6874&idAdmisiones=246222&token=I9pBAw4RtufwIjWP09oqrqHMwLjkkJThsNu0kJc9hYrxMl3JkeicirtkhInvJgRrAy2RHoPor21Ldk3qrGMUtZzJS4hPHNfKhaWI08YUvKBRdPor21LdXOn5RaHX48xYgp1VtYmLZqWG4xMl3JkqeR",
+      "pdfName": "PRE_812001219_246222.pdf",
+      "nombreArchivo": "Prefactura"
+    },
+    {
+      "folder": "admision-246428",
+      "url": "https://reportes.saludplus.co/view.aspx?modulo=Facturacion&reporte=ListadoPrefacturasDetallado&render=pdf&hideTool=true&environment=1&userId=6874&idAdmisiones=246428&token=I9pBAw4RtufwIjWP09oqrqHMwLjkkJThsNu0kJc9hYrxMl3JkeicirtkhInvJgRrAy2RH4LPor21LdueWkLDuciOs5XmEiZoO4Q94xMl3Jkfs6TvEd9ChsOf4KQWBRvwsNEzDQLw9tnu56XT",
+      "pdfName": "PRE_812001219_246428.pdf",
+      "nombreArchivo": "Prefactura"
+    },
+    {
+      "folder": "admision-246429",
+      "url": "https://reportes.saludplus.co/view.aspx?modulo=Facturacion&reporte=ListadoPrefacturasDetallado&render=pdf&hideTool=true&environment=1&userId=6874&idAdmisiones=246429&token=I9pBAw4RtufwIjWP09oqrqHMwLjkkJThsNu0kJc9hYrxMl3JkeicirtkhInvJgRrAy2RHsRN43ax3VZdakgHPor21Ldr5Por21LdUWFhxZ73WPor21LdFCfOe4qdfkhHkazRwPor21LdvGK0CVN03ivQ79EI1",
+      "pdfName": "PRE_812001219_246429.pdf",
+      "nombreArchivo": "Prefactura"
+    },
+    {
+      "folder": "admision-246628",
+      "url": "https://reportes.saludplus.co/view.aspx?modulo=Facturacion&reporte=ListadoPrefacturasDetallado&render=pdf&hideTool=true&environment=1&userId=6874&idAdmisiones=246628&token=I9pBAw4RtufwIjWP09oqrqHMwLjkkJThsNu0kJc9hYrxMl3JkeicirtkhInvJgRrAy2RHVxMl3Jk2HctUqAux4obtE2bnoxGVWYGbgQpxMl3Jk9zFC2xqrlZZ13wW00b4Por21Ld6994EZIiQxMl3JkmuA",
+      "pdfName": "PRE_812001219_246628.pdf",
+      "nombreArchivo": "Prefactura"
+    },
+    {
+      "folder": "admision-246777",
+      "url": "https://reportes.saludplus.co/view.aspx?modulo=Facturacion&reporte=ListadoPrefacturasDetallado&render=pdf&hideTool=true&environment=1&userId=6874&idAdmisiones=246777&token=I9pBAw4RtufwIjWP09oqrqHMwLjkkJThsNu0kJc9hYrxMl3JkeicirtkhInvJgRrAy2RH5a3pbJviEynECbmdXbdjxUYDfjuuZKT1OOpEwPPPor21LdsVLQQdxMl3Jk2QO16NIFoOPlzoVSq",
+      "pdfName": "PRE_812001219_246777.pdf",
+      "nombreArchivo": "Prefactura"
+    }
+  ],
+  "currentJob": 0,
+  "errors": [],
+  "startTime": "2026-03-26T15:27:43.221Z",
+  "lastUpdate": "2026-03-26T15:27:43.221Z"
+}
