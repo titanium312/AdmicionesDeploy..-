@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require('fs').promises;
 
 // ───────── IMPORT: solo Hs_Anx (handler Express) ─────────
 const { Hs_Anx } = require("../Controller/historias");
@@ -34,11 +35,11 @@ function getBaseURL(req) {
   return `${proto}://${host}${prefix}`;
 }
 
-// ───────── Bloques BAT ─────────
-function makeBlock({ folder, url, pdfName }) {
+// ───────── Bloques BAT con mejor manejo de errores ─────────
+function makeBlock({ folder, url, pdfName, retryCount = 3 }) {
   const FLAG = `${safeWinName(deaccent(folder))}_${safeWinName(deaccent(pdfName)).replace(/\.pdf$/i, "")}_OK`;
   const out = `${folder}\\${pdfName}`;
-  const curlBase = 'curl -L --retry 3 --retry-all-errors --retry-delay 3 --connect-timeout 15 --max-time 180 -A "!UA!" -H "Accept: application/pdf"';
+  const curlBase = 'curl -L --retry 3 --retry-all-errors --retry-delay 5 --connect-timeout 30 --max-time 300 -A "!UA!" -H "Accept: application/pdf"';
   const urlEsc = escapeForBat(url);
 
   return {
@@ -47,21 +48,32 @@ function makeBlock({ folder, url, pdfName }) {
 :: ====== Descargar ${pdfName} → ${folder} ======
 if not "!${FLAG}!"=="1" (
     if not exist "${folder}" mkdir "${folder}"
-    echo Descargando ${pdfName} ...
+    echo [${folder}] Descargando ${pdfName} ...
     set "URL=${urlEsc}"
     set "OUT=${out}"
-    ${curlBase} -C - "!URL!" --output "!OUT!" --silent
-    if not !errorlevel! equ 0 (
-        echo  [WARN] Reintentando sin reanudacion...
-        ${curlBase} "!URL!" --output "!OUT!" --silent
-    )
+    set "RETRY=0"
+    
+    :retry_${FLAG}
+    set /a RETRY+=1
+    echo [${folder}] Intento !RETRY! de ${retryCount}...
+    
+    ${curlBase} -C - "!URL!" --output "!OUT!" --silent --fail
+    
     if !errorlevel! equ 0 (
-        echo  [OK] ${pdfName}
+        echo [OK] ${pdfName} descargado correctamente
         > "!progresoFile!.tmp" findstr /v /b "${FLAG}=" "!progresoFile!" 2>nul
         >> "!progresoFile!.tmp" echo ${FLAG}=1
         move /Y "!progresoFile!.tmp" "!progresoFile!" >nul
     ) else (
-        echo  [ERROR] ${pdfName}
+        if !RETRY! lss ${retryCount} (
+            echo [WARN] Error en descarga, reintentando en 3 segundos...
+            ping 127.0.0.1 -n 4 >nul
+            goto retry_${FLAG}
+        ) else (
+            echo [ERROR] ${pdfName} - Fallo despues de ${retryCount} intentos
+            echo [ERROR] URL: !URL! >> "!errorLogFile!"
+            echo [ERROR] Fecha: %date% %time% >> "!errorLogFile!"
+        )
     )
 ) else (
     echo [SKIP] ${pdfName} ya estaba descargado.
@@ -149,7 +161,10 @@ async function getTrabajosViaController(params, authToken, sendProgress) {
         folder: safeWinName(deaccent(folder)), 
         url, 
         pdfName,
-        nombreArchivo: item.nombreArchivo || pdfName
+        nombreArchivo: item.nombreArchivo || pdfName,
+        // Guardar metadatos para recuperación
+        admision: params.numeroAdmision,
+        tipo: item.tipo || 'desconocido'
       });
       totalEncontrados++;
     }
@@ -177,7 +192,36 @@ function displayTitleFromFolder(folder) {
   return m ? `${folder.startsWith('factura') ? 'FACTURA' : 'ADMISION'} ${m[1]}` : folder.toUpperCase();
 }
 
-// Controller principal con soporte SSE
+// ───────── Guardar checkpoint para recuperación ─────────
+async function saveCheckpoint(jobs, filename, metadata) {
+  try {
+    const checkpoint = {
+      timestamp: new Date().toISOString(),
+      total_jobs: jobs.length,
+      jobs: jobs.map(j => ({
+        folder: j.folder,
+        pdfName: j.pdfName,
+        url: j.url,
+        nombreArchivo: j.nombreArchivo,
+        admision: j.admision,
+        tipo: j.tipo
+      })),
+      metadata
+    };
+    
+    const checkpointPath = path.join(__dirname, '..', 'checkpoints', `${filename}.checkpoint.json`);
+    const dir = path.dirname(checkpointPath);
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(checkpointPath, JSON.stringify(checkpoint, null, 2));
+    
+    return checkpointPath;
+  } catch (err) {
+    console.error('Error guardando checkpoint:', err);
+    return null;
+  }
+}
+
+// Controller principal con soporte SSE y recuperación
 const BatAuto = async (req, res) => {
   try {
     const {
@@ -185,7 +229,8 @@ const BatAuto = async (req, res) => {
       numeroAdmision, idAdmision, numeroFactura, clave,
       institucionId, idUser, eps,
       tipos, modalidad,
-      stream = false // Nuevo: si es true, usa SSE
+      stream = false,
+      recoveryId = null // ID de recuperación para continuar descarga
     } = req.body || {};
 
     const normalizeModalidad = (m) => {
@@ -216,8 +261,8 @@ const BatAuto = async (req, res) => {
     const haveSingleKey = !!(numeroAdmision || idAdmision || numeroFactura || clave);
     const admList = Array.isArray(admisiones) ? admisiones.filter(x => x != null && String(x).trim() !== "") : [];
     
-    if (!haveSingleKey && admList.length === 0) {
-      missing.push("admisiones[] | numeroAdmision | idAdmision | numeroFactura | clave");
+    if (!haveSingleKey && admList.length === 0 && !recoveryId) {
+      missing.push("admisiones[] | numeroAdmision | idAdmision | numeroFactura | clave | recoveryId");
     }
     
     if (missing.length) {
@@ -229,6 +274,9 @@ const BatAuto = async (req, res) => {
 
     // Configurar SSE si se solicita
     let sendProgress = null;
+    let allJobs = [];
+    let jobsMetadata = {};
+    
     if (stream) {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -239,22 +287,67 @@ const BatAuto = async (req, res) => {
       sendProgress = (data) => {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
       };
-      
-      sendProgress({
-        type: 'start',
-        total_queries: admList.length > 0 ? admList.length : 1,
-        admisiones: admList.length > 0 ? admList : [numeroAdmision || numeroFactura || clave],
-        message: `🚀 Iniciando descarga de documentos...`,
-        timestamp: new Date().toISOString()
-      });
     }
 
-    // Construir consultas
-    const queries = [];
-    if (admList.length > 0) {
-      for (const adm of admList) {
+    // Si es recuperación, cargar jobs desde checkpoint
+    if (recoveryId) {
+      sendProgress && sendProgress({
+        type: 'recovery',
+        recoveryId,
+        message: `🔄 Recuperando descarga anterior: ${recoveryId}`,
+        timestamp: new Date().toISOString()
+      });
+      
+      try {
+        const checkpointPath = path.join(__dirname, '..', 'checkpoints', `${recoveryId}.checkpoint.json`);
+        const checkpointData = await fs.readFile(checkpointPath, 'utf8');
+        const checkpoint = JSON.parse(checkpointData);
+        allJobs = checkpoint.jobs;
+        jobsMetadata = checkpoint.metadata;
+        
+        sendProgress && sendProgress({
+          type: 'recovery_success',
+          total_jobs: allJobs.length,
+          message: `✅ Recuperados ${allJobs.length} documentos para descargar`,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        sendProgress && sendProgress({
+          type: 'recovery_error',
+          error: err.message,
+          message: `❌ No se pudo recuperar la descarga: ${err.message}`,
+          timestamp: new Date().toISOString()
+        });
+        if (sendProgress) {
+          res.end();
+        } else {
+          return res.status(404).json({ 
+            success: false,
+            error: `No se encontró el checkpoint: ${recoveryId}` 
+          });
+        }
+        return;
+      }
+    } else {
+      // Construir consultas normalmente
+      const queries = [];
+      if (admList.length > 0) {
+        for (const adm of admList) {
+          queries.push({ 
+            numeroAdmision: String(adm), 
+            institucionId, 
+            idUser, 
+            eps, 
+            tipos, 
+            modalidad: modalidadNorm 
+          });
+        }
+      } else {
         queries.push({ 
-          numeroAdmision: String(adm), 
+          numeroAdmision, 
+          idAdmision, 
+          numeroFactura, 
+          clave, 
           institucionId, 
           idUser, 
           eps, 
@@ -262,96 +355,94 @@ const BatAuto = async (req, res) => {
           modalidad: modalidadNorm 
         });
       }
-    } else {
-      queries.push({ 
-        numeroAdmision, 
-        idAdmision, 
-        numeroFactura, 
-        clave, 
-        institucionId, 
-        idUser, 
-        eps, 
-        tipos, 
-        modalidad: modalidadNorm 
-      });
-    }
 
-    // Acumular todos los trabajos con progreso
-    const allJobs = [];
-    let processedQueries = 0;
-    const totalQueries = queries.length;
-    
-    for (const q of queries) {
-      processedQueries++;
-      const currentQuery = q.numeroAdmision || q.numeroFactura || q.clave || 'desconocido';
+      // Acumular todos los trabajos con progreso
+      let processedQueries = 0;
+      const totalQueries = queries.length;
       
-      if (sendProgress) {
-        sendProgress({
-          type: 'processing',
-          current: processedQueries,
-          total: totalQueries,
-          query: currentQuery,
-          message: `📋 Procesando admisión ${processedQueries} de ${totalQueries}: ${currentQuery}`,
-          timestamp: new Date().toISOString()
-        });
-      }
-      
-      try {
-        const jobs = await getTrabajosViaController(q, authToken, sendProgress);
-        if (jobs && jobs.length > 0) {
-          allJobs.push(...jobs);
-          
-          if (sendProgress) {
+      for (const q of queries) {
+        processedQueries++;
+        const currentQuery = q.numeroAdmision || q.numeroFactura || q.clave || 'desconocido';
+        
+        if (sendProgress) {
+          sendProgress({
+            type: 'processing',
+            current: processedQueries,
+            total: totalQueries,
+            query: currentQuery,
+            message: `📋 Procesando admisión ${processedQueries} de ${totalQueries}: ${currentQuery}`,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        try {
+          const jobs = await getTrabajosViaController(q, authToken, sendProgress);
+          if (jobs && jobs.length > 0) {
+            allJobs.push(...jobs);
+            
+            if (sendProgress) {
+              sendProgress({
+                type: 'documents_found',
+                query: currentQuery,
+                count: jobs.length,
+                message: `📄 Se encontraron ${jobs.length} documentos para admisión ${currentQuery}`,
+                timestamp: new Date().toISOString()
+              });
+            }
+          } else if (sendProgress) {
             sendProgress({
-              type: 'documents_found',
+              type: 'no_documents',
               query: currentQuery,
-              count: jobs.length,
-              message: `📄 Se encontraron ${jobs.length} documentos para admisión ${currentQuery}`,
+              message: `⚠️ No se encontraron documentos para admisión ${currentQuery}`,
               timestamp: new Date().toISOString()
             });
           }
-        } else if (sendProgress) {
-          sendProgress({
-            type: 'no_documents',
-            query: currentQuery,
-            message: `⚠️ No se encontraron documentos para admisión ${currentQuery}`,
-            timestamp: new Date().toISOString()
-          });
+        } catch (error) {
+          console.error(`Error obteniendo trabajos para consulta ${JSON.stringify(q)}:`, error);
+          if (sendProgress) {
+            sendProgress({
+              type: 'error',
+              query: currentQuery,
+              error: error.message,
+              message: `❌ Error procesando admisión ${currentQuery}: ${error.message}`,
+              timestamp: new Date().toISOString()
+            });
+          }
         }
-      } catch (error) {
-        console.error(`Error obteniendo trabajos para consulta ${JSON.stringify(q)}:`, error);
+      }
+      
+      if (!allJobs.length) {
         if (sendProgress) {
           sendProgress({
-            type: 'error',
-            query: currentQuery,
-            error: error.message,
-            message: `❌ Error procesando admisión ${currentQuery}: ${error.message}`,
+            type: 'no_documents',
+            message: '❌ No se encontraron documentos para los parámetros especificados',
             timestamp: new Date().toISOString()
           });
+          sendProgress({
+            type: 'end',
+            message: 'Proceso finalizado sin resultados',
+            timestamp: new Date().toISOString()
+          });
+          res.end();
+        } else {
+          return res.status(404).json({ 
+            success: false,
+            error: "No se encontraron documentos para esos parámetros" 
+          });
         }
+        return;
       }
-    }
-    
-    if (!allJobs.length) {
-      if (sendProgress) {
-        sendProgress({
-          type: 'no_documents',
-          message: '❌ No se encontraron documentos para los parámetros especificados',
-          timestamp: new Date().toISOString()
-        });
-        sendProgress({
-          type: 'end',
-          message: 'Proceso finalizado sin resultados',
-          timestamp: new Date().toISOString()
-        });
-        res.end();
-      } else {
-        return res.status(404).json({ 
-          success: false,
-          error: "No se encontraron documentos para esos parámetros" 
-        });
-      }
-      return;
+      
+      // Guardar metadata
+      jobsMetadata = {
+        institucionId,
+        idUser,
+        eps,
+        tipos,
+        modalidad: modalidadNorm,
+        admisiones: admList,
+        created: new Date().toISOString()
+      };
     }
 
     if (sendProgress) {
@@ -412,23 +503,47 @@ const BatAuto = async (req, res) => {
       label = `admision-${idAdmision}`;
     } else if (clave) {
       label = `clave-${clave}`;
+    } else if (recoveryId) {
+      label = `recuperacion-${recoveryId}`;
     } else {
       label = "descargas";
     }
     
     const filename = `descargas-${safeWinName(deaccent(label))}.bat`;
-
+    // ✅ CORRECCIÓN: Renombrar la variable para evitar conflicto
+    const newRecoveryId = Date.now().toString();
+    
+    // Guardar checkpoint para recuperación futura
+    const checkpointPath = await saveCheckpoint(allJobs, filename, jobsMetadata);
+    
     const bat = toCRLF(`@echo off
 chcp 65001 > nul
 setlocal EnableExtensions EnableDelayedExpansion
-title Descarga de documentos (curl)
+title Descarga de documentos (curl) - RECUPERABLE
 
 set "BASE=%~dp0"
 set "mainFolder=%BASE%Documentos_Descargados"
 set "progresoFile=descarga_progreso.txt"
+set "errorLogFile=errores_descarga.log"
 set "UA=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+set "RECOVERY_ID=${newRecoveryId}"
 
-where curl >nul 2>&1 || (echo [ERROR] curl no esta en PATH & goto :EOF)
+echo.
+echo ==========================================
+echo   DESCARGADOR DE DOCUMENTOS
+echo   ID Recuperación: %RECOVERY_ID%
+echo ==========================================
+echo.
+
+where curl >nul 2>&1 || (
+    echo [ERROR] curl no esta en PATH
+    echo.
+    echo Para instalar curl:
+    echo   1. Descargar de https://curl.se/windows/
+    echo   2. Agregar a PATH del sistema
+    pause
+    goto :EOF
+)
 
 if not exist "!mainFolder!" mkdir "!mainFolder!"
 pushd "!mainFolder!"
@@ -439,35 +554,77 @@ if not exist "!progresoFile!" (
 
 for /f "tokens=1,2 delims==" %%A in ('type "!progresoFile!"') do set "%%A=%%B"
 
+echo.
+echo [INFO] Iniciando descarga de ${allJobs.length} documento(s)...
+echo [INFO] Para reanudar en caso de fallo, guarda este ID: %RECOVERY_ID%
+echo.
+
 ${blocks.join("\n\n")}
 
 popd
 
-set "CLEANUP=0"
+:: Contar documentos completados
+set "COMPLETED=0"
+set "TOTAL=${allJobs.length}"
 for /f "tokens=1,2 delims==" %%A in ('type "!mainFolder!\\!progresoFile!"') do (
-  if "%%B"=="0" set "CLEANUP=1"
-)
-if "!CLEANUP!"=="0" (
-  echo Todo descargado. Abriendo carpeta...
-  start "" explorer "!mainFolder!"
-  echo Limpiando...
-  del /f /q "!mainFolder!\\!progresoFile!" 2>nul
-  ping 127.0.0.1 -n 2 >nul
-  start "" /b cmd /c del /q "%~f0"
-) else (
-  echo Proceso incompleto. Puedes relanzar este BAT para reanudar.
+    if "%%B"=="1" set /a COMPLETED+=1
 )
 
-pause
+echo.
+echo ==========================================
+echo   RESUMEN DE DESCARGA
+echo ==========================================
+echo   Documentos totales: %TOTAL%
+echo   Descargados: %COMPLETED%
+echo   Pendientes: $((TOTAL - COMPLETED))
+echo.
+
+if %COMPLETED% equ %TOTAL% (
+    echo ✅ TODO COMPLETADO CORRECTAMENTE
+    echo.
+    echo Abriendo carpeta de descargas...
+    start "" explorer "!mainFolder!"
+    echo Limpiando archivos temporales...
+    del /f /q "!mainFolder!\\!progresoFile!" 2>nul
+    del /f /q "!mainFolder!\\!errorLogFile!" 2>nul
+    ping 127.0.0.1 -n 2 >nul
+    start "" /b cmd /c del /q "%~f0"
+) else (
+    echo ⚠️ DESCARGA INCOMPLETA
+    echo.
+    echo Para reanudar, guarda este ID: %RECOVERY_ID%
+    echo.
+    echo Puedes reanudar ejecutando:
+    echo   %~nx0
+    echo.
+    if exist "!errorLogFile!" (
+        echo Errores encontrados:
+        type "!errorLogFile!"
+        echo.
+    )
+)
+
+echo.
+echo Presiona cualquier tecla para salir...
+pause >nul
 `);
 
     if (sendProgress) {
       sendProgress({
         type: 'complete',
         bat_filename: filename,
+        recovery_id: newRecoveryId,
+        checkpoint_path: checkpointPath,
         total_documents: allJobs.length,
         bat_content: bat,
         message: `✅ Proceso completado. Archivo BAT generado: ${filename}`,
+        timestamp: new Date().toISOString()
+      });
+      
+      sendProgress({
+        type: 'recovery_info',
+        recovery_id: newRecoveryId,
+        message: `🔑 ID de recuperación: ${newRecoveryId}. Guarda este ID para reanudar descargas fallidas.`,
         timestamp: new Date().toISOString()
       });
       
@@ -481,6 +638,8 @@ pause
     } else {
       res.setHeader("Content-Type", "application/octet-stream");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("X-Recovery-Id", newRecoveryId);
+      res.setHeader("X-Total-Documents", allJobs.length);
       res.send(bat);
     }
   } catch (err) {
@@ -492,4 +651,34 @@ pause
   }
 };
 
-module.exports = { BatAuto };
+// Endpoint para listar checkpoints disponibles
+const ListCheckpoints = async (req, res) => {
+  try {
+    const checkpointsDir = path.join(__dirname, '..', 'checkpoints');
+    const files = await fs.readdir(checkpointsDir).catch(() => []);
+    const checkpoints = [];
+    
+    for (const file of files) {
+      if (file.endsWith('.checkpoint.json')) {
+        try {
+          const data = await fs.readFile(path.join(checkpointsDir, file), 'utf8');
+          const checkpoint = JSON.parse(data);
+          checkpoints.push({
+            id: file.replace('.checkpoint.json', ''),
+            timestamp: checkpoint.timestamp,
+            total_jobs: checkpoint.total_jobs,
+            metadata: checkpoint.metadata
+          });
+        } catch (err) {
+          console.error('Error leyendo checkpoint:', err);
+        }
+      }
+    }
+    
+    res.json({ success: true, checkpoints });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+module.exports = { BatAuto, ListCheckpoints };
