@@ -1,16 +1,21 @@
 const axios = require('axios');
 
-const ConsultaIdEgreso = async (documento) => {
+/**
+ * Consulta el ID de egreso basado en el número de documento.
+ * @param {string|number} documento - Documento del paciente.
+ * @param {string} token - Token de sesión (valor para el header 'data').
+ */
+const ConsultaIdEgreso = async (documento, token) => {
     try {
-        if (!documento) {
-            throw new Error('El campo "documento" es requerido');
+        // Validación de campos requeridos
+        if (!documento || !token) {
+            throw new Error('Los campos "documento" y "token" son requeridos');
         }
 
         const cookies = [
             '_ga=GA1.1.1028655100.1772306648',
             '_clck=14vh75i%5E2%5Eg4k%5E0%5E2250',
-            '_ga_581YHK4S33=GS2.1.s1774205494`$o12`$g1`$t1774206070`$j59`$l0`$h0',
-            '_clsk=t0lzit%5E1774206071590%5E6%5E1%5Eb.clarity.ms%2Fcollect'
+            // PHPSESSID=... se podría añadir aquí si es necesario
         ];
 
         const headers = {
@@ -18,14 +23,16 @@ const ConsultaIdEgreso = async (documento) => {
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-language': 'es-419,es;q=0.9,en;q=0.8',
             'cache': 'true',
-            'data': 'qiT8/WA2snQC2ofRduY5QzyqKxGsueUOlPP2NAu7uiM=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==',
+            'data': token, // Ahora usa el token pasado por parámetro
             'origin': 'https://balance.saludplus.co',
-            'referer': 'https://balance.saludplus.co/instituciones/?origen=1&theme=false&time=1774206069448',
+            'referer': 'https://balance.saludplus.co/instituciones/',
             'x-requested-with': 'XMLHttpRequest',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Cookie': cookies.join('; ')
         };
 
+        // Construcción del cuerpo para DataTables
         const bodyData = new URLSearchParams({
             'sEcho': '2',
             'iColumns': '7',
@@ -43,30 +50,34 @@ const ConsultaIdEgreso = async (documento) => {
             url: 'https://balance.saludplus.co/egresosHistoria/BucardorEgresosDatos',
             params: {
                 fechaInicial: '01/01/2024',
-                fechaFinal: '03/22/2027'
+                fechaFinal: '12/31/2026' // Ajustado a una fecha coherente
             },
             headers: headers,
             data: bodyData.toString(),
             timeout: 30000
         });
 
-        if (response.data && response.data.aaData) {
+        // Verificación de la estructura aaData (estándar de DataTables antiguo)
+        if (response.data && response.data.aaData && response.data.aaData.length > 0) {
+            // Buscamos el registro donde la columna 6 coincida con el documento
             const registroEncontrado = response.data.aaData.find(egreso => 
-                egreso[6] === documento.toString()
+                egreso[6] && egreso[6].toString() === documento.toString()
             );
             
             if (registroEncontrado) {
+                // Retorna el ID (usualmente en la primera posición [0])
                 return registroEncontrado[0];
             } else {
-                throw new Error('Documento no encontrado en egresos');
+                throw new Error(`Documento ${documento} no encontrado en la lista de egresos`);
             }
         } else {
-            throw new Error('No se encontraron resultados en egresos');
+            throw new Error('La consulta no devolvió resultados (aaData vacío)');
         }
 
     } catch (error) {
-        console.error('Error en ConsultaIdEgreso:', error.message);
-        throw error;
+        const errorMsg = error.response ? `Error Servidor (${error.response.status})` : error.message;
+        console.error('Error en ConsultaIdEgreso:', errorMsg);
+        throw new Error(errorMsg);
     }
 };
 

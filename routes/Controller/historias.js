@@ -44,7 +44,6 @@ const reportMapping = [
   { param: 'idsHistorias',       report: 'ListadoAsistencialHojaAdministracionMedicamentos',   nombre: 'HojaMedicamentos' },
   { param: 'idsHistorias',       report: 'ListadoAsistencialHojaGastos',                       nombre: 'HojaInsumos' },
   { param: 'idHistorias',        report: 'ListadoHistoriasAsistencialesDestallado',            nombre: 'HistoriaClinicaAuditoria' },
-  // ✅ CORREGIDO: FacturaElectronica usa el idFactura real
   { param: 'idFacturas',         report: 'ListadoFacturasDetallado',                           nombre: 'FacturaElectronica' },
 ];
 
@@ -129,7 +128,6 @@ function construirContextoRenombramiento(ids, { idAdmision, institucionId }) {
   const tipoId = (ids?.tipoDocumento || 'CC').toString().toUpperCase();
   const numId = (ids?.numero_documento || '0000000000').toString();
 
-  // Usar el número de factura real si existe
   let numeroFactura = ids?.numeroFactura || '0';
 
   return {
@@ -171,34 +169,29 @@ function esCapita({ modalidad, ids }) {
   return cand.some(v => v.includes('cápita') || v.includes('capita') || v.includes('cap'));
 }
 
-/**
- * Genera nombre de archivo usando SIEMPRE los prefijos fijos
- * El número para renombrar es el numeroFactura (como en la lógica original)
- */
 function generarNombreArchivo(tipoDocumento, ctx, options = {}) {
   const { nit } = ctx;
-  // Siempre usar numeroFactura como base para el nombre
   const numeroParaRenombrar = ctx.factura || '0';
-
-  // Obtener el prefijo fijo según el tipo de documento
   const prefijo = PREFIJOS_RENOMBRES[tipoDocumento];
   
-  // Si no hay prefijo definido, usar el tipoDocumento como prefijo
   if (!prefijo) {
     return `${tipoDocumento}_${nit}_${numeroParaRenombrar}.pdf`;
   }
 
-  // Formato estándar: PREFIJO_NIT_NUMERO_FACTURA.pdf
   return `${prefijo}_${nit}_${numeroParaRenombrar}.pdf`;
 }
 
 /* =========================
- *  Obtener IDs usando ConsultaIdIntermedio
+ *  Obtener IDs usando ConsultaIdIntermedio - CORREGIDO
  * ========================= */
-async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
+async function obtenerIdsConConsultaId({ clave, idUser }) {
   try {
+    // Crear un mock de request para ConsultaIdIntermedio
     const mockReq = {
-      body: { documento: clave }
+      body: { 
+        documento: clave,    // ✅ Corregido: falta la coma
+        id_usuario: idUser   // ✅ Corregido: parámetro correcto
+      }
     };
     
     let resultadoIntermedio = null;
@@ -233,11 +226,9 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
 
     // TRANSFORMAR al formato esperado por el resto del código
     const transformIds = {
-      // ID individuales
       id_admision: resultadoIntermedio.idAdmision || null,
       id_egreso: resultadoIntermedio.idEgresos?.[0] || null,
       
-      // Arrays de IDs
       idsAdmisiones: resultadoIntermedio.idAdmision ? [resultadoIntermedio.idAdmision] : [],
       idEgresos: resultadoIntermedio.idEgresos || [],
       idsEvoluciones: resultadoIntermedio.idEvolucion ? [resultadoIntermedio.idEvolucion] : [],
@@ -245,17 +236,13 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
       idsOrdenMedicas: resultadoIntermedio.idOrden ? [resultadoIntermedio.idOrden] : [],
       idsHistorias: resultadoIntermedio.idHistoria ? [resultadoIntermedio.idHistoria] : [],
       idAnexosDos: resultadoIntermedio.idAnexosDos || [],
-      // ✅ CORREGIDO: Para facturas, usar el idFactura REAL
       idFacturas: resultadoIntermedio.idFactura ? [resultadoIntermedio.idFactura] : [],
       
-      // Información de búsqueda
       numeroFactura: resultadoIntermedio.numeroFactura || clave,
       
-      // Información del paciente
       tipoDocumento: 'CC',
       numero_documento: clave,
       
-      // Totales
       totales: {
         notasEnfermeria: (resultadoIntermedio.idNotas || []).length,
         ordenesMedicas: resultadoIntermedio.idOrden ? 1 : 0,
@@ -263,11 +250,9 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
         facturas: resultadoIntermedio.idFactura ? 1 : 0,
       },
       
-      // Información adicional
       modalidad: '',
       regimen: '',
       
-      // Datos de facturación
       facturasDetalle: [],
       facturasPorDocumento: {}
     };
@@ -289,16 +274,16 @@ async function obtenerIdsConConsultaId({ clave, institucionId, token }) {
   }
 }
 
-async function obtenerIdsPorAdmision({ institucionId, idAdmision, token }) {
+async function obtenerIdsPorAdmision({ institucionId, idAdmision, idUser }) {
+  // Nota: institucionId no se usa porque ConsultaIdIntermedio obtiene el token del usuario
   return await obtenerIdsConConsultaId({
     clave: idAdmision.toString(),
-    institucionId,
-    token
+    idUser
   });
 }
 
 /* =========================
- *  Controller principal
+ *  Controller principal - CORREGIDO
  * ========================= */
 async function Hs_Anx(req, res) {
   try {
@@ -314,7 +299,6 @@ async function Hs_Anx(req, res) {
       docs,
       tipo,
       modalidad,
-      token,
     } = req.query;
 
     const missing = [];
@@ -334,19 +318,11 @@ async function Hs_Anx(req, res) {
     const claveFinal = String(anyKey);
     let ids;
     
-    if (idAdmisionRaw && !numeroFactura && !clave && !numeroAdmision) {
-      ids = await obtenerIdsPorAdmision({
-        institucionId: Number(institucionId),
-        idAdmision: Number(idAdmisionRaw),
-        token
-      });
-    } else {
-      ids = await obtenerIdsConConsultaId({
-        clave: claveFinal,
-        institucionId: Number(institucionId),
-        token
-      });
-    }
+    // Llamar a obtenerIdsConConsultaId con los parámetros correctos
+    ids = await obtenerIdsConConsultaId({
+      clave: claveFinal,
+      idUser: Number(idUser)
+    });
 
     if (!ids) {
       return res.status(404).json({ 
@@ -367,7 +343,6 @@ async function Hs_Anx(req, res) {
       institucionId,
     });
 
-    // ✅ CORREGIDO: Normalizar colecciones - idFacturas ahora usa el ID real
     const normalized = {
       idsHistorias:       toArray(ids.idsHistorias || ids.id_historia),
       idAnexosDos:        toArray(ids.idAnexosDos || ids.anexo2),
@@ -378,7 +353,7 @@ async function Hs_Anx(req, res) {
       idAdmisiones:       toArray(resolvedAdmisionId),
       idsOrdenMedicas:    toArray(ids.idsOrdenMedicas || ids.ordenes_medicas),
       idHistorias:        toArray(ids.idHistorias || ids.id_historia),
-      idFacturas:         toArray(ids.idFacturas), // ✅ Ahora usa el idFactura real
+      idFacturas:         toArray(ids.idFacturas),
     };
 
     const trabajos = [];

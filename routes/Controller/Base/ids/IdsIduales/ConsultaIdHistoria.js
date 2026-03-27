@@ -1,17 +1,20 @@
 const axios = require('axios');
 
-// Función base para consultar historias clínicas
-const ConsultaIdHistoria = async (documento) => {
+/**
+ * Consulta el ID de la Historia Clínica basado en el documento del paciente.
+ * @param {string|number} documento - Número de identificación del paciente.
+ * @param {string} token - Token dinámico de sesión (header 'data').
+ */
+const ConsultaIdHistoria = async (documento, token) => {
     try {
-        if (!documento) {
-            throw new Error('El campo "documento" es requerido');
+        // Validación de parámetros
+        if (!documento || !token) {
+            throw new Error('Los campos "documento" y "token" son requeridos');
         }
 
         const cookies = [
             '_ga=GA1.1.1028655100.1772306648',
-            '_clck=14vh75i%5E2%5Eg4k%5E0%5E2250',
-            '_ga_581YHK4S33=GS2.1.s1774197211`$o10`$g1`$t1774197222`$j49`$l0`$h0',
-            '_clsk=hz2ilc%5E1774200386709%5E1%5E1%5Eb.clarity.ms%2Fcollect'
+            '_clck=14vh75i%5E2%5Eg4k%5E0%5E2250'
         ];
 
         const headers = {
@@ -19,11 +22,12 @@ const ConsultaIdHistoria = async (documento) => {
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-language': 'es-419,es;q=0.9,en;q=0.8',
             'cache': 'true',
-            'data': 'qiT8/WA2snQC2ofRduY5QzyqKxGsueUOlPP2NAu7uiM=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==',
+            'data': token, // Token dinámico inyectado
             'origin': 'https://balance.saludplus.co',
-            'referer': 'https://balance.saludplus.co/instituciones/?origen=1&theme=false&time=1774197221559',
+            'referer': 'https://balance.saludplus.co/instituciones/',
             'x-requested-with': 'XMLHttpRequest',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Cookie': cookies.join('; ')
         };
 
@@ -56,23 +60,27 @@ const ConsultaIdHistoria = async (documento) => {
             timeout: 30000
         });
 
-        if (response.data && response.data.aaData) {
+        // Verificación de datos recibidos (DataTables aaData)
+        if (response.data && response.data.aaData && response.data.aaData.length > 0) {
+            // Buscamos el registro donde el DOCUMENTO (columna 2 según sColumns) coincida
+            // Nota: En tu find anterior usabas historia[1], verifica si el documento está en la 1 o 2
             const registroEncontrado = response.data.aaData.find(historia => 
-                historia[1] === documento.toString()
+                historia[1] && historia[1].toString() === documento.toString()
             );
             
             if (registroEncontrado) {
-                return registroEncontrado[0]; // Devuelve solo el idHistoria
+                return registroEncontrado[0]; // Retorna el idHistoria (CODIGO)
             } else {
-                throw new Error('Documento no encontrado en historias clínicas');
+                throw new Error(`El documento ${documento} no se encuentra en el listado de Historias Clínicas`);
             }
         } else {
-            throw new Error('No se encontraron resultados en historias clínicas');
+            throw new Error('La consulta no arrojó resultados en Historias Clínicas');
         }
 
     } catch (error) {
-        console.error('Error en ConsultaIdHistoria:', error.message);
-        throw error;
+        const errorMsg = error.response ? `Error API Historias (${error.response.status})` : error.message;
+        console.error('Error en ConsultaIdHistoria:', errorMsg);
+        throw new Error(errorMsg);
     }
 };
 

@@ -1,16 +1,19 @@
 const axios = require('axios');
 
-const ConsultaIdFactura = async (documento) => {
+/**
+ * Consulta el ID y el número de factura basado en el documento del paciente.
+ * @param {string|number} documento - Documento del paciente.
+ * @param {string} token - Token dinámico para el header 'data'.
+ */
+const ConsultaIdFactura = async (documento, token) => {
     try {
-        if (!documento) {
-            throw new Error('El campo "documento" es requerido');
+        if (!documento || !token) {
+            throw new Error('Los campos "documento" y "token" son requeridos');
         }
 
         const cookies = [
             '_ga=GA1.1.1028655100.1772306648',
-            '_clck=14vh75i%5E2%5Eg4k%5E0%5E2250',
-            '_ga_581YHK4S33=GS2.1.s1774205494`$o12`$g1`$t1774206490`$j59`$l0`$h0',
-            '_clsk=t0lzit%5E1774206490744%5E8%5E1%5Eb.clarity.ms%2Fcollect'
+            '_clck=14vh75i%5E2%5Eg4k%5E0%5E2250'
         ];
 
         const headers = {
@@ -18,11 +21,12 @@ const ConsultaIdFactura = async (documento) => {
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-language': 'es-419,es;q=0.9,en;q=0.8',
             'cache': 'true',
-            'data': 'qiT8/WA2snQC2ofRduY5QzyqKxGsueUOlPP2NAu7uiM=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==',
+            'data': token, // Token dinámico inyectado
             'origin': 'https://balance.saludplus.co',
-            'referer': 'https://balance.saludplus.co/instituciones/?origen=1&theme=false&time=1774206489536',
+            'referer': 'https://balance.saludplus.co/instituciones/',
             'x-requested-with': 'XMLHttpRequest',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Cookie': cookies.join('; ')
         };
 
@@ -42,8 +46,8 @@ const ConsultaIdFactura = async (documento) => {
             method: 'POST',
             url: 'https://balance.saludplus.co/facturasAdministar/BuscarListadofacturasDatos',
             params: {
-                fechaInicial: '05/01/2024',
-                fechaFinal: '03/22/2026',
+                fechaInicial: '01/01/2024',
+                fechaFinal: '12/31/2026',
                 idEntidad: '0',
                 idContrato: '0',
                 SinNumero: 'False',
@@ -56,31 +60,33 @@ const ConsultaIdFactura = async (documento) => {
             timeout: 30000
         });
 
-        if (response.data && response.data.aaData) {
+        if (response.data && response.data.aaData && response.data.aaData.length > 0) {
+            // Buscamos en la columna de PACIENTE o NUMERO (ajustado según tu lógica de .includes)
             const registroEncontrado = response.data.aaData.find(factura => 
-                factura[2].includes(documento.toString())
+                factura[2] && factura[2].includes(documento.toString())
             );
             
             if (registroEncontrado) {
-                const numeroFacturaCompleto = registroEncontrado[2]; // "39842 - FEH28969"
+                // Formato esperado: "39842 - FEH28969"
+                const numeroFacturaCompleto = registroEncontrado[2]; 
                 const partes = numeroFacturaCompleto.split(' - ');
-                const numeroFactura = partes[1]; // "FEH28969"
-                const idFactura = registroEncontrado[0]; // "3985802"
                 
                 return {
-                    numeroFactura: numeroFactura,
-                    idFactura: idFactura
+                    idFactura: registroEncontrado[0], // "3985802"
+                    numeroFactura: partes[1] || partes[0], // "FEH28969"
+                    infoCompleta: numeroFacturaCompleto
                 };
             } else {
-                throw new Error('Factura no encontrada');
+                throw new Error(`No se encontró factura activa para el documento: ${documento}`);
             }
         } else {
-            throw new Error('No se encontraron resultados en facturas');
+            throw new Error('La consulta de facturas no devolvió resultados');
         }
 
     } catch (error) {
-        console.error('Error en ConsultaIdFactura:', error.message);
-        throw error;
+        const errorMsg = error.response ? `Error API Facturas (${error.response.status})` : error.message;
+        console.error('Error en ConsultaIdFactura:', errorMsg);
+        throw new Error(errorMsg);
     }
 };
 
