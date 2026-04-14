@@ -227,6 +227,8 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('formLab');
@@ -283,7 +285,6 @@
 
     poblarTiposDocumento();
 
-    // Mostrar/ocultar más tipos (realmente solo añadimos una vez)
     toggleTiposBtn.addEventListener('click', () => {
       const expanded = toggleTiposBtn.getAttribute('aria-expanded') === 'true';
       if (!expanded) {
@@ -291,12 +292,6 @@
       }
       toggleTiposBtn.setAttribute('aria-expanded', String(!expanded));
     });
-
-    // ====== 2. Animación simple para la tarjeta ======
-    if (card) {
-      card.addEventListener('mouseenter', () => card.classList.add('hovered'));
-      card.addEventListener('mouseleave', () => card.classList.remove('hovered'));
-    }
 
     // ====== 3. Helpers de UI ======
     function setLoading(isLoading) {
@@ -306,21 +301,17 @@
     }
 
     function mostrarMensaje(tipo, texto) {
-      // tipo: "ok" | "error"
       if (!out) return;
+      out.className = tipo === 'ok' ? 'text-success-soft' : 'text-danger-soft';
+      
       if (tipo === 'ok') {
-        out.classList.remove('text-danger-soft');
-        out.classList.add('text-success-soft');
-
         out.innerHTML = `
-          <svg class="check me-1" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 13l5 5 11-13"></path>
+          <svg style="width:20px; vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 6L9 17l-5-5"></path>
           </svg>
-          Resultado generado correctamente. La descarga del PDF debería iniciarse en unos segundos.
+          Archivo descargado con éxito.
         `;
       } else {
-        out.classList.remove('text-success-soft');
-        out.classList.add('text-danger-soft');
         out.textContent = texto;
       }
     }
@@ -328,23 +319,21 @@
     function limpiarMensaje() {
       if (out) {
         out.textContent = '';
-        out.classList.remove('text-success-soft', 'text-danger-soft');
+        out.className = '';
       }
     }
 
-    // Convierte fecha de YYYY-MM-DD a DD/MM/YYYY
-    function formatearFechaDDMMYYYY(valorDate) {
+    // Convierte YYYY-MM-DD (del input date) a DD/MM/YYYY (lo que el backend prefiere)
+    function formatearFechaParaBackend(valorDate) {
       if (!valorDate) return '';
-      const [yyyy, mm, dd] = valorDate.split('-');
-      if (!yyyy || !mm || !dd) return '';
-      return `${dd}/${mm}/${yyyy}`;
+      const partes = valorDate.split('-'); // [2024, 09, 30]
+      if (partes.length !== 3) return valorDate;
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
-    // ====== 4. Manejo del envío del formulario ======
+    // ====== 4. Manejo del envío ======
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      event.stopPropagation();
-
       limpiarMensaje();
 
       if (!form.checkValidity()) {
@@ -352,63 +341,58 @@
         return;
       }
 
-      form.classList.add('was-validated');
       setLoading(true);
 
       const payload = {
         institucionId: 20,
         idUser: 6874,
-        // OJO: el backend espera "numeroAdmicion" (tal cual el ejemplo de curl)
         numeroAdmicion: numeroAdmision.value.trim(),
         tipoDocumento: tipoDocumento.value,
         numeroDocumento: numeroDocumento.value.trim(),
-        // El backend espera dd/MM/yyyy
-        fechaNacimiento: formatearFechaDDMMYYYY(fechaNacimiento.value)
+        fechaNacimiento: formatearFechaParaBackend(fechaNacimiento.value)
       };
 
       try {
-  const response = await fetch('https://total-oeyx.onrender.com/DescargarLaboratorio', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
+        // Cambia '/DescargarLaboratorio' por tu ruta real si es necesario
+        const response = await fetch('/DescargarLaboratorio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
 
-  if (!response.ok) {
-    throw new Error('No se pudo obtener el resultado. Verifica los datos e inténtalo nuevamente.');
-  }
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          // Si el error es de validación de seguridad (ej. fecha incorrecta)
+          if (response.status === 401 || response.status === 404) {
+             throw new Error('Los datos no coinciden con nuestros registros. Revisa la fecha y el documento.');
+          }
+          throw new Error('Servidor no disponible en este momento.');
+        }
 
-  // Convertimos la respuesta en un blob (PDF)
-  const blob = await response.blob();
+        const blob = await response.blob();
+        
+        // Verificar si lo recibido es realmente un PDF
+        if (blob.type !== 'application/pdf') {
+          throw new Error('El sistema no generó un PDF válido.');
+        }
 
-  // Nombre del archivo: Laboratorio_tipoDocumento+numeroDocumento.pdf
-  const filename = `Laboratorio_${tipoDocumento.value}${numeroDocumento.value.trim()}.pdf`;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Resultado_${payload.numeroDocumento}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
 
-  // Creamos un enlace temporal de descarga
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.URL.revokeObjectURL(url);
+        mostrarMensaje('ok');
 
-  mostrarMensaje('ok');
-} catch (error) {
-  console.error(error);
-  mostrarMensaje('error', 'Verifica los datos e inténtalo nuevamente.Si el problema persiste, Asiste de forma presencial a la institución.');
-} finally {
-  setLoading(false);
-}
-
-
-
-
-
-
- 
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarMensaje('error', error.message || 'Error al descargar. Inténtalo de nuevo.');
+      } finally {
+        setLoading(false);
+      }
     });
   });
 </script>

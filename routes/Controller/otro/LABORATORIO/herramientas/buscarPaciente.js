@@ -142,3 +142,5 @@ exports.buscarPaciente = async (req, res) => {
     });
   }
 };
+
+

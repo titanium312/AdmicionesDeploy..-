@@ -21,22 +21,28 @@ const ejecutarBuscarPaciente = (numeroAdmision) => {
 };
 
 // =======================================================
-// Helper: normalizar fecha a YYYY-MM-DD
-// (tolerante a zona horaria)
+// 🛠️ HELPER CORREGIDO: Normalización manual de fecha
 // =======================================================
 const normalizarFecha = (fecha) => {
   if (!fecha) return '';
 
-  const d = new Date(fecha);
-  if (!isNaN(d)) {
-    return d.toISOString().slice(0, 10);
+  let f = String(fecha).trim();
+
+  // 1. Si el formato es DD/MM/YYYY (común en tu entrada)
+  if (f.includes('/')) {
+    const partes = f.split('/');
+    if (partes.length === 3) {
+      const [d, m, y] = partes;
+      // Forzamos el formato ISO manual: YYYY-MM-DD
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
   }
 
-  const f = String(fecha).trim();
-
-  if (f.includes('/')) {
-    const [d, m, y] = f.split('/');
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  // 2. Si ya viene como YYYY-MM-DD o similar (ISO)
+  const d = new Date(fecha);
+  if (!isNaN(d.getTime())) {
+    // Usamos el split de 'T' para evitar problemas de desfase por zona horaria (UTC)
+    return d.toISOString().split('T')[0];
   }
 
   return f;
@@ -58,7 +64,7 @@ async function DescargarLaboratorio(req, res) {
       fechaNacimiento
     } = source;
 
-    // ================= VALIDACIONES BÁSICAS =================
+    // VALIDACIONES BÁSICAS
     const faltantes = [];
     if (!institucionId) faltantes.push('institucionId');
     if (!idUser) faltantes.push('idUser');
@@ -68,91 +74,60 @@ async function DescargarLaboratorio(req, res) {
     if (!fechaNacimiento) faltantes.push('fechaNacimiento');
 
     if (faltantes.length) {
-      return res.status(400).json({
-        success: false,
-        paso: 'VALIDACION_PARAMETROS',
-        faltantes
-      });
+      return res.status(400).json({ success: false, paso: 'VALIDACION_PARAMETROS', faltantes });
     }
 
     const instId = Number(institucionId);
     const userId = Number(idUser);
 
-    if (!Number.isFinite(instId) || !Number.isFinite(userId)) {
-      return res.status(400).json({
-        success: false,
-        paso: 'VALIDACION_NUMERICA'
-      });
-    }
-
-    // ================= 1) BUSCAR PACIENTE =================
+    // 1) BUSCAR PACIENTE
     const numeroAdmisionBuscada = String(numeroAdmicion).trim();
-
     let paciente;
     try {
       paciente = await ejecutarBuscarPaciente(numeroAdmisionBuscada);
     } catch (e) {
-      return res.status(500).json({
-        success: false,
-        paso: 'BUSCAR_PACIENTE',
-        error: e
-      });
+      return res.status(500).json({ success: false, paso: 'BUSCAR_PACIENTE', error: e });
     }
 
     if (!paciente || !paciente.isSuccessful) {
-      return res.status(404).json({
-        success: false,
-        paso: 'PACIENTE_NO_ENCONTRADO'
-      });
+      return res.status(404).json({ success: false, paso: 'PACIENTE_NO_ENCONTRADO' });
     }
 
-    const {
-      idAdmision,
-      numeroAdmision,
-      tipoDocumento: tipoDocBD,
-      documento: numeroDocBD,
-      fechaNacimiento: fechaNacBD
-    } = paciente;
-
-    // ================= 2) VALIDACIÓN DE SEGURIDAD =================
+    // 2) VALIDACIÓN DE SEGURIDAD (Blindada)
     const errores = [];
 
-    if (String(tipoDocBD).toUpperCase() !== String(tipoDocumento).toUpperCase()) {
+    // Normalización de strings para evitar fallos por espacios o mayúsculas
+    if (String(paciente.tipoDocumento).trim().toUpperCase() !== String(tipoDocumento).trim().toUpperCase()) {
       errores.push('tipoDocumento');
     }
 
-    if (String(numeroDocBD) !== String(numeroDocumento)) {
+    if (String(paciente.documento).trim() !== String(numeroDocumento).trim()) {
       errores.push('numeroDocumento');
     }
 
-    if (
-      normalizarFecha(fechaNacBD) !==
-      normalizarFecha(fechaNacimiento)
-    ) {
-      errores.push('fechaNacimiento');
-    }
+    // COMPARACIÓN CRÍTICA DE FECHAS
+    const fechaEntrada = normalizarFecha(fechaNacimiento);
+    const fechaBaseDatos = normalizarFecha(paciente.fechaNacimiento);
 
-    if (String(numeroAdmision) !== String(numeroAdmisionBuscada)) {
-      errores.push('numeroAdmision');
+    if (fechaEntrada !== fechaBaseDatos) {
+      errores.push('fechaNacimiento');
     }
 
     if (errores.length) {
       return res.status(401).json({
         success: false,
         paso: 'VALIDACION_SEGURIDAD',
-        errores
+        errores,
+        info: {
+          recibido: fechaEntrada,
+          esperado: fechaBaseDatos
+        }
       });
     }
 
-    // ================= 3) TOKEN =================
-    const token = createToken(
-      'ListadoInformesResultadosLaboratorio',
-      instId,
-      83,
-      userId
-    );
+    // 3) GENERACIÓN DE TOKEN Y URL
+    const token = createToken('ListadoInformesResultadosLaboratorio', instId, 83, userId);
 
-    // ================= 4) URL REPORTE =================
     const params = new URLSearchParams({
       modulo: 'Laboratorio',
       reporte: 'ListadoInformesResultadosLaboratorio',
@@ -160,79 +135,54 @@ async function DescargarLaboratorio(req, res) {
       hideTool: 'true',
       environment: '1',
       userId: String(userId),
-      idAdmision: String(idAdmision),
+      idAdmision: String(paciente.idAdmision),
       token
     });
 
     const url = `https://reportes.saludplus.co/view.aspx?${params.toString()}`;
 
-    // ================= 5) DESCARGAR PDF =================
+    // 4) DESCARGA Y PIPE
     const response = await axios.get(url, {
       responseType: 'stream',
-      validateStatus: () => true
+      validateStatus: () => true,
+      timeout: 30000 // 30 segundos por si el reporte es pesado
     });
 
     if (!response.headers['content-type']?.includes('pdf')) {
-      return res.status(502).json({
-        success: false,
-        paso: 'REPORTE_NO_PDF'
-      });
+      return res.status(502).json({ success: false, paso: 'REPORTE_NO_PDF' });
     }
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="laboratorio_${idAdmision}.pdf"`
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="laboratorio_${paciente.idAdmision}.pdf"`);
 
     response.data.pipe(res);
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      paso: 'EXCEPCION_GENERAL',
-      message: error.message
-    });
+    return res.status(500).json({ success: false, paso: 'EXCEPCION_GENERAL', message: error.message });
   }
 }
 
 // =======================================================
-// 🧪 TEST — Debug sin romper producción
+// 🧪 TEST — Debug
 // =======================================================
 async function DescargarLaboratorioTest(req, res) {
   try {
-    const { numeroAdmicion, tipoDocumento, numeroDocumento, fechaNacimiento } = req.body;
+    const { numeroAdmicion, fechaNacimiento } = req.body;
+    const paciente = await ejecutarBuscarPaciente(String(numeroAdmicion).trim());
 
-    const numeroAdmisionBuscada = String(numeroAdmicion).trim();
-    const paciente = await ejecutarBuscarPaciente(numeroAdmisionBuscada);
-
-    if (!paciente || !paciente.isSuccessful) {
-      return res.status(404).json({ success: false });
-    }
+    if (!paciente || !paciente.isSuccessful) return res.status(404).json({ success: false });
 
     return res.json({
       success: true,
-      request: {
-        numeroAdmicion,
-        tipoDocumento,
-        numeroDocumento,
-        fechaNacimiento,
-        fechaNacimiento_normalizada: normalizarFecha(fechaNacimiento)
-      },
-      bd: {
-        tipoDocumento: paciente.tipoDocumento,
-        numeroDocumento: paciente.documento,
-        fechaNacimiento: paciente.fechaNacimiento,
-        fechaNacimiento_normalizada: normalizarFecha(paciente.fechaNacimiento)
+      comparacion: {
+        enviada: normalizarFecha(fechaNacimiento),
+        bd: normalizarFecha(paciente.fechaNacimiento),
+        match: normalizarFecha(fechaNacimiento) === normalizarFecha(paciente.fechaNacimiento)
       }
     });
-
   } catch (e) {
     return res.status(500).json({ success: false, error: e.message });
   }
 }
 
-module.exports = {
-  DescargarLaboratorio,
-  DescargarLaboratorioTest
-};
+module.exports = { DescargarLaboratorio, DescargarLaboratorioTest };
