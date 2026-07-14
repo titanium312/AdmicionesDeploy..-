@@ -3,7 +3,8 @@ const usuariosInstitucion = [
   { idUsuario: 8098, nombre: 'MIGUELMARINO', idInstitucion: 14 },
   { idUsuario: 6853, nombre: 'JERONIMORTEGA', idInstitucion: 20 },
   { idUsuario: 10763, nombre: 'Ysalcedo', idInstitucion: 14 }, 
-  { idUsuario: 10762, nombre: 'Miguelmartinez', idInstitucion: 14}
+  { idUsuario: 10762, nombre: 'Miguelmartinez', idInstitucion: 14},
+  { idUsuario: 11129, nombre: '1074011830', idInstitucion: 45 }
 ];
 
 const instituciones = [
@@ -18,6 +19,12 @@ const instituciones = [
     nombre: 'CENTRO DE SALUD SAN JOSE DE TOLUVIEJO ESE',
     nit: "823000696",
     Tksesicion: '4t8/ugObIEqPRBqgNMaqZgIcgbf1pWytKq44JFP/meo=.qSTbSfTuauUhk/PDAmMBhw==.W8yyMby3724tK/yRfaS43A=='
+  },
+  {
+    idInstitucion: 45,
+    nombre: 'ESE CENTRO DE SALUD SANTA LUCIA',
+    nit: "812001219",
+    Tksesicion: 'tuJL6kKcwcINYga8n3z2aYQpJNYwvrC8KfqWcUyfhQM=.zDnZgS1yR6oRFW9nEhJuKw==.SoEw/Rt/mGLWlraQIrBnbQ=='
   }
 ];
 
