@@ -23,7 +23,7 @@ const instituciones = [
   {
     idInstitucion: 45,
     nombre: 'ESE CENTRO DE SALUD SANTA LUCIA',
-    nit: "812001219",
+    nit: "802006991",
     Tksesicion: 'tuJL6kKcwcINYga8n3z2aYQpJNYwvrC8KfqWcUyfhQM=.zDnZgS1yR6oRFW9nEhJuKw==.SoEw/Rt/mGLWlraQIrBnbQ=='
   }
 ];
