@@ -7,12 +7,12 @@ const { Histronico } = require('../Histronico/Histronico'); // Ajusta la ruta
 
 
 // También importar el controlador de admisiones
-const { GeneradorHs } = require('./Controller/admissionController'); // Ajusta la ruta
+const { GeneradorHs } = require('./Controller/GeneradorHs'); // Ajusta la ruta
 const { buscarAdmisionMiddleware } = require('./Controller/buscador/buscarIdAdmision');
 
 // Definir rutas
 
-routerHistoria.get('/GeneradorHs', GeneradorHs);
+routerHistoria.post('/GeneradorHs', GeneradorHs);
 routerHistoria.post('/buscar', buscarAdmisionMiddleware);
 
 

@@ -4,16 +4,6 @@ const { usuariosInstitucion, instituciones } = require('./Instituciones.js');
 const LOGIN_URL = 'https://api.saludplus.co/api/Auth/login';
 
 /* =====================================================
-   FUNCIÓN: OBTENER INSTITUCIÓN POR USUARIO
-===================================================== */
-async function obtenerInstitucionPorUsuario(idUsuario) {
-  const usuario = usuariosInstitucion.find(u => u.idUsuario === Number(idUsuario));
-  if (!usuario) return null;
-  const institucion = instituciones.find(i => i.idInstitucion === usuario.idInstitucion);
-  return institucion || null;
-}
-
-/* =====================================================
    CONTROLLER LOGIN
 ===================================================== */
 async function obtenerDatosLogin(req, res) {
@@ -38,14 +28,12 @@ async function obtenerDatosLogin(req, res) {
 
     const data = await loginResponse.json();
 
-    // Validamos si la respuesta de SaludPlus fue exitosa según su esquema
     if (!loginResponse.ok || !data.isSuccessful) {
       return res.status(loginResponse.status || 401).json({
         error: data.messages || 'Credenciales incorrectas'
       });
     }
 
-    // Extraemos la información desde el objeto "result"
     const { result } = data;
 
     if (!result || !result.id) {
@@ -53,19 +41,24 @@ async function obtenerDatosLogin(req, res) {
     }
 
     /* ==========================
-       2. INSTITUCIÓN
+       2. BUSCAR USUARIO LOCAL Y SU INSTITUCIÓN
     =========================== */
-    const institucion = await obtenerInstitucionPorUsuario(result.id);
+    const usuarioLocal = usuariosInstitucion.find(u => u.idUsuario === Number(result.id));
+    if (!usuarioLocal) {
+      return res.status(404).json({ error: 'El usuario no está registrado en el sistema local' });
+    }
+
+    const institucion = instituciones.find(i => i.idInstitucion === usuarioLocal.idInstitucion);
     if (!institucion) {
-      return res.status(404).json({ error: 'El usuario no tiene institución asignada en el sistema local' });
+      return res.status(404).json({ error: 'Institución no encontrada para este usuario' });
     }
 
     /* ==========================
-       3. RESPUESTA FINAL (Mapeada)
+       3. RESPUESTA FINAL (incluye tokSesion)
     =========================== */
-    // Nota: Se eliminaron los campos de "perfiles" según tu instrucción
     return res.json({
       token: result.token || null,
+      tokSesion: usuarioLocal.Tksesicion,   // ← extraído del arreglo local
       usuario: {
         id_usuario: result.id,
         nombre: result.nombre,

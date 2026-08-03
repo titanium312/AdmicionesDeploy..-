@@ -4,17 +4,19 @@ const { obtenerDatosAdmision } = require('./buscador/buscarIdAdmision');
 const { adolescencia } = require('./catalogos/adolescencia');
 const { calcularEdad } = require('./utils/dateUtils');
 
-// ===== CONFIGURACIÓN =====
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
 const SALUDPLUS_URL = 'https://balance.saludplus.co/historiaClinicaUnificada/historiaCompletaEditar?auto=0';
-const SALUDPLUS_DATA_HEADER = 'RS46rQ352NMcaO1JVCMw18aQTs4rZV54Eo7G0QomRt8=.lGayPEg7GErPLTnqY9izNw==.wcFkBNOeMUO3EbN8I4nUXw==';
-const SALUDPLUS_API_KEY = '{{token}}';
 const CONTADOR_URL = 'https://hospitalsanjorgeayapel.gov.co/BakenPhp/cositas/contadorhs.php';
 
 const MIN_INTERVALO_MINUTOS = 30; // Duración de cada atención (30 min)
 const HORA_INICIO = 6;            // 6:00 AM
 const HORA_FIN = 17;              // 5:00 PM
 
-// ===== FUNCIONES AUXILIARES =====
+// ============================================================
+// FUNCIONES AUXILIARES
+// ============================================================
 
 /**
  * Convierte cualquier formato de fecha a 'YYYY-MM-DD'
@@ -145,10 +147,21 @@ async function guardarEnContador(numeroAdmision, fechaHora, resultado) {
     return response.data;
 }
 
-// ===== CONTROLADOR PRINCIPAL =====
+// ============================================================
+// CONTROLADOR PRINCIPAL
+// ============================================================
 const GeneradorHs = async (req, res) => {
     try {
-        // 1. Obtener número de admisión
+        // 1. Obtener token del body
+        const token = req.body.token;
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                error: 'Token de autenticación requerido en el cuerpo de la solicitud (campo "token").'
+            });
+        }
+
+        // 2. Obtener número de admisión
         const numeroAdmision = req.params.numeroAdmision ||
                                req.body.numeroAdmision ||
                                req.query.numeroAdmision;
@@ -160,11 +173,11 @@ const GeneradorHs = async (req, res) => {
             });
         }
 
-        // 2. Obtener datos de admisión
+        // 3. Obtener datos de admisión
         const resultado = await obtenerDatosAdmision(numeroAdmision);
         const data = resultado.data;
 
-        // 3. Calcular edad y validar etapa
+        // 4. Calcular edad y validar etapa
         const edad = calcularEdad(data.paciente.fecha_nacimiento);
         if (edad === null) {
             return res.status(400).json({
@@ -179,11 +192,10 @@ const GeneradorHs = async (req, res) => {
             });
         }
 
-        // 4. Parsear fecha y hora de admisión
+        // 5. Parsear fecha y hora de admisión
         const fechaAdmisionRaw = data.admision.fecha_admision;
         const fechaAdmision = parsearFechaAdmision(fechaAdmisionRaw);
 
-        // Obtener hora y minutos (puede ser objeto o string)
         const horaAdmision = data.admision.hora_admision;
         let horaSolicitada = 0;
         let minutoSolicitado = 0;
@@ -196,13 +208,13 @@ const GeneradorHs = async (req, res) => {
             horaSolicitada = parseInt(partes[0], 10);
             minutoSolicitado = parseInt(partes[1], 10);
         } else {
-            // Fallback: usar la hora actual (por si acaso)
+            // Fallback: usar hora actual
             const ahora = new Date();
             horaSolicitada = ahora.getHours();
             minutoSolicitado = ahora.getMinutes();
         }
 
-        // Validar rango horario básico (debe estar entre 6:00 y 17:00)
+        // Validar rango horario básico
         if (horaSolicitada < HORA_INICIO || horaSolicitada > HORA_FIN || (horaSolicitada === HORA_FIN && minutoSolicitado > 0)) {
             return res.status(400).json({
                 success: false,
@@ -210,7 +222,7 @@ const GeneradorHs = async (req, res) => {
             });
         }
 
-        // 5. Verificar que la misma admisión no esté ya registrada hoy
+        // 6. Verificar que la misma admisión no esté ya registrada hoy
         const registrosHoy = await obtenerRegistrosDelDia(fechaAdmision);
         const yaExiste = registrosHoy.some(reg => reg.numero_admision === numeroAdmision);
         if (yaExiste) {
@@ -220,7 +232,7 @@ const GeneradorHs = async (req, res) => {
             });
         }
 
-        // 6. Calcular todos los huecos libres del día
+        // 7. Calcular huecos libres
         const huecos = calcularHuecosLibres(fechaAdmision, registrosHoy);
         if (huecos.length === 0) {
             return res.status(409).json({
@@ -229,7 +241,7 @@ const GeneradorHs = async (req, res) => {
             });
         }
 
-        // 7. Elegir el hueco más cercano a la hora solicitada
+        // 8. Elegir el hueco más cercano a la hora solicitada
         const horaSolicitadaDate = new Date(`${fechaAdmision}T${String(horaSolicitada).padStart(2,'0')}:${String(minutoSolicitado).padStart(2,'0')}:00`);
         const inicioHueco = elegirHuecoCercano(huecos, horaSolicitadaDate);
         if (!inicioHueco) {
@@ -239,28 +251,36 @@ const GeneradorHs = async (req, res) => {
             });
         }
 
-        // 8. Extraer la nueva hora y minuto
+        // 9. Extraer nueva hora y minuto
         const nuevaHora = inicioHueco.getHours();
         const nuevoMinuto = inicioHueco.getMinutes();
         const fechaHoraAsignada = formatearFechaHora(inicioHueco);
 
-        // 9. Generar datos de adolescencia (usando los datos originales)
+        // 10. Generar datos de adolescencia
         const genero = data.paciente.sexo;
         const admisionFormateada = adolescencia(data, genero, edad);
 
-        // 10. Sobrescribir la hora de la historia con la nueva hora asignada
+        // 11. Sobrescribir la hora de la historia con la nueva hora asignada
         admisionFormateada.hora_historia = `${String(nuevaHora).padStart(2, '0')}:${String(nuevoMinuto).padStart(2, '0')}`;
 
-        // 11. Enviar a SaludPlus
+        // 12. Enviar a SaludPlus usando el token recibido en el body
         const responseExterna = await axios.post(SALUDPLUS_URL, admisionFormateada, {
             headers: {
                 'Content-Type': 'application/json',
-                'X-API-Key': SALUDPLUS_API_KEY,
-                'data': SALUDPLUS_DATA_HEADER
+                'data': token
             }
         });
 
-        // 12. Guardar en el contador con la fecha/hora asignada
+        // 13. Validar que la historia se haya guardado realmente
+        const { valorRetorno, numeroHistoria, mensajeRetorno } = responseExterna.data || {};
+
+        if (!valorRetorno || !numeroHistoria || valorRetorno === 0 || numeroHistoria === 0) {
+            // La API no guardó la historia, lanzamos error con el mensaje devuelto
+            const errorMsg = mensajeRetorno || 'La historia no pudo ser guardada (valorRetorno o numeroHistoria es 0)';
+            throw new Error(errorMsg);
+        }
+
+        // 14. Guardar en el contador (solo si la historia se guardó correctamente)
         let contadorRespuesta = null;
         try {
             contadorRespuesta = await guardarEnContador(
@@ -270,19 +290,17 @@ const GeneradorHs = async (req, res) => {
             );
         } catch (errorContador) {
             console.error('Error al guardar en contador:', errorContador.message);
+            // No interrumpimos el flujo, solo registramos el error
         }
 
-        // 13. Respuesta final
+        // 15. Respuesta final exitosa
         return res.status(200).json({
             success: true,
-            mensaje: `Historia asignada al hueco disponible: ${fechaHoraAsignada}`,
+            mensaje: `Historia guardada exitosamente (ID: ${valorRetorno}) y asignada al hueco: ${fechaHoraAsignada}`,
             hora_original_solicitada: `${String(horaSolicitada).padStart(2,'0')}:${String(minutoSolicitado).padStart(2,'0')}`,
             hora_asignada: `${String(nuevaHora).padStart(2, '0')}:${String(nuevoMinuto).padStart(2, '0')}`,
             admision: admisionFormateada,
-            apiExterna: {
-                status: responseExterna.status,
-                data: responseExterna.data
-            },
+            apiExterna: responseExterna.data,
             contador: contadorRespuesta || { success: false, message: 'No se pudo registrar en contador' }
         });
 
@@ -301,6 +319,11 @@ const GeneradorHs = async (req, res) => {
             errorMsg = 'No se recibió respuesta de la API externa';
         }
 
+        // Si el error es el que lanzamos manualmente (historia no guardada), devolvemos 400
+        if (errorMsg.includes('La historia no pudo ser guardada')) {
+            statusCode = 400;
+        }
+
         return res.status(statusCode).json({
             success: false,
             error: 'Error al procesar la admisión o al enviar a SaludPlus',
@@ -310,7 +333,9 @@ const GeneradorHs = async (req, res) => {
     }
 };
 
-// ===== CONTROLADOR PARA DATOS CRUDOS (sin cambios) =====
+// ============================================================
+// CONTROLADOR PARA DATOS CRUDOS (sin cambios)
+// ============================================================
 const getAdmissionRaw = async (req, res) => {
     try {
         const numeroAdmision = req.params.numeroAdmision ||
