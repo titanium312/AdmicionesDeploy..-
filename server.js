@@ -33,6 +33,11 @@ app.get('/cambiarFecha', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/otros', 'cambiar.html'));
 });
 
+app.get('/Historia', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/historia', 'Historia.html'));
+});
+
+
 
 // (Opcional) Respuesta simple en la raíz para health checks
 app.get('/', (req, res) => {

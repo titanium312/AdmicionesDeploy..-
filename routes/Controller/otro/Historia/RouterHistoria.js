@@ -1,17 +1,28 @@
 const express = require('express');
 const routerHistoria = express.Router();
 
-// AUDITORIA -----------------------------------------------------------
-const { AdmisionBuscarConAscendientes } = require('./Controller/Buscadores/AdmisionBuscarConAscendientes');
-const { HistoriaClinica } = require('./Controller/HistoriaClinica');
+// Importar el controlador CORRECTAMENTE
+const { Histronico } = require('../Histronico/Histronico'); // Ajusta la ruta
 
-const { Histronico } = require('./Histronico/Histronico');
 
-// AUDITORIA -----------------------------------------------------------
-routerHistoria.get('/AdmisionBuscarConAscendientes', AdmisionBuscarConAscendientes);
 
-routerHistoria.post('/HistoriaClinica', HistoriaClinica);
+// También importar el controlador de admisiones
+const { GeneradorHs } = require('./Controller/admissionController'); // Ajusta la ruta
+const { buscarAdmisionMiddleware } = require('./Controller/buscador/buscarIdAdmision');
+
+// Definir rutas
+
+routerHistoria.get('/GeneradorHs', GeneradorHs);
+routerHistoria.post('/buscar', buscarAdmisionMiddleware);
+
+
+
+
+
+
+
 
 routerHistoria.post('/Histronico', Histronico);
+
 
 module.exports = routerHistoria;
