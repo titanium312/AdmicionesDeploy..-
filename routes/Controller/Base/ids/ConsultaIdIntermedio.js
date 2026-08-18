@@ -6,15 +6,21 @@ const { consultaid } = require('./consultaid');
 
 /**
  * Función interna para cruzar idUsuario con Tksesicion
- * sin modificar el archivo Instituciones.js
+ * Ahora toma el token directamente del usuario
  */
 const obtenerTokenLocal = (idUsuario) => {
     const usuario = usuariosInstitucion.find(u => u.idUsuario === Number(idUsuario));
-    if (!usuario) return null;
-
-    const institucion = instituciones.find(i => i.idInstitucion === usuario.idInstitucion);
-    return institucion ? institucion.Tksesicion : null;
+    if (!usuario) {
+        console.log(`❌ Usuario ${idUsuario} no encontrado`);
+        return null;
+    }
+    
+    console.log(`✅ Usuario encontrado: ${usuario.nombre} (ID: ${usuario.idUsuario})`);
+    console.log(`✅ Token: ${usuario.Tksesicion ? 'Presente ✓' : 'Ausente ✗'}`);
+    
+    return usuario.Tksesicion || null;
 };
+
 
 const ConsultaIdIntermedio = async (req, res) => {
     try {
