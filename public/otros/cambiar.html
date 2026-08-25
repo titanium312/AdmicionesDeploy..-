@@ -3,286 +3,657 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CORE_INVOICE.v3.2 — Adaptive Control</title>
+  <title>✨ CORE_INVOICE v3.2 — Edición Coqueta 🌈🦋</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
-    
-    body { 
-      font-family: 'JetBrains Mono', monospace; 
-      background: #050505; 
-      color: #00ff41; 
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+    * { font-family: 'Quicksand', sans-serif; }
+
+    body {
+      background: linear-gradient(135deg, #ffe6f0 0%, #fce4ec 40%, #f3e5f5 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
+      position: relative;
+      overflow-x: hidden;
     }
-    
+
+    /* 🌸 FONDO CON IMAGEN REBOTANDO (flotación) */
+    .fondo-rebotante {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none; /* para que no interfiera con los clics */
+      opacity: 0.08; /* muy transparente */
+      overflow: hidden;
+    }
+    .fondo-rebotante img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      animation: rebote 8s ease-in-out infinite alternate;
+    }
+    @keyframes rebote {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(-20px) scale(1.02); }
+    }
+
+    /* Confeti de colores */
+    .confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .confetti span {
+      position: absolute;
+      display: block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      opacity: 0.5;
+      animation: float 8s infinite alternate ease-in-out;
+    }
+    @keyframes float {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(-30px) rotate(360deg); }
+    }
+
+    /* 🦋 Mariposas volando (decoración) */
+    .butterfly {
+      position: fixed;
+      font-size: 2.5rem;
+      opacity: 0.3;
+      animation: fly 12s infinite linear;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes fly {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(100px, -50px) rotate(10deg); }
+      50% { transform: translate(200px, 20px) rotate(-5deg); }
+      75% { transform: translate(100px, 50px) rotate(10deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    /* Tarjetas principales */
     .glass-panel {
-      background: rgba(15, 15, 15, 0.9);
-      border: 1px solid #1a1a1a;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(4px);
+      border-radius: 30px;
+      border: 3px solid transparent;
+      border-image: linear-gradient(135deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb) 1;
+      box-shadow: 0 8px 32px rgba(255, 105, 180, 0.2), 0 4px 16px rgba(255, 200, 220, 0.3);
+      transition: all 0.3s;
+    }
+    .glass-panel:hover {
+      box-shadow: 0 12px 48px rgba(255, 105, 180, 0.3);
     }
 
-    .step-indicator { width: 10px; height: 10px; border: 1px solid #333; transition: all 0.2s; }
-    .step-active { background: #00ff41; box-shadow: 0 0 8px #00ff41; border: none; animation: pulse 1s infinite; }
-    .step-done { background: #008f11; border: none; }
-    .step-error { background: #ff3131; border: none; box-shadow: 0 0 8px #ff3131; }
+    /* Indicadores de pasos (mariposas) */
+    .step-indicator {
+      font-size: 1.4rem;
+      transition: all 0.3s;
+      opacity: 0.3;
+      filter: grayscale(1);
+    }
+    .step-active {
+      opacity: 1;
+      filter: grayscale(0);
+      transform: scale(1.3);
+      animation: pulse-butterfly 0.6s infinite alternate;
+    }
+    .step-done {
+      opacity: 1;
+      filter: grayscale(0);
+      color: #ff6b9d;
+    }
+    .step-error {
+      opacity: 1;
+      filter: grayscale(0);
+      color: #ff1744;
+      transform: scale(1.2);
+    }
+    @keyframes pulse-butterfly {
+      0% { transform: scale(1) rotate(0deg); }
+      100% { transform: scale(1.4) rotate(10deg); }
+    }
 
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
+    /* Inputs y selects con estilo pastel */
     input, textarea, select {
-      background: #0a0a0a !important;
-      color: #00ff41 !important;
-      border: 1px solid #1a1a1a !important;
+      background: #fff0f5 !important;
+      color: #6a1b4d !important;
+      border: 2px solid #f8bbd0 !important;
+      border-radius: 20px !important;
+      padding: 10px 14px !important;
+      font-weight: 600;
+      box-shadow: inset 0 2px 4px rgba(255, 105, 180, 0.1);
     }
-    input:focus, textarea:focus { border-color: #00ff41 !important; outline: none; }
-    
-    /* Estilo para que el textarea se vea más limpio al pegar */
-    #admisionLista::placeholder { color: #1a3a1a; }
+    input:focus, textarea:focus, select:focus {
+      border-color: #ff6b9d !important;
+      box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.2);
+      outline: none;
+    }
+
+    /* Botón principal */
+    #ejecutarBtn {
+      background: linear-gradient(135deg, #ff9a9e, #fecfef, #fbc2eb);
+      color: #6a1b4d;
+      font-weight: 700;
+      border: none;
+      border-radius: 40px;
+      padding: 14px;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 16px rgba(255, 105, 180, 0.3);
+      transition: all 0.3s;
+    }
+    #ejecutarBtn:hover {
+      transform: scale(1.04) rotate(-1deg);
+      box-shadow: 0 8px 32px rgba(255, 105, 180, 0.5);
+    }
+
+    /* Checkboxes personalizados */
+    .checkbox-coqueta {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #f8bbd0;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      transition: 0.2s;
+      position: relative;
+    }
+    .checkbox-coqueta:checked {
+      background: #ff6b9d;
+      border-color: #ff6b9d;
+    }
+    .checkbox-coqueta:checked::after {
+      content: '✓';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      position: absolute;
+      top: -2px;
+      left: 2px;
+    }
+
+    /* Toast (notificación) */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border-left: 8px solid #ff6b9d;
+      padding: 16px 20px;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(255, 105, 180, 0.3);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transform: translateX(120%);
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      max-width: 340px;
+    }
+    .toast.show {
+      transform: translateX(0);
+    }
+    .toast img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 3px solid #f8bbd0;
+      object-fit: cover;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 240, 245, 0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 40px;
+      padding: 2rem;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(255, 105, 180, 0.4);
+      border: 4px solid #f8bbd0;
+      animation: popIn 0.5s;
+    }
+    .modal-box img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 30px;
+      border: 4px solid #fecfef;
+      margin-bottom: 1rem;
+    }
+    .modal-box h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ff6b9d, #f8bbd0, #a18cd1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .modal-box p {
+      color: #6a1b4d;
+      font-weight: 600;
+    }
+    .modal-box button {
+      background: #f8bbd0;
+      border: none;
+      border-radius: 30px;
+      padding: 10px 28px;
+      font-weight: 700;
+      color: #6a1b4d;
+      transition: 0.2s;
+    }
+    .modal-box button:hover {
+      background: #ff6b9d;
+      color: white;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Texto arcoíris */
+    .rainbow-text {
+      background: linear-gradient(90deg, #ff6b9d, #f8bbd0, #a18cd1, #fbc2eb, #ff6b9d);
+      background-size: 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbowMove 4s linear infinite;
+    }
+    @keyframes rainbowMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    /* Títulos */
+    .title-coqueto {
+      font-weight: 700;
+      color: #6a1b4d;
+    }
+
+    /* Barra de progreso con colores pastel */
+    .progress-bar {
+      height: 8px;
+      border-radius: 20px;
+      background: #f8bbd0;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff9a9e, #fecfef, #fbc2eb, #a18cd1);
+      border-radius: 20px;
+      transition: width 0.7s;
+    }
+
+    /* Ajuste para que el contenido esté por encima del fondo */
+    .contenido-principal {
+      position: relative;
+      z-index: 10;
+    }
   </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
 
-    
-    <div class="max-w-5xl mx-auto">
-  
-  <header class="mb-8 border-b border-zinc-800 pb-4 flex justify-between items-end">
-    <div>
-      <h1 class="text-2xl font-black tracking-tighter uppercase italic">
-        System_Invoice_<span class="text-white">v3.2</span>
-      </h1>
-      <p class="text-[10px] text-zinc-500 tracking-[0.2em]">LIMPIEZA AUTOMÁTICA Y FECHA DINÁMICA</p>
-    </div>
-    <div class="text-right">
-      <p id="apiIndicator" class="text-[9px] font-bold text-zinc-600 uppercase italic tracking-tighter">Kernel Status: Active</p>
-    </div>
-  </header>
-
-  <div class="grid lg:grid-cols-12 gap-6">
-    
-    <aside class="lg:col-span-4 space-y-4">
-      <div class="glass-panel rounded-lg p-5">
-        <div class="flex justify-between items-center mb-2">
-            <label class="text-[10px] font-bold text-zinc-500 uppercase">Input_Data_Stream</label>
-            <button onclick="limpiarCaja()" class="text-[9px] text-zinc-600 hover:text-red-500 underline uppercase">Limpiar</button>
-        </div>
-        <textarea id="admisionLista" 
-          class="w-full h-32 rounded p-3 text-xs outline-none resize-none mb-4" 
-          placeholder="Pega aquí: 275572, 275573 - 275574..."></textarea>
-        
-        <div class="space-y-4">
-          <div>
-            <label class="text-[9px] font-bold text-zinc-600 block uppercase mb-1">Target_Institución</label>
-            <select id="selInstitucion" class="w-full rounded p-2 text-xs outline-none cursor-pointer">
-              <option value="14">C.S. SAN JOSE DE TOLUVIEJO (14)</option>
-              <option value="20">E.S.E. HOSPITAL SAN JORGE (20)</option>
-              <option value="45">ESE CENTRO DE SALUD SANTA LUCIA (45)</option>              
-            </select>
-          </div>
-
-          <div>
-            <label class="text-[9px] font-bold text-zinc-600 block uppercase mb-1">Processing_Date (Editable)</label>
-            <input id="fechaInput" type="text" maxlength="10"
-              class="w-full rounded p-2 text-xs outline-none font-bold tracking-widest">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-2 mt-6">
-          <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
-            <input type="checkbox" id="chkCambiar" checked class="opacity-30 checked:opacity-100"> 01_SET_DATE
-          </label>
-          <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
-            <input type="checkbox" id="chkGenerar" checked class="opacity-30 checked:opacity-100"> 02_GEN_PREFIX
-          </label>
-          <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
-            <input type="checkbox" id="chkEnviar" class="opacity-30 checked:opacity-100"> 03_DIAN_PUSH
-          </label>
-        </div>
-
-        <button id="ejecutarBtn" class="w-full mt-8 py-3 bg-white text-black font-black text-xs uppercase hover:bg-green-500 transition-all">
-          Execute_Sequence
-        </button>
-      </div>
-    </aside>
-
-    <main class="lg:col-span-8 space-y-4">
-      
-      <div class="glass-panel rounded-lg p-5 flex justify-between items-center border-l-4 border-l-white">
-        <div>
-          <p class="text-[9px] font-bold text-zinc-500 uppercase">System_Output</p>
-          <h2 id="summary" class="text-sm font-bold text-white tracking-widest uppercase">Kernel_Ready</h2>
-        </div>
-        <div class="text-right">
-          <span id="progressPct" class="text-3xl font-black italic">0%</span>
-        </div>
-      </div>
-
-      <div class="glass-panel rounded-lg overflow-hidden">
-        <div class="overflow-y-auto max-h-[450px]">
-          <table class="w-full text-[10px] text-left">
-            <thead class="bg-zinc-900 text-zinc-500 uppercase font-black border-b border-zinc-800">
-              <tr>
-                <th class="p-3">Admission</th>
-                <th class="p-3 text-center">Process_Map</th>
-                <th class="p-3 text-right">Result_Log</th>
-              </tr>
-            </thead>
-            <tbody id="resultsTableBody" class="divide-y divide-zinc-900">
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <div class="flex justify-between items-center px-1">
-        <button onclick="document.getElementById('resultsTableBody').innerHTML=''" class="text-[8px] font-bold text-zinc-700 hover:text-red-500 uppercase">Reset_Monitor</button>
-        <div class="h-1 bg-zinc-900 flex-1 mx-6 rounded-full overflow-hidden">
-          <div id="progressBar" class="h-full bg-white transition-all duration-700" style="width: 0%"></div>
-        </div>
-      </div>
-    </main>
-
+  <!-- 🖼️ FONDO CON IMAGEN REBOTANDO (la del funcionario) -->
+  <div class="fondo-rebotante">
+    <img src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="Fondo rebotante">
   </div>
-</div>
 
-<script>
-  const API_BASE = window.location.origin;
+  <!-- 🦋 Mariposas flotantes (decorativas) -->
+  <div class="butterfly" style="top:10%; left:5%;">🦋</div>
+  <div class="butterfly" style="top:20%; right:10%; animation-delay:3s;">🦋</div>
+  <div class="butterfly" style="bottom:30%; left:15%; animation-delay:6s;">🦋</div>
+  <div class="butterfly" style="bottom:10%; right:5%; animation-delay:9s;">🦋</div>
 
-  // 1. CARGAR FECHA DE HOY AUTOMÁTICAMENTE
-  window.onload = () => {
-    const hoy = new Date();
-    const d = String(hoy.getDate()).padStart(2, '0');
-    const m = String(hoy.getMonth() + 1).padStart(2, '0');
-    const y = hoy.getFullYear();
-    document.getElementById('fechaInput').value = `${d}/${m}/${y}`;
-  };
+  <!-- Confeti de colores -->
+  <div class="confetti">
+    <span style="background:#ff9a9e; top:10%; left:20%;"></span>
+    <span style="background:#fecfef; top:30%; left:70%;"></span>
+    <span style="background:#fbc2eb; top:60%; left:10%;"></span>
+    <span style="background:#a18cd1; top:80%; left:80%;"></span>
+    <span style="background:#ff6b9d; top:50%; left:50%;"></span>
+    <span style="background:#f8bbd0; top:15%; left:85%;"></span>
+    <span style="background:#ffd1dc; top:75%; left:30%;"></span>
+  </div>
 
-  function limpiarCaja() {
-    document.getElementById('admisionLista').value = '';
-  }
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <img id="toastImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="funcionario">
+    <div>
+      <div id="toastTitle" style="font-weight:700; color:#ff6b9d;">✨ Paso completado</div>
+      <div id="toastMsg" style="font-size:0.8rem; color:#6a1b4d;">Detalle</div>
+    </div>
+  </div>
 
-  // 2. LIMPIEZA AGRESIVA DE LISTA (Regex mejorada)
-  function limpiarLista(texto) {
-    // Busca cualquier grupo de números y los extrae como array, ignorando comas, guiones, espacios, etc.
-    return texto.match(/\d+/g) || [];
-  }
+  <!-- Modal -->
+  <div id="modal" class="modal-overlay" onclick="cerrarModal()">
+    <div class="modal-box" onclick="event.stopPropagation();">
+      <img id="modalImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="Coordinador TIC">
+      <h2 id="modalTitle">🌈 ¡Paso completado!</h2>
+      <p id="modalMsg">Detalle del paso</p>
+      <button onclick="cerrarModal()">🌸 Cerrar</button>
+    </div>
+  </div>
 
-  function crearFila(id) {
-    const tr = document.createElement('tr');
-    tr.id = `r-${id}`;
-    tr.className = "hover:bg-zinc-900/50 transition-colors";
-    tr.innerHTML = `
-      <td class="p-3 border-r border-zinc-900">
-        <span class="font-bold text-white">#${id}</span>
-        <div id="idf-${id}" class="text-[8px] text-zinc-600 mt-0.5 tracking-tighter">UUID: SEARCHING...</div>
-      </td>
-      <td class="p-3">
-        <div class="flex justify-center gap-4">
-          <div id="s1-${id}" class="step-indicator" title="Find"></div>
-          <div id="s2-${id}" class="step-indicator" title="Date"></div>
-          <div id="s3-${id}" class="step-indicator" title="Prefix"></div>
-          <div id="s4-${id}" class="step-indicator" title="Push"></div>
+  <!-- Contenido principal -->
+  <div class="max-w-5xl mx-auto contenido-principal">
+    <header class="mb-8 flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-black tracking-tight">
+          <span class="rainbow-text">✨ System_Invoice v3.2</span>
+          <span class="text-2xl">🌈🦋</span>
+        </h1>
+        <p class="text-sm text-pink-600 font-semibold">🌸 Edición Coqueta · Automatización con amor</p>
+      </div>
+      <div class="text-right">
+        <p class="text-xs font-bold text-pink-500 uppercase">💖 Kernel: Activo</p>
+      </div>
+    </header>
+
+    <div class="grid lg:grid-cols-12 gap-6">
+      <aside class="lg:col-span-4 space-y-4">
+        <div class="glass-panel p-5">
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-sm font-bold text-pink-700 uppercase">📋 Input_Data</label>
+            <button onclick="limpiarCaja()" class="text-xs text-pink-400 hover:text-pink-700 underline">Limpiar 🧹</button>
+          </div>
+          <textarea id="admisionLista" 
+            class="w-full h-32 rounded-2xl p-3 text-sm outline-none resize-none mb-4" 
+            placeholder="Pega aquí: 275572, 275573 - 275574..."></textarea>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-bold text-pink-600 block uppercase mb-1">🏥 Institución</label>
+              <select id="selInstitucion" class="w-full rounded-2xl p-2 text-sm outline-none cursor-pointer">
+                <option value="14">C.S. SAN JOSE DE TOLUVIEJO (14)</option>
+                <option value="20" selected>E.S.E. HOSPITAL SAN JORGE (20)</option>
+                <option value="45">ESE CENTRO DE SALUD SANTA LUCIA (45)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-pink-600 block uppercase mb-1">📅 Fecha (editable)</label>
+              <input id="fechaInput" type="text" maxlength="10"
+                class="w-full rounded-2xl p-2 text-sm outline-none font-bold tracking-widest">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 mt-6">
+            <label class="flex items-center gap-3 text-sm cursor-pointer hover:text-pink-700">
+              <input type="checkbox" id="chkCambiar" checked class="checkbox-coqueta"> 01_SET_DATE
+            </label>
+            <label class="flex items-center gap-3 text-sm cursor-pointer hover:text-pink-700">
+              <input type="checkbox" id="chkGenerar" checked class="checkbox-coqueta"> 02_GEN_PREFIX
+            </label>
+            <label class="flex items-center gap-3 text-sm cursor-pointer hover:text-pink-700">
+              <input type="checkbox" id="chkEnviar" class="checkbox-coqueta"> 03_DIAN_PUSH
+            </label>
+          </div>
+
+          <button id="ejecutarBtn" class="w-full mt-8 py-3 rounded-full text-sm font-bold uppercase transition-all">
+            🚀 Execute Sequence
+          </button>
         </div>
-      </td>
-      <td class="p-3 text-right border-l border-zinc-900 font-bold">
-        <span id="msg-${id}" class="text-zinc-600 italic">STANDBY</span>
-      </td>
-    `;
-    document.getElementById('resultsTableBody').prepend(tr);
-  }
+      </aside>
 
-  function updateStep(id, step, status) {
-    const dot = document.getElementById(`s${step}-${id}`);
-    if(dot) {
-      dot.className = `step-indicator ${status === 'active' ? 'step-active' : status === 'done' ? 'step-done' : 'step-error'}`;
+      <main class="lg:col-span-8 space-y-4">
+        <div class="glass-panel p-5 flex justify-between items-center border-l-8 border-l-pink-300">
+          <div>
+            <p class="text-xs font-bold text-pink-500 uppercase">📊 System Output</p>
+            <h2 id="summary" class="text-lg font-bold text-pink-800 tracking-wide">🌟 Kernel_Ready</h2>
+          </div>
+          <div class="text-right">
+            <span id="progressPct" class="text-3xl font-black rainbow-text">0%</span>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-3xl overflow-hidden">
+          <div class="overflow-y-auto max-h-[450px]">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-pink-100 text-pink-700 uppercase font-bold border-b-2 border-pink-200">
+                <tr>
+                  <th class="p-3">Admission</th>
+                  <th class="p-3 text-center">Process_Map 🦋</th>
+                  <th class="p-3 text-right">Result_Log</th>
+                </tr>
+              </thead>
+              <tbody id="resultsTableBody" class="divide-y divide-pink-100"></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center px-1">
+          <button onclick="document.getElementById('resultsTableBody').innerHTML=''" class="text-xs font-bold text-pink-400 hover:text-pink-700 uppercase">Resetear</button>
+          <div class="progress-bar flex-1 mx-6">
+            <div id="progressBar" class="fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const IMAGEN = "https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg";
+
+    window.onload = () => {
+      const hoy = new Date();
+      const y = hoy.getFullYear();
+      const m = String(hoy.getMonth() + 1).padStart(2, '0');
+      const d = String(hoy.getDate()).padStart(2, '0');
+      document.getElementById('fechaInput').value = `${y}/${m}/${d}`;
+    };
+
+    function limpiarCaja() {
+      document.getElementById('admisionLista').value = '';
     }
-  }
 
-  document.getElementById('ejecutarBtn').addEventListener('click', async () => {
-    const rawText = document.getElementById('admisionLista').value;
-    const list = limpiarLista(rawText);
-    const fechaDirecta = document.getElementById('fechaInput').value.trim();
-    const inst = document.getElementById('selInstitucion').value;
-    const btn = document.getElementById('ejecutarBtn');
+    function limpiarLista(texto) {
+      return texto.match(/\d+/g) || [];
+    }
 
-    if (!list.length) return alert("EMPTY_STREAM: No se detectaron números");
-    
-    btn.disabled = true;
-    btn.innerText = "BUSY_PROCESS...";
-    
-    for (let i = 0; i < list.length; i++) {
+    function normalizarFecha(fechaStr) {
+      if (/^\d{4}\/\d{2}\/\d{2}$/.test(fechaStr)) return fechaStr;
+      const partes = fechaStr.split('/');
+      if (partes.length === 3 && partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      }
+      return fechaStr;
+    }
+
+    function mostrarToast(titulo, mensaje) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastTitle').innerText = titulo;
+      document.getElementById('toastMsg').innerText = mensaje;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function mostrarModal(titulo, mensaje) {
+      const modal = document.getElementById('modal');
+      document.getElementById('modalTitle').innerText = titulo;
+      document.getElementById('modalMsg').innerText = mensaje;
+      modal.classList.add('active');
+      if (window.modalTimeout) clearTimeout(window.modalTimeout);
+      window.modalTimeout = setTimeout(() => cerrarModal(), 4500);
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').classList.remove('active');
+      if (window.modalTimeout) clearTimeout(window.modalTimeout);
+    }
+
+    function crearFila(id) {
+      const tr = document.createElement('tr');
+      tr.id = `r-${id}`;
+      tr.className = "hover:bg-pink-50 transition-colors";
+      tr.innerHTML = `
+        <td class="p-3 border-r border-pink-100">
+          <span class="font-bold text-pink-800">#${id}</span>
+          <div id="idf-${id}" class="text-[10px] text-pink-400 mt-0.5">🆔 Buscando...</div>
+        </td>
+        <td class="p-3">
+          <div class="flex justify-center gap-3 text-2xl">
+            <span id="s1-${id}" class="step-indicator">🦋</span>
+            <span id="s2-${id}" class="step-indicator">🦋</span>
+            <span id="s3-${id}" class="step-indicator">🦋</span>
+            <span id="s4-${id}" class="step-indicator">🦋</span>
+          </div>
+        </td>
+        <td class="p-3 text-right border-l border-pink-100 font-bold">
+          <span id="msg-${id}" class="text-pink-300 italic">💤 STANDBY</span>
+        </td>
+      `;
+      document.getElementById('resultsTableBody').prepend(tr);
+    }
+
+    function updateStep(id, step, status) {
+      const dot = document.getElementById(`s${step}-${id}`);
+      if (dot) {
+        dot.className = `step-indicator ${status === 'active' ? 'step-active' : status === 'done' ? 'step-done' : 'step-error'}`;
+      }
+    }
+
+    document.getElementById('ejecutarBtn').addEventListener('click', async () => {
+      const rawText = document.getElementById('admisionLista').value;
+      const list = limpiarLista(rawText);
+      const fechaRaw = document.getElementById('fechaInput').value.trim();
+      const fechaNormalizada = normalizarFecha(fechaRaw);
+      const inst = document.getElementById('selInstitucion').value;
+      const btn = document.getElementById('ejecutarBtn');
+
+      if (!list.length) {
+        alert("🌸 ¡No se detectaron números! Pega algunos IDs.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "⏳ Procesando...";
+
+      for (let i = 0; i < list.length; i++) {
         const idAdm = list[i];
         crearFila(idAdm);
-        
+
         try {
-            // STEP 1: SEARCH
-            updateStep(idAdm, 1, 'active');
-            const resS = await fetch(`${API_BASE}/buscarFactura?numero=${idAdm}&idInstitucion=${inst}`, { method: 'POST' });
-            const dataS = await resS.json();
-            if(!dataS.ok) throw new Error("NOT_FOUND");
-            
-            const idFactura = dataS.idFactura;
-            document.getElementById(`idf-${idAdm}`).innerText = `UUID: ${idFactura}`;
-            updateStep(idAdm, 1, 'done');
+          // STEP 1: Buscar
+          updateStep(idAdm, 1, 'active');
+          const resS = await fetch(`${API_BASE}/buscarFactura?numero=${idAdm}&idInstitucion=${inst}`, { method: 'POST' });
+          const dataS = await resS.json();
+          if (!dataS.ok || !dataS.idFactura) throw new Error("NOT_FOUND");
+          const idFactura = dataS.idFactura;
+          document.getElementById(`idf-${idAdm}`).innerText = `🆔 ${idFactura}`;
+          updateStep(idAdm, 1, 'done');
+          mostrarToast("🔍 ¡Encontrada!", `Admisión ${idAdm} → Factura ${idFactura}`);
+          mostrarModal("✅ Búsqueda exitosa", `Factura: ${idFactura}`);
 
-            // STEP 2: DATE
-            if(document.getElementById('chkCambiar').checked) {
-                updateStep(idAdm, 2, 'active');
-                await fetch(`${API_BASE}/cambiar-fecha`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ idFactura, fechaEmision: fechaDirecta })
-                });
-                updateStep(idAdm, 2, 'done');
+          // STEP 2: Fecha
+          if (document.getElementById('chkCambiar').checked) {
+            updateStep(idAdm, 2, 'active');
+            const payload = { idFactura, fechaEmision: fechaNormalizada };
+            const resC = await fetch(`${API_BASE}/cambiar-fecha`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const dataC = await resC.json();
+            if (!dataC.ok) throw new Error("DATE_ERR");
+            updateStep(idAdm, 2, 'done');
+            mostrarToast("📅 Fecha OK", `Cambiada a ${fechaNormalizada}`);
+            mostrarModal("📅 Fecha actualizada", `Nueva fecha: ${fechaNormalizada}`);
+          }
+
+          // STEP 3: Prefijo
+          if (document.getElementById('chkGenerar').checked) {
+            updateStep(idAdm, 3, 'active');
+            const resG = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${inst}`);
+            const dataG = await resG.json();
+            if (dataG.resultado?.valorRetorno === -1) {
+              document.getElementById(`msg-${idAdm}`).innerText = "🔏 YA FIRMADA";
+              updateStep(idAdm, 3, 'done');
+              mostrarToast("🔢 Prefix", "Factura ya firmada");
+              mostrarModal("🔢 Prefix", "Ya estaba firmada");
+            } else if (dataG.resultado?.numeroFactura) {
+              const num = dataG.resultado.numeroFactura;
+              document.getElementById(`msg-${idAdm}`).innerText = num;
+              updateStep(idAdm, 3, 'done');
+              mostrarToast("🔢 Prefix OK", `Número: ${num}`);
+              mostrarModal("🔢 Prefix generado", `Número: ${num}`);
+            } else {
+              throw new Error("GEN_ERR");
             }
+          }
 
-            // STEP 3: PREFIX (Smart Validation)
-            if(document.getElementById('chkGenerar').checked) {
-                updateStep(idAdm, 3, 'active');
-                const resG = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${inst}`);
-                const dataG = await resG.json();
-                
-                if(dataG.resultado?.valorRetorno === -1 && dataG.resultado.mensajeRetorno.includes("no se puede cambiae el número")) {
-                    document.getElementById(`msg-${idAdm}`).innerText = "ALREADY_SIGNED";
-                } else if(dataG.resultado?.numeroFactura) {
-                    document.getElementById(`msg-${idAdm}`).innerText = dataG.resultado.numeroFactura;
-                } else {
-                    throw new Error("GEN_ERR");
-                }
-                updateStep(idAdm, 3, 'done');
-            }
+          // STEP 4: DIAN
+          if (document.getElementById('chkEnviar').checked) {
+            updateStep(idAdm, 4, 'active');
+            const resD = await fetch(`${API_BASE}/EnviarDian`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idFacturas: idFactura })
+            });
+            const dataD = await resD.json();
+            if (dataD.valorRetorno !== 1) throw new Error("DIAN_ERR");
+            updateStep(idAdm, 4, 'done');
+            mostrarToast("📤 Enviado a DIAN", `Factura ${idFactura} OK`);
+            mostrarModal("📤 Envío a DIAN", `Factura ${idFactura} enviada`);
+          }
 
-            // STEP 4: DIAN
-            if(document.getElementById('chkEnviar').checked) {
-                updateStep(idAdm, 4, 'active');
-                await fetch(`${API_BASE}/EnviarDian`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ idFacturas: idFactura })
-                });
-                updateStep(idAdm, 4, 'done');
-            }
-
-            const msgEl = document.getElementById(`msg-${idAdm}`);
-            msgEl.classList.replace('text-zinc-600', 'text-white');
-            if(msgEl.innerText === 'STANDBY') msgEl.innerText = "DONE";
+          const msgEl = document.getElementById(`msg-${idAdm}`);
+          if (msgEl.innerText === '💤 STANDBY') msgEl.innerText = "✅ DONE";
+          msgEl.classList.remove('text-pink-300');
+          msgEl.classList.add('text-pink-700');
 
         } catch (e) {
-            document.getElementById(`msg-${idAdm}`).innerText = e.message;
-            document.getElementById(`msg-${idAdm}`).className = "text-red-500 italic";
-            for(let s=1; s<=4; s++) {
-                const d = document.getElementById(`s${s}-${idAdm}`);
-                if(!d.classList.contains('step-done')) updateStep(idAdm, s, 'error');
+          document.getElementById(`msg-${idAdm}`).innerText = "❌ " + e.message;
+          document.getElementById(`msg-${idAdm}`).className = "text-red-500 italic";
+          for (let s = 1; s <= 4; s++) {
+            const dot = document.getElementById(`s${s}-${idAdm}`);
+            if (dot && !dot.classList.contains('step-done')) {
+              updateStep(idAdm, s, 'error');
             }
+          }
+          mostrarModal("❌ Error", e.message);
+          mostrarToast("❌ Error", e.message);
         }
 
         const pct = Math.round(((i + 1) / list.length) * 100);
         document.getElementById('progressBar').style.width = pct + '%';
         document.getElementById('progressPct').innerText = pct + '%';
-        document.getElementById('summary').innerText = `EXECUTING_${i+1}_OF_${list.length}`;
-    }
+        document.getElementById('summary').innerText = `🌸 Procesando ${i+1} de ${list.length}`;
+      }
 
-    btn.disabled = false;
-    btn.innerText = "EXECUTE_SEQUENCE";
-    document.getElementById('summary').innerText = "SEQUENCE_TERMINATED";
-  });
-</script>
+      mostrarModal("🎉 ¡PROCESO COMPLETO!", `Se procesaron ${list.length} admisiones`);
+      mostrarToast("🎉 ¡Listo!", "Todas las admisiones procesadas");
 
+      btn.disabled = false;
+      btn.innerText = "🚀 Execute Sequence";
+      document.getElementById('summary').innerText = "✨ SEQUENCE_TERMINATED ✨";
+    });
+  </script>
 </body>
 </html>

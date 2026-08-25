@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CORE_INVOICE.v3.2 — Adaptive Control</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+    
+    body { 
+      font-family: 'JetBrains Mono', monospace; 
+      background: #050505; 
+      color: #00ff41; 
+    }
+    
+    .glass-panel {
+      background: rgba(15, 15, 15, 0.9);
+      border: 1px solid #1a1a1a;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .step-indicator { width: 10px; height: 10px; border: 1px solid #333; transition: all 0.2s; }
+    .step-active { background: #00ff41; box-shadow: 0 0 8px #00ff41; border: none; animation: pulse 1s infinite; }
+    .step-done { background: #008f11; border: none; }
+    .step-error { background: #ff3131; border: none; box-shadow: 0 0 8px #ff3131; }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    input, textarea, select {
+      background: #0a0a0a !important;
+      color: #00ff41 !important;
+      border: 1px solid #1a1a1a !important;
+    }
+    input:focus, textarea:focus { border-color: #00ff41 !important; outline: none; }
+    
+    #admisionLista::placeholder { color: #1a3a1a; }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+  <div class="max-w-5xl mx-auto">
+    <header class="mb-8 border-b border-zinc-800 pb-4 flex justify-between items-end">
+      <div>
+        <h1 class="text-2xl font-black tracking-tighter uppercase italic">
+          System_Invoice_<span class="text-white">v3.2</span>
+        </h1>
+        <p class="text-[10px] text-zinc-500 tracking-[0.2em]">LIMPIEZA AUTOMÁTICA Y FECHA DINÁMICA</p>
+      </div>
+      <div class="text-right">
+        <p id="apiIndicator" class="text-[9px] font-bold text-zinc-600 uppercase italic tracking-tighter">Kernel Status: Active</p>
+      </div>
+    </header>
+
+    <div class="grid lg:grid-cols-12 gap-6">
+      <aside class="lg:col-span-4 space-y-4">
+        <div class="glass-panel rounded-lg p-5">
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-[10px] font-bold text-zinc-500 uppercase">Input_Data_Stream</label>
+            <button onclick="limpiarCaja()" class="text-[9px] text-zinc-600 hover:text-red-500 underline uppercase">Limpiar</button>
+          </div>
+          <textarea id="admisionLista" 
+            class="w-full h-32 rounded p-3 text-xs outline-none resize-none mb-4" 
+            placeholder="Pega aquí: 275572, 275573 - 275574..."></textarea>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="text-[9px] font-bold text-zinc-600 block uppercase mb-1">Target_Institución</label>
+              <select id="selInstitucion" class="w-full rounded p-2 text-xs outline-none cursor-pointer">
+                <option value="14">C.S. SAN JOSE DE TOLUVIEJO (14)</option>
+                <option value="20" selected>E.S.E. HOSPITAL SAN JORGE (20)</option>
+                <option value="45">ESE CENTRO DE SALUD SANTA LUCIA (45)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-[9px] font-bold text-zinc-600 block uppercase mb-1">Processing_Date (Editable)</label>
+              <input id="fechaInput" type="text" maxlength="10"
+                class="w-full rounded p-2 text-xs outline-none font-bold tracking-widest">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 mt-6">
+            <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
+              <input type="checkbox" id="chkCambiar" checked class="opacity-30 checked:opacity-100"> 01_SET_DATE
+            </label>
+            <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
+              <input type="checkbox" id="chkGenerar" checked class="opacity-30 checked:opacity-100"> 02_GEN_PREFIX
+            </label>
+            <label class="flex items-center gap-3 text-[10px] cursor-pointer hover:text-white">
+              <input type="checkbox" id="chkEnviar" class="opacity-30 checked:opacity-100"> 03_DIAN_PUSH
+            </label>
+          </div>
+
+          <button id="ejecutarBtn" class="w-full mt-8 py-3 bg-white text-black font-black text-xs uppercase hover:bg-green-500 transition-all">
+            Execute_Sequence
+          </button>
+        </div>
+      </aside>
+
+      <main class="lg:col-span-8 space-y-4">
+        <div class="glass-panel rounded-lg p-5 flex justify-between items-center border-l-4 border-l-white">
+          <div>
+            <p class="text-[9px] font-bold text-zinc-500 uppercase">System_Output</p>
+            <h2 id="summary" class="text-sm font-bold text-white tracking-widest uppercase">Kernel_Ready</h2>
+          </div>
+          <div class="text-right">
+            <span id="progressPct" class="text-3xl font-black italic">0%</span>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-lg overflow-hidden">
+          <div class="overflow-y-auto max-h-[450px]">
+            <table class="w-full text-[10px] text-left">
+              <thead class="bg-zinc-900 text-zinc-500 uppercase font-black border-b border-zinc-800">
+                <tr>
+                  <th class="p-3">Admission</th>
+                  <th class="p-3 text-center">Process_Map</th>
+                  <th class="p-3 text-right">Result_Log</th>
+                </tr>
+              </thead>
+              <tbody id="resultsTableBody" class="divide-y divide-zinc-900"></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center px-1">
+          <button onclick="document.getElementById('resultsTableBody').innerHTML=''" class="text-[8px] font-bold text-zinc-700 hover:text-red-500 uppercase">Reset_Monitor</button>
+          <div class="h-1 bg-zinc-900 flex-1 mx-6 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-white transition-all duration-700" style="width: 0%"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    // Cargar fecha de hoy en formato YYYY/MM/DD (coincide con el backend)
+    window.onload = () => {
+      const hoy = new Date();
+      const y = hoy.getFullYear();
+      const m = String(hoy.getMonth() + 1).padStart(2, '0');
+      const d = String(hoy.getDate()).padStart(2, '0');
+      document.getElementById('fechaInput').value = `${y}/${m}/${d}`;
+    };
+
+    function limpiarCaja() {
+      document.getElementById('admisionLista').value = '';
+    }
+
+    // Limpieza agresiva: extrae todos los números
+    function limpiarLista(texto) {
+      return texto.match(/\d+/g) || [];
+    }
+
+    // Convierte fecha de DD/MM/YYYY a YYYY/MM/DD si es necesario
+    function normalizarFecha(fechaStr) {
+      // Si ya tiene formato YYYY/MM/DD, devolver igual
+      if (/^\d{4}\/\d{2}\/\d{2}$/.test(fechaStr)) return fechaStr;
+      // Si es DD/MM/YYYY, convertir
+      const partes = fechaStr.split('/');
+      if (partes.length === 3 && partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      }
+      // Si no, devolver tal cual (puede fallar)
+      return fechaStr;
+    }
+
+    function crearFila(id) {
+      const tr = document.createElement('tr');
+      tr.id = `r-${id}`;
+      tr.className = "hover:bg-zinc-900/50 transition-colors";
+      tr.innerHTML = `
+        <td class="p-3 border-r border-zinc-900">
+          <span class="font-bold text-white">#${id}</span>
+          <div id="idf-${id}" class="text-[8px] text-zinc-600 mt-0.5 tracking-tighter">UUID: SEARCHING...</div>
+        </td>
+        <td class="p-3">
+          <div class="flex justify-center gap-4">
+            <div id="s1-${id}" class="step-indicator" title="Find"></div>
+            <div id="s2-${id}" class="step-indicator" title="Date"></div>
+            <div id="s3-${id}" class="step-indicator" title="Prefix"></div>
+            <div id="s4-${id}" class="step-indicator" title="Push"></div>
+          </div>
+        </td>
+        <td class="p-3 text-right border-l border-zinc-900 font-bold">
+          <span id="msg-${id}" class="text-zinc-600 italic">STANDBY</span>
+        </td>
+      `;
+      document.getElementById('resultsTableBody').prepend(tr);
+    }
+
+    function updateStep(id, step, status) {
+      const dot = document.getElementById(`s${step}-${id}`);
+      if (dot) {
+        dot.className = `step-indicator ${status === 'active' ? 'step-active' : status === 'done' ? 'step-done' : 'step-error'}`;
+      }
+    }
+
+    document.getElementById('ejecutarBtn').addEventListener('click', async () => {
+      const rawText = document.getElementById('admisionLista').value;
+      const list = limpiarLista(rawText);
+      const fechaRaw = document.getElementById('fechaInput').value.trim();
+      const fechaNormalizada = normalizarFecha(fechaRaw);
+      const inst = document.getElementById('selInstitucion').value;
+      const btn = document.getElementById('ejecutarBtn');
+
+      if (!list.length) {
+        alert("EMPTY_STREAM: No se detectaron números");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "BUSY_PROCESS...";
+
+      for (let i = 0; i < list.length; i++) {
+        const idAdm = list[i];
+        crearFila(idAdm);
+
+        try {
+          // ---- STEP 1: Buscar factura ----
+          updateStep(idAdm, 1, 'active');
+          const resS = await fetch(`${API_BASE}/buscarFactura?numero=${idAdm}&idInstitucion=${inst}`, { method: 'POST' });
+          const dataS = await resS.json();
+          
+          if (!dataS.ok || !dataS.idFactura) {
+            throw new Error("NOT_FOUND: " + (dataS.mensaje || "sin ID"));
+          }
+          const idFactura = dataS.idFactura;
+          document.getElementById(`idf-${idAdm}`).innerText = `UUID: ${idFactura}`;
+          updateStep(idAdm, 1, 'done');
+
+          // ---- STEP 2: Cambiar fecha ----
+          if (document.getElementById('chkCambiar').checked) {
+            updateStep(idAdm, 2, 'active');
+            const payload = {
+              idFactura: idFactura,
+              fechaEmision: fechaNormalizada
+            };
+            const resC = await fetch(`${API_BASE}/cambiar-fecha`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const dataC = await resC.json();
+            if (!dataC.ok) {
+              throw new Error("DATE_ERR: " + (dataC.mensaje || "falló"));
+            }
+            updateStep(idAdm, 2, 'done');
+          }
+
+          // ---- STEP 3: Generar prefijo ----
+          if (document.getElementById('chkGenerar').checked) {
+            updateStep(idAdm, 3, 'active');
+            const resG = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${inst}`);
+            const dataG = await resG.json();
+            
+            if (dataG.resultado?.valorRetorno === -1) {
+              // Factura ya firmada / no se puede cambiar número
+              const msg = dataG.resultado.mensajeRetorno || "no se puede cambiae el número";
+              document.getElementById(`msg-${idAdm}`).innerText = "ALREADY_SIGNED";
+              updateStep(idAdm, 3, 'done'); // Lo marcamos como completado aunque no generó nuevo número
+              // pero no lanzamos error, consideramos que está bien
+            } else if (dataG.resultado?.numeroFactura) {
+              document.getElementById(`msg-${idAdm}`).innerText = dataG.resultado.numeroFactura;
+              updateStep(idAdm, 3, 'done');
+            } else {
+              throw new Error("GEN_ERR: sin número");
+            }
+          }
+
+          // ---- STEP 4: Enviar a DIAN ----
+          if (document.getElementById('chkEnviar').checked) {
+            updateStep(idAdm, 4, 'active');
+            const resD = await fetch(`${API_BASE}/EnviarDian`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idFacturas: idFactura })
+            });
+            const dataD = await resD.json();
+            if (dataD.valorRetorno !== 1) {
+              throw new Error("DIAN_ERR: " + (dataD.mensajeRetorno || "falló"));
+            }
+            updateStep(idAdm, 4, 'done');
+          }
+
+          // Si todo bien, mensaje final
+          const msgEl = document.getElementById(`msg-${idAdm}`);
+          if (msgEl.innerText === 'STANDBY' || msgEl.innerText === 'ALREADY_SIGNED') {
+            // Si ya estaba con mensaje de firmado, dejarlo
+            if (msgEl.innerText === 'STANDBY') msgEl.innerText = "DONE";
+          }
+          msgEl.classList.replace('text-zinc-600', 'text-white');
+
+        } catch (e) {
+          // Error en algún paso
+          document.getElementById(`msg-${idAdm}`).innerText = e.message;
+          document.getElementById(`msg-${idAdm}`).className = "text-red-500 italic";
+          // Marcar como error los pasos no completados
+          for (let s = 1; s <= 4; s++) {
+            const dot = document.getElementById(`s${s}-${idAdm}`);
+            if (dot && !dot.classList.contains('step-done')) {
+              updateStep(idAdm, s, 'error');
+            }
+          }
+        }
+
+        // Actualizar progreso
+        const pct = Math.round(((i + 1) / list.length) * 100);
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('progressPct').innerText = pct + '%';
+        document.getElementById('summary').innerText = `EXECUTING_${i+1}_OF_${list.length}`;
+      }
+
+      btn.disabled = false;
+      btn.innerText = "EXECUTE_SEQUENCE";
+      document.getElementById('summary').innerText = "SEQUENCE_TERMINATED";
+    });
+  </script>
+</body>
+</html>
