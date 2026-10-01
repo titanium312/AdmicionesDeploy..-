@@ -2,6 +2,9 @@ const Tokenfijo14='4t8/ugObIEqPRBqgNMaqZgIcgbf1pWytKq44JFP/meo=.qSTbSfTuauUhk/PD
 
 const TokenMio='qE+u6gALbCTcoaaZIVd9OLUyM1jBgsC4+YKt3ApDiVU=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==';
 
+
+
+
 const usuariosInstitucion = [
   { idUsuario: 6874, nombre: 'Rbarreto', idInstitucion: 20 ,Tksesicion: TokenMio},
 
@@ -15,6 +18,7 @@ const usuariosInstitucion = [
 
   { idUsuario: 11129, nombre: '1074011830', idInstitucion: 45 , Tksesicion: 'tuJL6kKcwcINYga8n3z2aYQpJNYwvrC8KfqWcUyfhQM=.zDnZgS1yR6oRFW9nEhJuKw==.SoEw/Rt/mGLWlraQIrBnbQ=='},
 
+  { idUsuario: 6903, nombre: 'Epardo', idInstitucion: 20 ,Tksesicion: "jBjZfPsilkxfXJHmi+qRN4pLCKoWz+pe/A2SXqea31M=.xlPtF9cVKjUYA9w0e1P8Sg==.wcFkBNOeMUO3EbN8I4nUXw==",contraseña:"1066525797"},
   // Medicos 
 
   { idUsuario: 6905, nombre: 'Abuelvas', idInstitucion: 20 , Tksesicion: "E1hEfZwRUGHkXJKDiaW+Bgm3jpdKLKQXsAuNlMUbZEo=.lGayPEg7GErPLTnqY9izNw==.wcFkBNOeMUO3EbN8I4nUXw==" ,contraseña: "1007734157"},
