@@ -14,7 +14,7 @@ const PREFIJOS_RENOMBRES = {
   HojaMedicamentos: 'HAM',
   HistoriaClinica: 'HAU',
   Evoluciones: 'HEV',
-  OrdenesMedicas: 'CRC',      // Fijo CRC para todas
+  OrdenesMedicas: 'CRC',
   HojaAdmision: 'HAD',
   Prefactura: 'PRE',
   NotasEnfermeria: 'NOT',
@@ -115,11 +115,9 @@ function toArray(v) { return v == null ? [] : (Array.isArray(v) ? v : [v]); }
 
 function obtenerNitInstitucion(institucionId) {
   if (!institucionId) return 'NITDESCONOCIDO';
-  
   const institucion = instituciones.find(
     inst => inst.idInstitucion === Number(institucionId)
   );
-  
   return institucion?.nit || 'NITDESCONOCIDO';
 }
 
@@ -127,8 +125,7 @@ function construirContextoRenombramiento(ids, { idAdmision, institucionId }) {
   const nit = obtenerNitInstitucion(institucionId);
   const tipoId = (ids?.tipoDocumento || 'CC').toString().toUpperCase();
   const numId = (ids?.numero_documento || '0000000000').toString();
-
-  let numeroFactura = ids?.numeroFactura || '0';
+  const numeroFactura = ids?.numeroFactura || '0';
 
   return {
     nit: String(nit),
@@ -173,29 +170,27 @@ function generarNombreArchivo(tipoDocumento, ctx, options = {}) {
   const { nit } = ctx;
   const numeroParaRenombrar = ctx.factura || '0';
   const prefijo = PREFIJOS_RENOMBRES[tipoDocumento];
-  
+
   if (!prefijo) {
     return `${tipoDocumento}_${nit}_${numeroParaRenombrar}.pdf`;
   }
-
   return `${prefijo}_${nit}_${numeroParaRenombrar}.pdf`;
 }
 
 /* =========================
- *  Obtener IDs usando ConsultaIdIntermedio - CORREGIDO
+ *  Obtener IDs usando ConsultaIdIntermedio
  * ========================= */
 async function obtenerIdsConConsultaId({ clave, idUser }) {
   try {
-    // Crear un mock de request para ConsultaIdIntermedio
     const mockReq = {
-      body: { 
-        documento: clave,    // ✅ Corregido: falta la coma
-        id_usuario: idUser   // ✅ Corregido: parámetro correcto
+      body: {
+        documento: clave,
+        id_usuario: idUser
       }
     };
-    
+
     let resultadoIntermedio = null;
-    
+
     await new Promise((resolve, reject) => {
       const mockRes = {
         status: (code) => ({
@@ -205,10 +200,10 @@ async function obtenerIdsConConsultaId({ clave, idUser }) {
           }
         })
       };
-      
+
       ConsultaIdIntermedio(mockReq, mockRes).catch(reject);
     });
-    
+
     if (!resultadoIntermedio || !resultadoIntermedio.ok) {
       console.error('Error en ConsultaIdIntermedio:', resultadoIntermedio?.message || 'No se encontraron resultados');
       return null;
@@ -224,11 +219,10 @@ async function obtenerIdsConConsultaId({ clave, idUser }) {
       numeroFactura: resultadoIntermedio.numeroFactura
     });
 
-    // TRANSFORMAR al formato esperado por el resto del código
     const transformIds = {
       id_admision: resultadoIntermedio.idAdmision || null,
       id_egreso: resultadoIntermedio.idEgresos?.[0] || null,
-      
+
       idsAdmisiones: resultadoIntermedio.idAdmision ? [resultadoIntermedio.idAdmision] : [],
       idEgresos: resultadoIntermedio.idEgresos || [],
       idsEvoluciones: resultadoIntermedio.idEvolucion ? [resultadoIntermedio.idEvolucion] : [],
@@ -237,22 +231,22 @@ async function obtenerIdsConConsultaId({ clave, idUser }) {
       idsHistorias: resultadoIntermedio.idHistoria ? [resultadoIntermedio.idHistoria] : [],
       idAnexosDos: resultadoIntermedio.idAnexosDos || [],
       idFacturas: resultadoIntermedio.idFactura ? [resultadoIntermedio.idFactura] : [],
-      
+
       numeroFactura: resultadoIntermedio.numeroFactura || clave,
-      
+
       tipoDocumento: 'CC',
       numero_documento: clave,
-      
+
       totales: {
         notasEnfermeria: (resultadoIntermedio.idNotas || []).length,
         ordenesMedicas: resultadoIntermedio.idOrden ? 1 : 0,
         historiasClinicas: resultadoIntermedio.idHistoria ? 1 : 0,
         facturas: resultadoIntermedio.idFactura ? 1 : 0,
       },
-      
+
       modalidad: '',
       regimen: '',
-      
+
       facturasDetalle: [],
       facturasPorDocumento: {}
     };
@@ -275,7 +269,6 @@ async function obtenerIdsConConsultaId({ clave, idUser }) {
 }
 
 async function obtenerIdsPorAdmision({ institucionId, idAdmision, idUser }) {
-  // Nota: institucionId no se usa porque ConsultaIdIntermedio obtiene el token del usuario
   return await obtenerIdsConConsultaId({
     clave: idAdmision.toString(),
     idUser
@@ -283,7 +276,7 @@ async function obtenerIdsPorAdmision({ institucionId, idAdmision, idUser }) {
 }
 
 /* =========================
- *  Controller principal - CORREGIDO
+ *  Controller principal
  * ========================= */
 async function Hs_Anx(req, res) {
   try {
@@ -316,18 +309,15 @@ async function Hs_Anx(req, res) {
     const reportesSeleccionados = parseTiposParam(tiposRaw);
 
     const claveFinal = String(anyKey);
-    let ids;
-    
-    // Llamar a obtenerIdsConConsultaId con los parámetros correctos
-    ids = await obtenerIdsConConsultaId({
+    const ids = await obtenerIdsConConsultaId({
       clave: claveFinal,
       idUser: Number(idUser)
     });
 
     if (!ids) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'No se pudieron obtener los IDs para la consulta' 
+      return res.status(404).json({
+        success: false,
+        message: 'No se pudieron obtener los IDs para la consulta'
       });
     }
 
@@ -352,7 +342,8 @@ async function Hs_Anx(req, res) {
       idsAdmisiones:      toArray(ids.idsAdmisiones || ids.id_admision || resolvedAdmisionId),
       idAdmisiones:       toArray(resolvedAdmisionId),
       idsOrdenMedicas:    toArray(ids.idsOrdenMedicas || ids.ordenes_medicas),
-      idHistorias:        toArray(ids.idHistorias || ids.id_historia),
+      // 👇 FIX: aceptar también la clave plural del transform
+      idHistorias:        toArray(ids.idHistorias || ids.idsHistorias || ids.id_historia),
       idFacturas:         toArray(ids.idFacturas),
     };
 
@@ -394,7 +385,7 @@ async function Hs_Anx(req, res) {
         }
 
         const facturaPorDoc = resolverFacturaParaDocumento(ids, nombre, String(id), ctx.factura);
-        
+
         const nombreArchivoFinal = generarNombreArchivo(
           nombre,
           ctx,
@@ -423,9 +414,7 @@ async function Hs_Anx(req, res) {
         ? `factura-${t.numeroFactura}`
         : `admision-${t.numeroAdmision}`;
 
-      if (!resultadoFinal[key]) {
-        resultadoFinal[key] = [];
-      }
+      if (!resultadoFinal[key]) resultadoFinal[key] = [];
       resultadoFinal[key].push({
         nombreArchivo: t.nombreArchivo,
         url: t.url,
