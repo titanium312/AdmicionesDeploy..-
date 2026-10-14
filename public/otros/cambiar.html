@@ -1,659 +1,1074 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>✨ CORE_INVOICE v3.2 — Edición Coqueta 🌈🦋</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CORE_INVOICE v3.2 // TERMINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#04070c;
+    --panel:rgba(8,14,22,.82);
+    --panel2:#060b12;
+    --line:rgba(0,229,255,.22);
+    --cyan:#00e5ff;
+    --mag:#ff2bd6;
+    --lime:#8bff5a;
+    --amber:#ffc857;
+    --red:#ff3b5c;
+    --txt:#c3ecf7;
+    --dim:#5d7f8c;
+    --mono:'Share Tech Mono', ui-monospace, monospace;
+    --display:'Orbitron', sans-serif;
+  }
 
-    * { font-family: 'Quicksand', sans-serif; }
+  *{ box-sizing:border-box; }
 
-    body {
-      background: linear-gradient(135deg, #ffe6f0 0%, #fce4ec 40%, #f3e5f5 100%);
-      min-height: 100vh;
-      margin: 0;
-      padding: 1rem;
-      position: relative;
-      overflow-x: hidden;
-    }
+  html,body{ height:100%; }
 
-    /* 🌸 FONDO CON IMAGEN REBOTANDO (flotación) */
-    .fondo-rebotante {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none; /* para que no interfiera con los clics */
-      opacity: 0.08; /* muy transparente */
-      overflow: hidden;
-    }
-    .fondo-rebotante img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      animation: rebote 8s ease-in-out infinite alternate;
-    }
-    @keyframes rebote {
-      0% { transform: translateY(0px) scale(1); }
-      100% { transform: translateY(-20px) scale(1.02); }
-    }
+  body{
+    margin:0;
+    padding:18px;
+    min-height:100vh;
+    font-family:var(--mono);
+    color:var(--txt);
+    background:
+      radial-gradient(1200px 620px at 12% -12%, rgba(0,229,255,.12), transparent 62%),
+      radial-gradient(900px 520px at 92% 112%, rgba(255,43,214,.11), transparent 62%),
+      radial-gradient(700px 400px at 50% 50%, rgba(139,255,90,.04), transparent 70%),
+      var(--bg);
+    overflow-x:hidden;
+    letter-spacing:.02em;
+  }
 
-    /* Confeti de colores */
-    .confetti {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .confetti span {
-      position: absolute;
-      display: block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      opacity: 0.5;
-      animation: float 8s infinite alternate ease-in-out;
-    }
-    @keyframes float {
-      0% { transform: translateY(0px) rotate(0deg); }
-      100% { transform: translateY(-30px) rotate(360deg); }
-    }
+  /* ---- rejilla animada de fondo ---- */
+  body::before{
+    content:'';
+    position:fixed; inset:-50%;
+    background-image:
+      linear-gradient(rgba(0,229,255,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.055) 1px, transparent 1px);
+    background-size:46px 46px;
+    pointer-events:none;
+    z-index:0;
+    animation:gridpan 22s linear infinite;
+  }
+  @keyframes gridpan{
+    0%{ transform:translate(0,0); }
+    100%{ transform:translate(46px,46px); }
+  }
 
-    /* 🦋 Mariposas volando (decoración) */
-    .butterfly {
-      position: fixed;
-      font-size: 2.5rem;
-      opacity: 0.3;
-      animation: fly 12s infinite linear;
-      pointer-events: none;
-      z-index: 0;
-    }
-    @keyframes fly {
-      0% { transform: translate(0, 0) rotate(0deg); }
-      25% { transform: translate(100px, -50px) rotate(10deg); }
-      50% { transform: translate(200px, 20px) rotate(-5deg); }
-      75% { transform: translate(100px, 50px) rotate(10deg); }
-      100% { transform: translate(0, 0) rotate(0deg); }
-    }
+  /* ---- scanlines CRT ---- */
+  body::after{
+    content:'';
+    position:fixed; inset:0;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.30) 0 1px, transparent 1px 3px);
+    pointer-events:none;
+    z-index:9997;
+    opacity:.30;
+    mix-blend-mode:multiply;
+  }
 
-    /* Tarjetas principales */
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(4px);
-      border-radius: 30px;
-      border: 3px solid transparent;
-      border-image: linear-gradient(135deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb) 1;
-      box-shadow: 0 8px 32px rgba(255, 105, 180, 0.2), 0 4px 16px rgba(255, 200, 220, 0.3);
-      transition: all 0.3s;
-    }
-    .glass-panel:hover {
-      box-shadow: 0 12px 48px rgba(255, 105, 180, 0.3);
-    }
+  /* ---- imagen del funcionario: ahora como "scan ghost" ---- */
+  .ghost-layer{
+    position:fixed; inset:0;
+    z-index:0;
+    pointer-events:none;
+    overflow:hidden;
+    opacity:.10;
+  }
+  .ghost-layer img{
+    width:100%; height:100%;
+    object-fit:cover;
+    filter:grayscale(1) contrast(1.4) brightness(.7) sepia(1) hue-rotate(140deg) saturate(4);
+    animation:ghostPulse 9s ease-in-out infinite alternate;
+  }
+  @keyframes ghostPulse{
+    0%{ transform:scale(1.02) translateY(0); opacity:.55; }
+    50%{ transform:scale(1.05) translateY(-10px); opacity:.85; }
+    100%{ transform:scale(1.03) translateY(6px); opacity:.6; }
+  }
 
-    /* Indicadores de pasos (mariposas) */
-    .step-indicator {
-      font-size: 1.4rem;
-      transition: all 0.3s;
-      opacity: 0.3;
-      filter: grayscale(1);
-    }
-    .step-active {
-      opacity: 1;
-      filter: grayscale(0);
-      transform: scale(1.3);
-      animation: pulse-butterfly 0.6s infinite alternate;
-    }
-    .step-done {
-      opacity: 1;
-      filter: grayscale(0);
-      color: #ff6b9d;
-    }
-    .step-error {
-      opacity: 1;
-      filter: grayscale(0);
-      color: #ff1744;
-      transform: scale(1.2);
-    }
-    @keyframes pulse-butterfly {
-      0% { transform: scale(1) rotate(0deg); }
-      100% { transform: scale(1.4) rotate(10deg); }
-    }
+  /* ---- partículas flotantes ---- */
+  .particles{ position:fixed; inset:0; pointer-events:none; z-index:0; }
+  .particles span{
+    position:absolute;
+    font-size:14px;
+    color:var(--cyan);
+    opacity:.28;
+    text-shadow:0 0 10px var(--cyan);
+    animation:drift 14s infinite ease-in-out alternate;
+  }
+  @keyframes drift{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:.12; }
+    100%{ transform:translate(60px,-70px) rotate(180deg); opacity:.42; }
+  }
 
-    /* Inputs y selects con estilo pastel */
-    input, textarea, select {
-      background: #fff0f5 !important;
-      color: #6a1b4d !important;
-      border: 2px solid #f8bbd0 !important;
-      border-radius: 20px !important;
-      padding: 10px 14px !important;
-      font-weight: 600;
-      box-shadow: inset 0 2px 4px rgba(255, 105, 180, 0.1);
-    }
-    input:focus, textarea:focus, select:focus {
-      border-color: #ff6b9d !important;
-      box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.2);
-      outline: none;
-    }
+  /* ================= PANELES ================= */
+  .panel{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:3px;
+    backdrop-filter:blur(6px);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,.7) inset,
+      0 0 60px rgba(0,229,255,.05),
+      0 18px 50px rgba(0,0,0,.55);
+  }
+  .panel::before,
+  .panel::after{
+    content:'';
+    position:absolute;
+    width:13px; height:13px;
+    border:2px solid var(--cyan);
+    opacity:.75;
+    pointer-events:none;
+  }
+  .panel::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .panel::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
 
-    /* Botón principal */
-    #ejecutarBtn {
-      background: linear-gradient(135deg, #ff9a9e, #fecfef, #fbc2eb);
-      color: #6a1b4d;
-      font-weight: 700;
-      border: none;
-      border-radius: 40px;
-      padding: 14px;
-      font-size: 0.9rem;
-      box-shadow: 0 4px 16px rgba(255, 105, 180, 0.3);
-      transition: all 0.3s;
-    }
-    #ejecutarBtn:hover {
-      transform: scale(1.04) rotate(-1deg);
-      box-shadow: 0 8px 32px rgba(255, 105, 180, 0.5);
-    }
+  /* ================= LAYOUT ================= */
+  .shell{
+    position:relative;
+    z-index:10;
+    max-width:1240px;
+    margin:0 auto;
+  }
 
-    /* Checkboxes personalizados */
-    .checkbox-coqueta {
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      border: 2px solid #f8bbd0;
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-      transition: 0.2s;
-      position: relative;
-    }
-    .checkbox-coqueta:checked {
-      background: #ff6b9d;
-      border-color: #ff6b9d;
-    }
-    .checkbox-coqueta:checked::after {
-      content: '✓';
-      color: white;
-      font-size: 14px;
-      font-weight: bold;
-      position: absolute;
-      top: -2px;
-      left: 2px;
-    }
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:16px;
+    flex-wrap:wrap;
+    padding:16px 20px;
+    margin-bottom:18px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:linear-gradient(90deg, rgba(0,229,255,.07), rgba(255,43,214,.05) 60%, transparent);
+    position:relative;
+  }
+  .topbar::before{
+    content:'';
+    position:absolute; left:0; top:0; bottom:0;
+    width:3px;
+    background:linear-gradient(180deg,var(--cyan),var(--mag));
+    box-shadow:0 0 18px var(--cyan);
+  }
 
-    /* Toast (notificación) */
-    .toast {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: white;
-      border-left: 8px solid #ff6b9d;
-      padding: 16px 20px;
-      border-radius: 24px;
-      box-shadow: 0 8px 32px rgba(255, 105, 180, 0.3);
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      transform: translateX(120%);
-      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      max-width: 340px;
-    }
-    .toast.show {
-      transform: translateX(0);
-    }
-    .toast img {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: 3px solid #f8bbd0;
-      object-fit: cover;
-    }
+  .brand h1{
+    font-family:var(--display);
+    font-weight:900;
+    font-size:clamp(1.3rem,3.4vw,2rem);
+    margin:0;
+    letter-spacing:.10em;
+    color:#eafcff;
+    text-shadow:0 0 14px rgba(0,229,255,.55), 0 0 34px rgba(0,229,255,.25);
+  }
+  .brand h1 .v{ color:var(--mag); text-shadow:0 0 16px rgba(255,43,214,.7); }
+  .brand p{
+    margin:6px 0 0;
+    font-size:.72rem;
+    color:var(--dim);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+  }
 
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 240, 245, 0.7);
-      backdrop-filter: blur(6px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    .modal-overlay.active {
-      display: flex;
-    }
-    .modal-box {
-      background: white;
-      border-radius: 40px;
-      padding: 2rem;
-      max-width: 380px;
-      width: 90%;
-      text-align: center;
-      box-shadow: 0 20px 60px rgba(255, 105, 180, 0.4);
-      border: 4px solid #f8bbd0;
-      animation: popIn 0.5s;
-    }
-    .modal-box img {
-      width: 100%;
-      max-height: 200px;
-      object-fit: cover;
-      border-radius: 30px;
-      border: 4px solid #fecfef;
-      margin-bottom: 1rem;
-    }
-    .modal-box h2 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #ff6b9d, #f8bbd0, #a18cd1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .modal-box p {
-      color: #6a1b4d;
-      font-weight: 600;
-    }
-    .modal-box button {
-      background: #f8bbd0;
-      border: none;
-      border-radius: 30px;
-      padding: 10px 28px;
-      font-weight: 700;
-      color: #6a1b4d;
-      transition: 0.2s;
-    }
-    .modal-box button:hover {
-      background: #ff6b9d;
-      color: white;
-    }
+  .status{
+    display:flex; align-items:center; gap:10px;
+    font-size:.7rem;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--lime);
+    border:1px solid rgba(139,255,90,.35);
+    padding:7px 14px;
+    border-radius:2px;
+    background:rgba(139,255,90,.05);
+  }
+  .dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--lime);
+    box-shadow:0 0 10px var(--lime);
+    animation:blink 1.15s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{ opacity:.15; } }
 
-    @keyframes popIn {
-      0% { transform: scale(0.6); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+  .layout{
+    display:grid;
+    grid-template-columns:380px 1fr;
+    gap:18px;
+    align-items:start;
+  }
+  @media (max-width:1040px){
+    .layout{ grid-template-columns:1fr; }
+  }
 
-    /* Texto arcoíris */
-    .rainbow-text {
-      background: linear-gradient(90deg, #ff6b9d, #f8bbd0, #a18cd1, #fbc2eb, #ff6b9d);
-      background-size: 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: rainbowMove 4s linear infinite;
-    }
-    @keyframes rainbowMove {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 300% 50%; }
-    }
+  /* ================= SIDEBAR ================= */
+  .side{ padding:20px; }
 
-    /* Títulos */
-    .title-coqueto {
-      font-weight: 700;
-      color: #6a1b4d;
-    }
+  .block-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:.7rem;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--cyan);
+    text-shadow:0 0 10px rgba(0,229,255,.45);
+    margin-bottom:12px;
+  }
+  .block-title::after{
+    content:'';
+    flex:1;
+    margin-left:12px;
+    height:1px;
+    background:linear-gradient(90deg, var(--line), transparent);
+  }
 
-    /* Barra de progreso con colores pastel */
-    .progress-bar {
-      height: 8px;
-      border-radius: 20px;
-      background: #f8bbd0;
-      overflow: hidden;
-    }
-    .progress-bar .fill {
-      height: 100%;
-      background: linear-gradient(90deg, #ff9a9e, #fecfef, #fbc2eb, #a18cd1);
-      border-radius: 20px;
-      transition: width 0.7s;
-    }
+  textarea#admisionLista{
+    width:100%;
+    height:132px;
+    resize:none;
+    margin-bottom:18px;
+  }
 
-    /* Ajuste para que el contenido esté por encima del fondo */
-    .contenido-principal {
-      position: relative;
-      z-index: 10;
-    }
-  </style>
+  input, textarea, select{
+    width:100%;
+    font-family:var(--mono);
+    font-size:.84rem;
+    background:var(--panel2);
+    color:#d9f8ff;
+    border:1px solid rgba(0,229,255,.25);
+    border-radius:2px;
+    padding:11px 13px;
+    outline:none;
+    transition:border-color .2s, box-shadow .2s, background .2s;
+    letter-spacing:.06em;
+  }
+  input::placeholder, textarea::placeholder{ color:#3f5b66; }
+  input:focus, textarea:focus, select:focus{
+    border-color:var(--cyan);
+    background:#061019;
+    box-shadow:0 0 0 1px var(--cyan), 0 0 24px rgba(0,229,255,.22);
+  }
+  select{ cursor:pointer; }
+  select option{ background:#060b12; color:#d9f8ff; }
+
+  .field{ margin-bottom:16px; }
+  .label{
+    display:block;
+    font-size:.66rem;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--dim);
+    margin-bottom:7px;
+  }
+  .label b{ color:var(--cyan); font-weight:400; }
+
+  /* ---- checkboxes ---- */
+  .chk{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:.78rem;
+    letter-spacing:.09em;
+    color:#93c4d1;
+    cursor:pointer;
+    padding:8px 10px;
+    border:1px solid transparent;
+    border-radius:2px;
+    transition:.18s;
+  }
+  .chk:hover{
+    color:var(--cyan);
+    border-color:rgba(0,229,255,.22);
+    background:rgba(0,229,255,.04);
+  }
+  .checkbox-coqueta{
+    appearance:none;
+    width:17px; height:17px;
+    flex:0 0 17px;
+    border:1px solid rgba(0,229,255,.5);
+    background:#060b12;
+    border-radius:2px;
+    cursor:pointer;
+    position:relative;
+    transition:.18s;
+  }
+  .checkbox-coqueta:checked{
+    background:var(--cyan);
+    border-color:var(--cyan);
+    box-shadow:0 0 14px rgba(0,229,255,.7);
+  }
+  .checkbox-coqueta:checked::after{
+    content:'';
+    position:absolute;
+    left:5px; top:1px;
+    width:5px; height:10px;
+    border:solid #04070c;
+    border-width:0 2px 2px 0;
+    transform:rotate(45deg);
+  }
+
+  /* ---- botón principal ---- */
+  #ejecutarBtn{
+    width:100%;
+    margin-top:22px;
+    padding:16px 14px;
+    font-family:var(--display);
+    font-weight:700;
+    font-size:.82rem;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--cyan);
+    background:linear-gradient(90deg, rgba(0,229,255,.14), rgba(255,43,214,.12));
+    border:1px solid var(--cyan);
+    border-radius:2px;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+    clip-path:polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    text-shadow:0 0 12px rgba(0,229,255,.6);
+    box-shadow:0 0 22px rgba(0,229,255,.18), 0 0 0 1px rgba(0,229,255,.08) inset;
+    transition:all .22s ease;
+  }
+  #ejecutarBtn::before{
+    content:'';
+    position:absolute;
+    top:0; left:-120%;
+    width:60%; height:100%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    transform:skewX(-22deg);
+    transition:left .55s ease;
+  }
+  #ejecutarBtn:hover:not(:disabled)::before{ left:140%; }
+  #ejecutarBtn:hover:not(:disabled){
+    background:var(--cyan);
+    color:#04070c;
+    text-shadow:none;
+    box-shadow:0 0 42px rgba(0,229,255,.75), 0 0 90px rgba(0,229,255,.30);
+    transform:translateY(-2px);
+  }
+  #ejecutarBtn:active:not(:disabled){ transform:translateY(0) scale(.985); }
+  #ejecutarBtn:disabled{
+    cursor:not-allowed;
+    color:var(--dim);
+    border-color:rgba(93,127,140,.45);
+    background:rgba(93,127,140,.08);
+    box-shadow:none;
+    text-shadow:none;
+    animation:btnPulse 1s ease-in-out infinite alternate;
+  }
+  @keyframes btnPulse{ to{ opacity:.55; } }
+
+  /* ---- botón limpiar ---- */
+  .btn-mini{
+    font-family:var(--mono);
+    font-size:.64rem;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--mag);
+    background:transparent;
+    border:1px solid rgba(255,43,214,.35);
+    border-radius:2px;
+    padding:5px 10px;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .btn-mini:hover{
+    background:var(--mag);
+    color:#04070c;
+    box-shadow:0 0 20px rgba(255,43,214,.7);
+  }
+
+  /* ================= MAIN ================= */
+  .main-col{ display:flex; flex-direction:column; gap:18px; }
+
+  .monitor{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:18px;
+    padding:18px 22px;
+    flex-wrap:wrap;
+  }
+  .monitor .k{
+    font-size:.66rem;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--dim);
+    margin-bottom:6px;
+  }
+  .monitor .v{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:1.05rem;
+    letter-spacing:.08em;
+    color:#eafcff;
+    text-shadow:0 0 16px rgba(0,229,255,.45);
+  }
+  .pct{
+    font-family:var(--display);
+    font-weight:900;
+    font-size:2.4rem;
+    line-height:1;
+    color:var(--cyan);
+    text-shadow:0 0 22px rgba(0,229,255,.75), 0 0 60px rgba(0,229,255,.35);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* ---- tabla ---- */
+  .table-wrap{ max-height:470px; overflow-y:auto; }
+  .table-wrap::-webkit-scrollbar{ width:9px; }
+  .table-wrap::-webkit-scrollbar-track{ background:#040a10; }
+  .table-wrap::-webkit-scrollbar-thumb{
+    background:linear-gradient(180deg,var(--cyan),var(--mag));
+    border-radius:9px;
+  }
+
+  table{ width:100%; border-collapse:collapse; font-size:.82rem; }
+
+  thead th{
+    position:sticky; top:0;
+    background:#050c14;
+    color:var(--cyan);
+    font-family:var(--display);
+    font-size:.62rem;
+    font-weight:700;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    padding:13px 14px;
+    text-align:left;
+    border-bottom:1px solid var(--line);
+    z-index:2;
+  }
+  thead th.center{ text-align:center; }
+  thead th.right{ text-align:right; }
+
+  tbody tr{
+    border-bottom:1px solid rgba(0,229,255,.08);
+    transition:background .18s;
+  }
+  tbody tr:hover{ background:rgba(0,229,255,.045); }
+
+  tbody td{ padding:12px 14px; vertical-align:middle; }
+  td.c-map{ text-align:center; }
+  td.c-log{ text-align:right; }
+
+  .adm-id{
+    font-family:var(--display);
+    font-weight:700;
+    color:#eafcff;
+    letter-spacing:.06em;
+  }
+  .adm-sub{
+    font-size:.62rem;
+    color:var(--dim);
+    margin-top:4px;
+    letter-spacing:.1em;
+  }
+
+  .steps{ display:inline-flex; gap:10px; }
+  .step{
+    font-size:1.15rem;
+    color:#22333c;
+    transition:all .25s;
+  }
+  .step-active{
+    color:var(--cyan);
+    text-shadow:0 0 14px var(--cyan), 0 0 28px rgba(0,229,255,.6);
+    animation:stepPulse .5s infinite alternate;
+  }
+  @keyframes stepPulse{ to{ transform:scale(1.35); } }
+  .step-done{
+    color:var(--lime);
+    text-shadow:0 0 12px rgba(139,255,90,.85);
+  }
+  .step-error{
+    color:var(--red);
+    text-shadow:0 0 14px rgba(255,59,92,.9);
+    animation:stepShake .3s 2;
+  }
+  @keyframes stepShake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-3px); }
+    75%{ transform:translateX(3px); }
+  }
+
+  .log{
+    font-size:.7rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-weight:400;
+  }
+  .standby{ color:#33474f; }
+  .ok{ color:var(--lime); text-shadow:0 0 12px rgba(139,255,90,.6); }
+  .err{ color:var(--red); text-shadow:0 0 12px rgba(255,59,92,.6); }
+
+  /* ---- barra de progreso ---- */
+  .bar-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:0 4px;
+  }
+  .progress-bar{
+    flex:1;
+    height:6px;
+    background:#0a1620;
+    border:1px solid rgba(0,229,255,.18);
+    border-radius:2px;
+    overflow:hidden;
+    position:relative;
+  }
+  .progress-bar .fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--cyan), var(--mag));
+    box-shadow:0 0 20px rgba(0,229,255,.85);
+    transition:width .6s cubic-bezier(.4,0,.2,1);
+    position:relative;
+  }
+  .progress-bar .fill::after{
+    content:'';
+    position:absolute; inset:0;
+    background:repeating-linear-gradient(115deg, rgba(255,255,255,.28) 0 6px, transparent 6px 14px);
+    animation:stripes .7s linear infinite;
+  }
+  @keyframes stripes{ to{ background-position:28px 0; } }
+
+  /* ================= TOAST ================= */
+  .toast{
+    position:fixed;
+    top:22px; right:22px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    max-width:360px;
+    padding:14px 18px;
+    background:rgba(6,12,19,.96);
+    border:1px solid var(--line);
+    border-left:3px solid var(--cyan);
+    border-radius:2px;
+    box-shadow:0 0 40px rgba(0,229,255,.22), 0 20px 50px rgba(0,0,0,.7);
+    backdrop-filter:blur(8px);
+    z-index:10000;
+    transform:translateX(130%);
+    transition:transform .5s cubic-bezier(.16,1,.3,1);
+  }
+  .toast.show{ transform:translateX(0); }
+  .toast img{
+    width:46px; height:46px;
+    object-fit:cover;
+    border-radius:2px;
+    border:1px solid var(--cyan);
+    filter:grayscale(1) contrast(1.3) sepia(1) hue-rotate(140deg) saturate(4);
+    box-shadow:0 0 18px rgba(0,229,255,.4);
+  }
+  #toastTitle{
+    font-family:var(--display);
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--cyan);
+    text-shadow:0 0 12px rgba(0,229,255,.6);
+  }
+  #toastMsg{
+    font-size:.74rem;
+    color:var(--dim);
+    margin-top:5px;
+    letter-spacing:.06em;
+  }
+
+  /* ================= MODAL ================= */
+  .modal-overlay{
+    position:fixed; inset:0;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    background:rgba(2,5,9,.82);
+    backdrop-filter:blur(7px);
+    z-index:9999;
+  }
+  .modal-overlay.active{ display:flex; }
+
+  .modal-box{
+    width:min(420px, 92vw);
+    padding:26px;
+    text-align:center;
+    background:rgba(6,12,19,.97);
+    border:1px solid var(--cyan);
+    border-radius:3px;
+    position:relative;
+    box-shadow:0 0 70px rgba(0,229,255,.28), 0 30px 80px rgba(0,0,0,.8);
+    animation:modalIn .38s cubic-bezier(.16,1,.3,1);
+  }
+  .modal-box::before,
+  .modal-box::after{
+    content:'';
+    position:absolute;
+    width:16px; height:16px;
+    border:2px solid var(--mag);
+  }
+  .modal-box::before{ top:-2px; right:-2px; border-left:none; border-bottom:none; }
+  .modal-box::after{ bottom:-2px; left:-2px; border-right:none; border-top:none; }
+
+  @keyframes modalIn{
+    0%{ transform:scale(.9) translateY(14px); opacity:0; }
+    100%{ transform:scale(1) translateY(0); opacity:1; }
+  }
+
+  .modal-box img{
+    width:100%;
+    max-height:190px;
+    object-fit:cover;
+    border-radius:2px;
+    border:1px solid var(--line);
+    margin-bottom:18px;
+    filter:grayscale(1) contrast(1.35) sepia(1) hue-rotate(140deg) saturate(4);
+    box-shadow:0 0 34px rgba(0,229,255,.22) inset;
+  }
+  .modal-box h2{
+    font-family:var(--display);
+    font-size:1.02rem;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    margin:0 0 12px;
+    color:var(--cyan);
+    text-shadow:0 0 18px rgba(0,229,255,.65);
+  }
+  .modal-box p{
+    margin:0 0 22px;
+    font-size:.84rem;
+    color:var(--txt);
+    letter-spacing:.06em;
+    line-height:1.55;
+  }
+  .modal-box button{
+    font-family:var(--display);
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    padding:11px 30px;
+    color:var(--cyan);
+    background:transparent;
+    border:1px solid var(--cyan);
+    border-radius:2px;
+    cursor:pointer;
+    transition:.2s;
+    clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);
+  }
+  .modal-box button:hover{
+    background:var(--cyan);
+    color:#04070c;
+    box-shadow:0 0 30px rgba(0,229,255,.8);
+  }
+
+  /* ---- banco de sonido oculto ---- */
+  #sound-bank{
+    position:fixed;
+    width:1px; height:1px;
+    overflow:hidden;
+    opacity:0;
+    pointer-events:none;
+    left:-9999px;
+    top:-9999px;
+  }
+
+  .hint{
+    font-size:.62rem;
+    color:#3f5b66;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    text-align:center;
+    margin-top:14px;
+  }
+</style>
 </head>
 <body>
 
-  <!-- 🖼️ FONDO CON IMAGEN REBOTANDO (la del funcionario) -->
-  <div class="fondo-rebotante">
-    <img src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="Fondo rebotante">
+<!-- 👻 Capa fantasma con la imagen del funcionario (tratada estilo scan) -->
+<div class="ghost-layer">
+  <img src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="">
+</div>
+
+<!-- ⬡ Partículas decorativas -->
+<div class="particles">
+  <span style="top:12%; left:6%;">◈</span>
+  <span style="top:24%; right:11%; animation-delay:2.5s;">⬢</span>
+  <span style="bottom:32%; left:16%; animation-delay:5s;">◈</span>
+  <span style="bottom:12%; right:7%; animation-delay:7.5s;">⬢</span>
+  <span style="top:58%; left:48%; animation-delay:4s;">◇</span>
+  <span style="top:78%; right:26%; animation-delay:9s;">◈</span>
+</div>
+
+<!-- 🔇 Banco de sonido (iframes ocultos de respaldo) -->
+<div id="sound-bank"></div>
+
+<!-- Toast -->
+<div id="toast" class="toast">
+  <img id="toastImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="sys">
+  <div>
+    <div id="toastTitle">// PASO COMPLETADO</div>
+    <div id="toastMsg">Detalle del sistema</div>
   </div>
+</div>
 
-  <!-- 🦋 Mariposas flotantes (decorativas) -->
-  <div class="butterfly" style="top:10%; left:5%;">🦋</div>
-  <div class="butterfly" style="top:20%; right:10%; animation-delay:3s;">🦋</div>
-  <div class="butterfly" style="bottom:30%; left:15%; animation-delay:6s;">🦋</div>
-  <div class="butterfly" style="bottom:10%; right:5%; animation-delay:9s;">🦋</div>
-
-  <!-- Confeti de colores -->
-  <div class="confetti">
-    <span style="background:#ff9a9e; top:10%; left:20%;"></span>
-    <span style="background:#fecfef; top:30%; left:70%;"></span>
-    <span style="background:#fbc2eb; top:60%; left:10%;"></span>
-    <span style="background:#a18cd1; top:80%; left:80%;"></span>
-    <span style="background:#ff6b9d; top:50%; left:50%;"></span>
-    <span style="background:#f8bbd0; top:15%; left:85%;"></span>
-    <span style="background:#ffd1dc; top:75%; left:30%;"></span>
+<!-- Modal -->
+<div id="modal" class="modal-overlay" onclick="cerrarModal()">
+  <div class="modal-box" onclick="event.stopPropagation();">
+    <img id="modalImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="sys">
+    <h2 id="modalTitle">// PASO COMPLETADO</h2>
+    <p id="modalMsg">Detalle del paso</p>
+    <button onclick="cerrarModal()">CERRAR</button>
   </div>
+</div>
 
-  <!-- Toast -->
-  <div id="toast" class="toast">
-    <img id="toastImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="funcionario">
-    <div>
-      <div id="toastTitle" style="font-weight:700; color:#ff6b9d;">✨ Paso completado</div>
-      <div id="toastMsg" style="font-size:0.8rem; color:#6a1b4d;">Detalle</div>
+<!-- ================= CONTENIDO ================= -->
+<div class="shell">
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>CORE_INVOICE <span class="v">v3.2</span></h1>
+      <p>Terminal de automatización · facturación electrónica</p>
     </div>
-  </div>
-
-  <!-- Modal -->
-  <div id="modal" class="modal-overlay" onclick="cerrarModal()">
-    <div class="modal-box" onclick="event.stopPropagation();">
-      <img id="modalImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="Coordinador TIC">
-      <h2 id="modalTitle">🌈 ¡Paso completado!</h2>
-      <p id="modalMsg">Detalle del paso</p>
-      <button onclick="cerrarModal()">🌸 Cerrar</button>
+    <div class="status">
+      <span class="dot"></span> KERNEL ONLINE
     </div>
-  </div>
+  </header>
 
-  <!-- Contenido principal -->
-  <div class="max-w-5xl mx-auto contenido-principal">
-    <header class="mb-8 flex justify-between items-center">
-      <div>
-        <h1 class="text-3xl font-black tracking-tight">
-          <span class="rainbow-text">✨ System_Invoice v3.2</span>
-          <span class="text-2xl">🌈🦋</span>
-        </h1>
-        <p class="text-sm text-pink-600 font-semibold">🌸 Edición Coqueta · Automatización con amor</p>
+  <div class="layout">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="panel side">
+
+      <div class="block-title">
+        <span>// INPUT_DATA</span>
+        <button onclick="limpiarCaja()" class="btn-mini">Limpiar</button>
       </div>
-      <div class="text-right">
-        <p class="text-xs font-bold text-pink-500 uppercase">💖 Kernel: Activo</p>
+
+      <textarea id="admisionLista"
+        placeholder="&gt; pega aquí: 275572, 275573 - 275574 ..."></textarea>
+
+      <div class="field">
+        <label class="label">Institución <b>[id]</b></label>
+        <select id="selInstitucion">
+          <option value="14">C.S. SAN JOSE DE TOLUVIEJO (14)</option>
+          <option value="20" selected>E.S.E. HOSPITAL SAN JORGE (20)</option>
+          <option value="45">ESE CENTRO DE SALUD SANTA LUCIA (45)</option>
+        </select>
       </div>
-    </header>
 
-    <div class="grid lg:grid-cols-12 gap-6">
-      <aside class="lg:col-span-4 space-y-4">
-        <div class="glass-panel p-5">
-          <div class="flex justify-between items-center mb-2">
-            <label class="text-sm font-bold text-pink-700 uppercase">📋 Input_Data</label>
-            <button onclick="limpiarCaja()" class="text-xs text-pink-400 hover:text-pink-700 underline">Limpiar 🧹</button>
-          </div>
-          <textarea id="admisionLista" 
-            class="w-full h-32 rounded-2xl p-3 text-sm outline-none resize-none mb-4" 
-            placeholder="Pega aquí: 275572, 275573 - 275574..."></textarea>
-          
-          <div class="space-y-4">
-            <div>
-              <label class="text-xs font-bold text-pink-600 block uppercase mb-1">🏥 Institución</label>
-              <select id="selInstitucion" class="w-full rounded-2xl p-2 text-sm outline-none cursor-pointer">
-                <option value="14">C.S. SAN JOSE DE TOLUVIEJO (14)</option>
-                <option value="20" selected>E.S.E. HOSPITAL SAN JORGE (20)</option>
-                <option value="45">ESE CENTRO DE SALUD SANTA LUCIA (45)</option>
-              </select>
-            </div>
+      <div class="field">
+        <label class="label">Fecha de emisión <b>[editable]</b></label>
+        <input id="fechaInput" type="text" maxlength="10">
+      </div>
 
-            <div>
-              <label class="text-xs font-bold text-pink-600 block uppercase mb-1">📅 Fecha (editable)</label>
-              <input id="fechaInput" type="text" maxlength="10"
-                class="w-full rounded-2xl p-2 text-sm outline-none font-bold tracking-widest">
-            </div>
-          </div>
+      <div class="block-title" style="margin-top:22px;"><span>// MÓDULOS</span></div>
 
-          <div class="grid grid-cols-1 gap-2 mt-6">
-            <label class="flex items-center gap-3 text-sm cursor-pointer hover:text-pink-700">
-              <input type="checkbox" id="chkCambiar" checked class="checkbox-coqueta"> 01_SET_DATE
-            </label>
-            <label class="flex items-center gap-3 text-sm cursor-pointer hover:text-pink-700">
-              <input type="checkbox" id="chkGenerar" checked class="checkbox-coqueta"> 02_GEN_PREFIX
-            </label>
-            <label class="flex items-center gap-3 text-sm cursor-pointer hover:text-pink-700">
-              <input type="checkbox" id="chkEnviar" class="checkbox-coqueta"> 03_DIAN_PUSH
-            </label>
-          </div>
+      <label class="chk"><input type="checkbox" id="chkCambiar" checked class="checkbox-coqueta"> 01_SET_DATE</label>
+      <label class="chk"><input type="checkbox" id="chkGenerar" checked class="checkbox-coqueta"> 02_GEN_PREFIX</label>
+      <label class="chk"><input type="checkbox" id="chkEnviar" class="checkbox-coqueta"> 03_DIAN_PUSH</label>
 
-          <button id="ejecutarBtn" class="w-full mt-8 py-3 rounded-full text-sm font-bold uppercase transition-all">
-            🚀 Execute Sequence
-          </button>
+      <button id="ejecutarBtn">▶ Execute Sequence</button>
+
+      <p class="hint">// audio: es_una_pasiva.wav → main</p>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <main class="main-col">
+
+      <div class="panel monitor">
+        <div>
+          <div class="k">System Output</div>
+          <div class="v" id="summary">KERNEL_READY</div>
         </div>
-      </aside>
+        <div class="pct" id="progressPct">0%</div>
+      </div>
 
-      <main class="lg:col-span-8 space-y-4">
-        <div class="glass-panel p-5 flex justify-between items-center border-l-8 border-l-pink-300">
-          <div>
-            <p class="text-xs font-bold text-pink-500 uppercase">📊 System Output</p>
-            <h2 id="summary" class="text-lg font-bold text-pink-800 tracking-wide">🌟 Kernel_Ready</h2>
-          </div>
-          <div class="text-right">
-            <span id="progressPct" class="text-3xl font-black rainbow-text">0%</span>
-          </div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Admission</th>
+                <th class="center">Process_Map</th>
+                <th class="right">Result_Log</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+          </table>
         </div>
+      </div>
 
-        <div class="glass-panel rounded-3xl overflow-hidden">
-          <div class="overflow-y-auto max-h-[450px]">
-            <table class="w-full text-sm text-left">
-              <thead class="bg-pink-100 text-pink-700 uppercase font-bold border-b-2 border-pink-200">
-                <tr>
-                  <th class="p-3">Admission</th>
-                  <th class="p-3 text-center">Process_Map 🦋</th>
-                  <th class="p-3 text-right">Result_Log</th>
-                </tr>
-              </thead>
-              <tbody id="resultsTableBody" class="divide-y divide-pink-100"></tbody>
-            </table>
-          </div>
+      <div class="bar-row">
+        <button onclick="document.getElementById('resultsTableBody').innerHTML=''"
+          class="btn-mini" style="color:var(--dim); border-color:rgba(93,127,140,.4);">Reset</button>
+        <div class="progress-bar">
+          <div id="progressBar" class="fill"></div>
         </div>
-        
-        <div class="flex justify-between items-center px-1">
-          <button onclick="document.getElementById('resultsTableBody').innerHTML=''" class="text-xs font-bold text-pink-400 hover:text-pink-700 uppercase">Resetear</button>
-          <div class="progress-bar flex-1 mx-6">
-            <div id="progressBar" class="fill" style="width: 0%"></div>
-          </div>
-        </div>
-      </main>
-    </div>
+      </div>
+
+    </main>
   </div>
+</div>
 
-  <script>
-    const API_BASE = window.location.origin;
-    const IMAGEN = "https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg";
+<script>
+  /* ============ CONFIG ============ */
+  const API_BASE = window.location.origin;
+  const IMAGEN = "https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg";
 
-    window.onload = () => {
-      const hoy = new Date();
-      const y = hoy.getFullYear();
-      const m = String(hoy.getMonth() + 1).padStart(2, '0');
-      const d = String(hoy.getDate()).padStart(2, '0');
-      document.getElementById('fechaInput').value = `${y}/${m}/${d}`;
-    };
+  /* ============ AUDIO ============ */
+  const SOUNDS = {
+    main:  "https://www.myinstants.com/media/sounds/es-una-pasiva.mp3",
+    clear: "https://www.myinstants.com/media/sounds/gemision.mp3"
+  };
+  const EMBEDS = {
+    main:  "https://www.myinstants.com/instant/es-una-pasiva-20058/embed/",
+    clear: "https://www.myinstants.com/instant/gemision-88211/embed/"
+  };
+  const audioCache = {};
 
-    function limpiarCaja() {
-      document.getElementById('admisionLista').value = '';
+  function playSound(key){
+    const url = SOUNDS[key];
+    if(!url) return;
+    try{
+      if(!audioCache[key]) audioCache[key] = new Audio(url);
+      const a = audioCache[key];
+      a.currentTime = 0;
+      a.volume = 0.9;
+      const p = a.play();
+      if(p && p.catch) p.catch(() => fallbackIframe(key));
+    }catch(e){
+      fallbackIframe(key);
+    }
+  }
+
+  function fallbackIframe(key){
+    const bank = document.getElementById('sound-bank');
+    const old = document.getElementById('snd-' + key);
+    if(old) old.remove();
+    const f = document.createElement('iframe');
+    f.id = 'snd-' + key;
+    f.src = EMBEDS[key];
+    f.width = 110;
+    f.height = 200;
+    f.frameBorder = 0;
+    f.scrolling = 'no';
+    bank.appendChild(f);
+  }
+
+  /* ============ INIT ============ */
+  window.onload = () => {
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = String(hoy.getMonth() + 1).padStart(2, '0');
+    const d = String(hoy.getDate()).padStart(2, '0');
+    document.getElementById('fechaInput').value = `${y}/${m}/${d}`;
+  };
+
+  /* ============ UTILIDADES ============ */
+  function limpiarCaja(){
+    playSound('clear');
+    document.getElementById('admisionLista').value = '';
+  }
+
+  function limpiarLista(texto){
+    return texto.match(/\d+/g) || [];
+  }
+
+  function normalizarFecha(fechaStr){
+    if(/^\d{4}\/\d{2}\/\d{2}$/.test(fechaStr)) return fechaStr;
+    const partes = fechaStr.split('/');
+    if(partes.length === 3 && partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4){
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+    return fechaStr;
+  }
+
+  function mostrarToast(titulo, mensaje){
+    const toast = document.getElementById('toast');
+    document.getElementById('toastTitle').innerText = titulo;
+    document.getElementById('toastMsg').innerText = mensaje;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  function mostrarModal(titulo, mensaje){
+    const modal = document.getElementById('modal');
+    document.getElementById('modalTitle').innerText = titulo;
+    document.getElementById('modalMsg').innerText = mensaje;
+    modal.classList.add('active');
+    if(window.modalTimeout) clearTimeout(window.modalTimeout);
+    window.modalTimeout = setTimeout(() => cerrarModal(), 4500);
+  }
+
+  function cerrarModal(){
+    document.getElementById('modal').classList.remove('active');
+    if(window.modalTimeout) clearTimeout(window.modalTimeout);
+  }
+
+  /* ============ TABLA ============ */
+  function crearFila(id){
+    const tr = document.createElement('tr');
+    tr.id = `r-${id}`;
+    tr.innerHTML = `
+      <td>
+        <div class="adm-id">#${id}</div>
+        <div id="idf-${id}" class="adm-sub">🆔 buscando…</div>
+      </td>
+      <td class="c-map">
+        <div class="steps">
+          <span id="s1-${id}" class="step">◈</span>
+          <span id="s2-${id}" class="step">◈</span>
+          <span id="s3-${id}" class="step">◈</span>
+          <span id="s4-${id}" class="step">◈</span>
+        </div>
+      </td>
+      <td class="c-log">
+        <span id="msg-${id}" class="log standby">STANDBY</span>
+      </td>
+    `;
+    document.getElementById('resultsTableBody').prepend(tr);
+  }
+
+  function updateStep(id, step, status){
+    const dot = document.getElementById(`s${step}-${id}`);
+    if(!dot) return;
+    dot.className = 'step ' + (status === 'active' ? 'step-active'
+                              : status === 'done' ? 'step-done'
+                              : 'step-error');
+  }
+
+  /* ============ SECUENCIA PRINCIPAL ============ */
+  document.getElementById('ejecutarBtn').addEventListener('click', async () => {
+
+    /* 🔊 sonido del botón principal */
+    playSound('main');
+
+    const rawText = document.getElementById('admisionLista').value;
+    const list = limpiarLista(rawText);
+    const fechaRaw = document.getElementById('fechaInput').value.trim();
+    const fechaNormalizada = normalizarFecha(fechaRaw);
+    const inst = document.getElementById('selInstitucion').value;
+    const btn = document.getElementById('ejecutarBtn');
+
+    if(!list.length){
+      mostrarModal("// SIN DATOS", "No se detectaron números de admisión en el campo de entrada.");
+      return;
     }
 
-    function limpiarLista(texto) {
-      return texto.match(/\d+/g) || [];
-    }
+    btn.disabled = true;
+    btn.innerText = "⏳ PROCESANDO…";
 
-    function normalizarFecha(fechaStr) {
-      if (/^\d{4}\/\d{2}\/\d{2}$/.test(fechaStr)) return fechaStr;
-      const partes = fechaStr.split('/');
-      if (partes.length === 3 && partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4) {
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
-      }
-      return fechaStr;
-    }
+    for(let i = 0; i < list.length; i++){
+      const idAdm = list[i];
+      crearFila(idAdm);
 
-    function mostrarToast(titulo, mensaje) {
-      const toast = document.getElementById('toast');
-      document.getElementById('toastTitle').innerText = titulo;
-      document.getElementById('toastMsg').innerText = mensaje;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3500);
-    }
+      try{
+        /* ---- STEP 1: BUSCAR ---- */
+        updateStep(idAdm, 1, 'active');
+        const resS = await fetch(`${API_BASE}/buscarFactura?numero=${idAdm}&idInstitucion=${inst}`, { method:'POST' });
+        const dataS = await resS.json();
+        if(!dataS.ok || !dataS.idFactura) throw new Error("NOT_FOUND");
 
-    function mostrarModal(titulo, mensaje) {
-      const modal = document.getElementById('modal');
-      document.getElementById('modalTitle').innerText = titulo;
-      document.getElementById('modalMsg').innerText = mensaje;
-      modal.classList.add('active');
-      if (window.modalTimeout) clearTimeout(window.modalTimeout);
-      window.modalTimeout = setTimeout(() => cerrarModal(), 4500);
-    }
+        const idFactura = dataS.idFactura;
+        document.getElementById(`idf-${idAdm}`).innerText = `🆔 ${idFactura}`;
+        updateStep(idAdm, 1, 'done');
+        mostrarToast("// BÚSQUEDA OK", `Admisión ${idAdm} → Factura ${idFactura}`);
+        mostrarModal("// BÚSQUEDA EXITOSA", `Factura: ${idFactura}`);
 
-    function cerrarModal() {
-      document.getElementById('modal').classList.remove('active');
-      if (window.modalTimeout) clearTimeout(window.modalTimeout);
-    }
-
-    function crearFila(id) {
-      const tr = document.createElement('tr');
-      tr.id = `r-${id}`;
-      tr.className = "hover:bg-pink-50 transition-colors";
-      tr.innerHTML = `
-        <td class="p-3 border-r border-pink-100">
-          <span class="font-bold text-pink-800">#${id}</span>
-          <div id="idf-${id}" class="text-[10px] text-pink-400 mt-0.5">🆔 Buscando...</div>
-        </td>
-        <td class="p-3">
-          <div class="flex justify-center gap-3 text-2xl">
-            <span id="s1-${id}" class="step-indicator">🦋</span>
-            <span id="s2-${id}" class="step-indicator">🦋</span>
-            <span id="s3-${id}" class="step-indicator">🦋</span>
-            <span id="s4-${id}" class="step-indicator">🦋</span>
-          </div>
-        </td>
-        <td class="p-3 text-right border-l border-pink-100 font-bold">
-          <span id="msg-${id}" class="text-pink-300 italic">💤 STANDBY</span>
-        </td>
-      `;
-      document.getElementById('resultsTableBody').prepend(tr);
-    }
-
-    function updateStep(id, step, status) {
-      const dot = document.getElementById(`s${step}-${id}`);
-      if (dot) {
-        dot.className = `step-indicator ${status === 'active' ? 'step-active' : status === 'done' ? 'step-done' : 'step-error'}`;
-      }
-    }
-
-    document.getElementById('ejecutarBtn').addEventListener('click', async () => {
-      const rawText = document.getElementById('admisionLista').value;
-      const list = limpiarLista(rawText);
-      const fechaRaw = document.getElementById('fechaInput').value.trim();
-      const fechaNormalizada = normalizarFecha(fechaRaw);
-      const inst = document.getElementById('selInstitucion').value;
-      const btn = document.getElementById('ejecutarBtn');
-
-      if (!list.length) {
-        alert("🌸 ¡No se detectaron números! Pega algunos IDs.");
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerText = "⏳ Procesando...";
-
-      for (let i = 0; i < list.length; i++) {
-        const idAdm = list[i];
-        crearFila(idAdm);
-
-        try {
-          // STEP 1: Buscar
-          updateStep(idAdm, 1, 'active');
-          const resS = await fetch(`${API_BASE}/buscarFactura?numero=${idAdm}&idInstitucion=${inst}`, { method: 'POST' });
-          const dataS = await resS.json();
-          if (!dataS.ok || !dataS.idFactura) throw new Error("NOT_FOUND");
-          const idFactura = dataS.idFactura;
-          document.getElementById(`idf-${idAdm}`).innerText = `🆔 ${idFactura}`;
-          updateStep(idAdm, 1, 'done');
-          mostrarToast("🔍 ¡Encontrada!", `Admisión ${idAdm} → Factura ${idFactura}`);
-          mostrarModal("✅ Búsqueda exitosa", `Factura: ${idFactura}`);
-
-          // STEP 2: Fecha
-          if (document.getElementById('chkCambiar').checked) {
-            updateStep(idAdm, 2, 'active');
-            const payload = { idFactura, fechaEmision: fechaNormalizada };
-            const resC = await fetch(`${API_BASE}/cambiar-fecha`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-            const dataC = await resC.json();
-            if (!dataC.ok) throw new Error("DATE_ERR");
-            updateStep(idAdm, 2, 'done');
-            mostrarToast("📅 Fecha OK", `Cambiada a ${fechaNormalizada}`);
-            mostrarModal("📅 Fecha actualizada", `Nueva fecha: ${fechaNormalizada}`);
-          }
-
-          // STEP 3: Prefijo
-          if (document.getElementById('chkGenerar').checked) {
-            updateStep(idAdm, 3, 'active');
-            const resG = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${inst}`);
-            const dataG = await resG.json();
-            if (dataG.resultado?.valorRetorno === -1) {
-              document.getElementById(`msg-${idAdm}`).innerText = "🔏 YA FIRMADA";
-              updateStep(idAdm, 3, 'done');
-              mostrarToast("🔢 Prefix", "Factura ya firmada");
-              mostrarModal("🔢 Prefix", "Ya estaba firmada");
-            } else if (dataG.resultado?.numeroFactura) {
-              const num = dataG.resultado.numeroFactura;
-              document.getElementById(`msg-${idAdm}`).innerText = num;
-              updateStep(idAdm, 3, 'done');
-              mostrarToast("🔢 Prefix OK", `Número: ${num}`);
-              mostrarModal("🔢 Prefix generado", `Número: ${num}`);
-            } else {
-              throw new Error("GEN_ERR");
-            }
-          }
-
-          // STEP 4: DIAN
-          if (document.getElementById('chkEnviar').checked) {
-            updateStep(idAdm, 4, 'active');
-            const resD = await fetch(`${API_BASE}/EnviarDian`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idFacturas: idFactura })
-            });
-            const dataD = await resD.json();
-            if (dataD.valorRetorno !== 1) throw new Error("DIAN_ERR");
-            updateStep(idAdm, 4, 'done');
-            mostrarToast("📤 Enviado a DIAN", `Factura ${idFactura} OK`);
-            mostrarModal("📤 Envío a DIAN", `Factura ${idFactura} enviada`);
-          }
-
-          const msgEl = document.getElementById(`msg-${idAdm}`);
-          if (msgEl.innerText === '💤 STANDBY') msgEl.innerText = "✅ DONE";
-          msgEl.classList.remove('text-pink-300');
-          msgEl.classList.add('text-pink-700');
-
-        } catch (e) {
-          document.getElementById(`msg-${idAdm}`).innerText = "❌ " + e.message;
-          document.getElementById(`msg-${idAdm}`).className = "text-red-500 italic";
-          for (let s = 1; s <= 4; s++) {
-            const dot = document.getElementById(`s${s}-${idAdm}`);
-            if (dot && !dot.classList.contains('step-done')) {
-              updateStep(idAdm, s, 'error');
-            }
-          }
-          mostrarModal("❌ Error", e.message);
-          mostrarToast("❌ Error", e.message);
+        /* ---- STEP 2: FECHA ---- */
+        if(document.getElementById('chkCambiar').checked){
+          updateStep(idAdm, 2, 'active');
+          const resC = await fetch(`${API_BASE}/cambiar-fecha`, {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify({ idFactura, fechaEmision: fechaNormalizada })
+          });
+          const dataC = await resC.json();
+          if(!dataC.ok) throw new Error("DATE_ERR");
+          updateStep(idAdm, 2, 'done');
+          mostrarToast("// FECHA OK", `Cambiada a ${fechaNormalizada}`);
+          mostrarModal("// FECHA ACTUALIZADA", `Nueva fecha: ${fechaNormalizada}`);
         }
 
-        const pct = Math.round(((i + 1) / list.length) * 100);
-        document.getElementById('progressBar').style.width = pct + '%';
-        document.getElementById('progressPct').innerText = pct + '%';
-        document.getElementById('summary').innerText = `🌸 Procesando ${i+1} de ${list.length}`;
+        /* ---- STEP 3: PREFIJO ---- */
+        if(document.getElementById('chkGenerar').checked){
+          updateStep(idAdm, 3, 'active');
+          const resG = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${inst}`);
+          const dataG = await resG.json();
+
+          if(dataG.resultado?.valorRetorno === -1){
+            document.getElementById(`msg-${idAdm}`).innerText = "YA FIRMADA";
+            updateStep(idAdm, 3, 'done');
+            mostrarToast("// PREFIX", "Factura ya firmada");
+            mostrarModal("// PREFIX", "La factura ya estaba firmada");
+          } else if(dataG.resultado?.numeroFactura){
+            const num = dataG.resultado.numeroFactura;
+            document.getElementById(`msg-${idAdm}`).innerText = num;
+            updateStep(idAdm, 3, 'done');
+            mostrarToast("// PREFIX OK", `Número: ${num}`);
+            mostrarModal("// PREFIX GENERADO", `Número: ${num}`);
+          } else {
+            throw new Error("GEN_ERR");
+          }
+        }
+
+        /* ---- STEP 4: DIAN ---- */
+        if(document.getElementById('chkEnviar').checked){
+          updateStep(idAdm, 4, 'active');
+          const resD = await fetch(`${API_BASE}/EnviarDian`, {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify({ idFacturas: idFactura })
+          });
+          const dataD = await resD.json();
+          if(dataD.valorRetorno !== 1) throw new Error("DIAN_ERR");
+          updateStep(idAdm, 4, 'done');
+          mostrarToast("// DIAN OK", `Factura ${idFactura} enviada`);
+          mostrarModal("// ENVÍO DIAN", `Factura ${idFactura} enviada correctamente`);
+        }
+
+        const msgEl = document.getElementById(`msg-${idAdm}`);
+        if(msgEl.classList.contains('standby')){
+          msgEl.innerText = "DONE";
+          msgEl.classList.remove('standby');
+          msgEl.classList.add('ok');
+        }
+
+      }catch(e){
+        const msgEl = document.getElementById(`msg-${idAdm}`);
+        msgEl.innerText = "ERR · " + e.message;
+        msgEl.className = "log err";
+
+        for(let s = 1; s <= 4; s++){
+          const dot = document.getElementById(`s${s}-${idAdm}`);
+          if(dot && !dot.classList.contains('step-done')){
+            updateStep(idAdm, s, 'error');
+          }
+        }
+        mostrarModal("// ERROR", e.message);
+        mostrarToast("// ERROR", e.message);
       }
 
-      mostrarModal("🎉 ¡PROCESO COMPLETO!", `Se procesaron ${list.length} admisiones`);
-      mostrarToast("🎉 ¡Listo!", "Todas las admisiones procesadas");
+      const pct = Math.round(((i + 1) / list.length) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressPct').innerText = pct + '%';
+      document.getElementById('summary').innerText = `PROCESANDO ${i + 1} / ${list.length}`;
+    }
 
-      btn.disabled = false;
-      btn.innerText = "🚀 Execute Sequence";
-      document.getElementById('summary').innerText = "✨ SEQUENCE_TERMINATED ✨";
-    });
-  </script>
+    mostrarModal("// PROCESO COMPLETO", `Se procesaron ${list.length} admisiones correctamente.`);
+    mostrarToast("// LISTO", "Todas las admisiones fueron procesadas");
+
+    btn.disabled = false;
+    btn.innerText = "▶ Execute Sequence";
+    document.getElementById('summary').innerText = "SEQUENCE_TERMINATED";
+  });
+</script>
 </body>
 </html>
