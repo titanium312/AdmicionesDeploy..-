@@ -55,15 +55,13 @@ const ConsultaIdOrdenMedicas = async (documento, token) => {
         });
 
         if (response.data && response.data.aaData && response.data.aaData.length > 0) {
-            // Buscamos el registro donde el documento coincida en la columna [1]
             const registroEncontrado = response.data.aaData.find(orden => 
                 orden[1] && orden[1].toString() === documento.toString()
             );
             
             if (registroEncontrado) {
                 const idOrden = registroEncontrado[0];
-                // Mantenemos tu lógica de prefijo '20'
-                return '20' + idOrden; 
+                return idOrden; // ✅ sin prefijo '20'
             } else {
                 throw new Error(`Documento ${documento} no encontrado en órdenes médicas`);
             }
