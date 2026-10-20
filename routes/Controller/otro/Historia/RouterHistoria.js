@@ -1,9 +1,13 @@
 const express = require('express');
 const routerHistoria = express.Router();
 
-const { Hs_Anx } = require('../../historias');
+const { Histronico } = require('./Histronico');
+const { descargarReporte  } = require('./Exel');
 
-routerHistoria.post('/Histronico', Hs_Anx);
+
+
+routerHistoria.post('/Histronico', Histronico);
+routerHistoria.post('/descargarReporte', descargarReporte);
 
 
 module.exports = routerHistoria;
