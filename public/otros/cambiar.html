@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>💖 CORE_INVOICE v3.2 — RAINBOW PRIDE EDITION 🌈🦄</title>
+<title>💖 CORE_INVOICE v3.3 — RAINBOW PRIDE EDITION 🌈🦄</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -13,19 +13,14 @@
     --cyan:#7ee8fa;
     --mint:#a8ff9e;
     --yellow:#ffd36e;
-    --orange:#ff9a6e;
     --txt:#5a1a4a;
     --txt-soft:#9b5b8a;
     --white-glass:rgba(255,255,255,.9);
   }
-
   *{ box-sizing:border-box; }
-
   html,body{ min-height:100%; }
-
   body{
-    margin:0;
-    padding:20px;
+    margin:0; padding:20px;
     font-family:'Quicksand', sans-serif;
     color:var(--txt);
     background:linear-gradient(135deg,
@@ -33,10 +28,8 @@
       #7ee8fa 50%, #b39dff 66%, #ff9ecd 83%, #ffd36e 100%);
     background-size:400% 400%;
     animation:rainbowBg 16s ease infinite;
-    overflow-x:hidden;
-    position:relative;
+    overflow-x:hidden; position:relative;
   }
-
   @keyframes rainbowBg{
     0%{ background-position:0% 50%; }
     50%{ background-position:100% 50%; }
@@ -44,17 +37,9 @@
   }
 
   /* ---- lluvia de emojis flotantes ---- */
-  .floaties{
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    z-index:0;
-    overflow:hidden;
-  }
+  .floaties{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
   .floaties span{
-    position:absolute;
-    font-size:2rem;
-    opacity:.55;
+    position:absolute; font-size:2rem; opacity:.55;
     filter:drop-shadow(0 4px 10px rgba(255,79,163,.45));
     animation:floaty 9s ease-in-out infinite alternate;
   }
@@ -62,15 +47,7 @@
     0%{ transform:translateY(0) rotate(-8deg) scale(1); opacity:.35; }
     100%{ transform:translateY(-38px) rotate(10deg) scale(1.15); opacity:.75; }
   }
-
-  /* ---- destellos ---- */
-  .sparkle{
-    position:fixed;
-    pointer-events:none;
-    z-index:1;
-    font-size:1.1rem;
-    animation:twinkle 3s ease-in-out infinite;
-  }
+  .sparkle{ position:fixed; pointer-events:none; z-index:1; font-size:1.1rem; animation:twinkle 3s ease-in-out infinite; }
   @keyframes twinkle{
     0%,100%{ opacity:.2; transform:scale(.7) rotate(0deg); }
     50%{ opacity:1; transform:scale(1.2) rotate(25deg); }
@@ -106,23 +83,11 @@
   }
 
   /* ============ TOPBAR ============ */
-  .shell{
-    position:relative;
-    z-index:10;
-    max-width:1260px;
-    margin:0 auto;
-  }
-
+  .shell{ position:relative; z-index:10; max-width:1260px; margin:0 auto; }
   .topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:18px;
-    flex-wrap:wrap;
-    padding:22px 28px;
-    margin-bottom:22px;
-    border-radius:38px;
-    border:4px solid transparent;
+    display:flex; justify-content:space-between; align-items:center;
+    gap:18px; flex-wrap:wrap; padding:22px 28px; margin-bottom:22px;
+    border-radius:38px; border:4px solid transparent;
     background:
       linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)) padding-box,
       linear-gradient(120deg,#ff4fa3,#ffd36e,#a8ff9e,#7ee8fa,#b39dff,#ff2bd6,#ff4fa3) border-box;
@@ -130,40 +95,21 @@
     animation:borderRainbow 7s linear infinite;
     box-shadow:0 14px 45px rgba(255,43,214,.3), 0 0 0 6px rgba(255,255,255,.35);
   }
-
   .brand h1{
-    font-family:'Fredoka', sans-serif;
-    font-weight:700;
-    font-size:clamp(1.5rem,4vw,2.4rem);
-    margin:0;
-    letter-spacing:.02em;
+    font-family:'Fredoka', sans-serif; font-weight:700;
+    font-size:clamp(1.5rem,4vw,2.4rem); margin:0; letter-spacing:.02em;
     background:linear-gradient(90deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e,#ff4fa3);
     background-size:300% 100%;
-    -webkit-background-clip:text;
-    background-clip:text;
+    -webkit-background-clip:text; background-clip:text;
     -webkit-text-fill-color:transparent;
     animation:rainbowBg 6s linear infinite;
     text-shadow:0 4px 18px rgba(255,79,163,.25);
   }
-  .brand p{
-    margin:8px 0 0;
-    font-size:.8rem;
-    font-weight:600;
-    color:var(--txt-soft);
-    letter-spacing:.06em;
-  }
-
+  .brand p{ margin:8px 0 0; font-size:.8rem; font-weight:600; color:var(--txt-soft); letter-spacing:.06em; }
   .status{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-family:'Fredoka',sans-serif;
-    font-size:.78rem;
-    font-weight:600;
-    letter-spacing:.08em;
-    color:#fff;
-    padding:10px 20px;
-    border-radius:999px;
+    display:flex; align-items:center; gap:10px;
+    font-family:'Fredoka',sans-serif; font-size:.78rem; font-weight:600;
+    letter-spacing:.08em; color:#fff; padding:10px 20px; border-radius:999px;
     background:linear-gradient(135deg,#ff4fa3,#ff2bd6,#b39dff);
     box-shadow:0 6px 22px rgba(255,43,214,.5);
     animation:statusBounce 2.2s ease-in-out infinite;
@@ -173,148 +119,74 @@
     50%{ transform:translateY(-5px) rotate(1deg); }
   }
   .dot{
-    width:10px; height:10px;
-    border-radius:50%;
-    background:#a8ff9e;
+    width:10px; height:10px; border-radius:50%; background:#a8ff9e;
     box-shadow:0 0 12px #a8ff9e, 0 0 24px #a8ff9e;
     animation:blink 1s steps(1) infinite;
   }
   @keyframes blink{ 50%{ opacity:.2; } }
 
   /* ============ LAYOUT ============ */
-  .layout{
-    display:grid;
-    grid-template-columns:390px 1fr;
-    gap:22px;
-    align-items:start;
-  }
-  @media (max-width:1060px){
-    .layout{ grid-template-columns:1fr; }
-  }
+  .layout{ display:grid; grid-template-columns:390px 1fr; gap:22px; align-items:start; }
+  @media (max-width:1060px){ .layout{ grid-template-columns:1fr; } }
 
   /* ============ SIDEBAR ============ */
   .side{ padding:26px; }
-
   .block-title{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    font-family:'Fredoka',sans-serif;
-    font-size:.9rem;
-    font-weight:600;
-    letter-spacing:.04em;
-    color:var(--magenta);
-    margin-bottom:14px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Fredoka',sans-serif; font-size:.9rem; font-weight:600;
+    letter-spacing:.04em; color:var(--magenta); margin-bottom:14px;
   }
-
-  textarea#admisionLista{
-    width:100%;
-    height:140px;
-    resize:none;
-    margin-bottom:20px;
-  }
-
+  textarea#admisionLista{ width:100%; height:140px; resize:none; margin-bottom:20px; }
   input, textarea, select{
-    width:100%;
-    font-family:'Quicksand',sans-serif;
-    font-size:.9rem;
-    font-weight:600;
-    color:var(--txt);
-    background:#fff5fb;
-    border:3px solid #ffd0e8;
-    border-radius:22px;
-    padding:13px 16px;
-    outline:none;
-    transition:.2s;
+    width:100%; font-family:'Quicksand',sans-serif; font-size:.9rem; font-weight:600;
+    color:var(--txt); background:#fff5fb; border:3px solid #ffd0e8;
+    border-radius:22px; padding:13px 16px; outline:none; transition:.2s;
     box-shadow:inset 0 3px 8px rgba(255,79,163,.08);
   }
   input::placeholder, textarea::placeholder{ color:#d9a3c4; }
   input:focus, textarea:focus, select:focus{
-    border-color:var(--pink);
-    background:#fff;
+    border-color:var(--pink); background:#fff;
     box-shadow:0 0 0 5px rgba(255,79,163,.18), 0 6px 20px rgba(255,79,163,.2);
   }
   select{ cursor:pointer; }
   select option{ background:#fff; color:var(--txt); }
-
   .field{ margin-bottom:18px; }
   .label{
-    display:block;
-    font-family:'Fredoka',sans-serif;
-    font-size:.76rem;
-    font-weight:600;
-    letter-spacing:.06em;
-    color:var(--txt-soft);
-    margin-bottom:8px;
+    display:block; font-family:'Fredoka',sans-serif; font-size:.76rem; font-weight:600;
+    letter-spacing:.06em; color:var(--txt-soft); margin-bottom:8px;
   }
   .label b{ color:var(--pink); }
 
   /* ---- checkboxes ---- */
   .chk{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    font-size:.88rem;
-    font-weight:600;
-    color:var(--txt);
-    cursor:pointer;
-    padding:10px 14px;
-    border-radius:18px;
-    border:2px solid transparent;
-    transition:.2s;
+    display:flex; align-items:center; gap:12px; font-size:.88rem; font-weight:600;
+    color:var(--txt); cursor:pointer; padding:10px 14px; border-radius:18px;
+    border:2px solid transparent; transition:.2s;
   }
-  .chk:hover{
-    background:rgba(255,79,163,.08);
-    border-color:#ffd0e8;
-    transform:translateX(4px);
-  }
+  .chk:hover{ background:rgba(255,79,163,.08); border-color:#ffd0e8; transform:translateX(4px); }
   .checkbox-coqueta{
-    appearance:none;
-    width:24px; height:24px;
-    flex:0 0 24px;
-    border:3px solid #ffb3d9;
-    border-radius:9px;
-    background:#fff;
-    cursor:pointer;
-    position:relative;
-    transition:.2s;
+    appearance:none; width:24px; height:24px; flex:0 0 24px;
+    border:3px solid #ffb3d9; border-radius:9px; background:#fff;
+    cursor:pointer; position:relative; transition:.2s;
   }
   .checkbox-coqueta:checked{
-    background:linear-gradient(135deg,#ff4fa3,#b39dff);
-    border-color:#ff4fa3;
-    box-shadow:0 0 16px rgba(255,43,214,.6);
-    transform:scale(1.08);
+    background:linear-gradient(135deg,#ff4fa3,#b39dff); border-color:#ff4fa3;
+    box-shadow:0 0 16px rgba(255,43,214,.6); transform:scale(1.08);
   }
   .checkbox-coqueta:checked::after{
-    content:'✓';
-    position:absolute;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#fff;
-    font-size:15px;
-    font-weight:700;
+    content:'✓'; position:absolute; inset:0; display:flex;
+    align-items:center; justify-content:center; color:#fff;
+    font-size:15px; font-weight:700;
   }
 
   /* ---- BOTÓN PRINCIPAL ---- */
   #ejecutarBtn{
-    width:100%;
-    margin-top:24px;
-    padding:18px 16px;
-    font-family:'Fredoka',sans-serif;
-    font-weight:700;
-    font-size:1.05rem;
-    letter-spacing:.05em;
-    color:#fff;
-    text-shadow:0 2px 8px rgba(120,0,80,.4);
+    width:100%; margin-top:24px; padding:18px 16px;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:1.05rem;
+    letter-spacing:.05em; color:#fff; text-shadow:0 2px 8px rgba(120,0,80,.4);
     background:linear-gradient(120deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e,#ff4fa3);
-    background-size:300% 100%;
-    border:none;
-    border-radius:999px;
-    cursor:pointer;
-    position:relative;
-    overflow:hidden;
+    background-size:300% 100%; border:none; border-radius:999px; cursor:pointer;
+    position:relative; overflow:hidden;
     box-shadow:
       0 10px 28px rgba(255,43,214,.5),
       0 4px 14px rgba(126,232,250,.45),
@@ -323,13 +195,9 @@
     transition:transform .2s ease, box-shadow .2s ease;
   }
   #ejecutarBtn::before{
-    content:'';
-    position:absolute;
-    top:0; left:-130%;
-    width:55%; height:100%;
+    content:''; position:absolute; top:0; left:-130%; width:55%; height:100%;
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
-    transform:skewX(-22deg);
-    transition:left .6s ease;
+    transform:skewX(-22deg); transition:left .6s ease;
   }
   #ejecutarBtn:hover:not(:disabled)::before{ left:150%; }
   #ejecutarBtn:hover:not(:disabled){
@@ -339,31 +207,20 @@
       0 8px 22px rgba(126,232,250,.6),
       0 0 0 7px rgba(255,255,255,.75);
   }
-  #ejecutarBtn:active:not(:disabled){
-    transform:translateY(-1px) scale(.99);
-  }
+  #ejecutarBtn:active:not(:disabled){ transform:translateY(-1px) scale(.99); }
   #ejecutarBtn:disabled{
-    cursor:not-allowed;
-    filter:grayscale(.45) brightness(.95);
+    cursor:not-allowed; filter:grayscale(.45) brightness(.95);
     animation:btnPulse 1s ease-in-out infinite alternate;
     box-shadow:0 6px 16px rgba(150,120,160,.35);
   }
   @keyframes btnPulse{ to{ opacity:.65; } }
 
-  /* ---- BOTÓN MINI ---- */
   .btn-mini{
-    font-family:'Fredoka',sans-serif;
-    font-size:.76rem;
-    font-weight:600;
-    letter-spacing:.05em;
-    color:#fff;
+    font-family:'Fredoka',sans-serif; font-size:.76rem; font-weight:600;
+    letter-spacing:.05em; color:#fff;
     background:linear-gradient(135deg,#ff9ecd,#ff4fa3);
-    border:none;
-    border-radius:999px;
-    padding:8px 18px;
-    cursor:pointer;
-    box-shadow:0 5px 16px rgba(255,79,163,.45);
-    transition:.2s;
+    border:none; border-radius:999px; padding:8px 18px; cursor:pointer;
+    box-shadow:0 5px 16px rgba(255,79,163,.45); transition:.2s;
   }
   .btn-mini:hover{
     transform:translateY(-2px) scale(1.07) rotate(-2deg);
@@ -371,74 +228,101 @@
   }
   .btn-mini:active{ transform:scale(.96); }
 
-  /* ============ MAIN ============ */
-  .main-col{ display:flex; flex-direction:column; gap:22px; }
-
+  /* ============ MONITOR (mejorado) ============ */
   .monitor{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:18px;
-    flex-wrap:wrap;
-    padding:24px 30px;
+    display:flex; flex-wrap:wrap; gap:20px; align-items:center;
+    padding:22px 26px;
   }
+  .monitor-cell{ flex:1 1 auto; min-width:150px; }
   .monitor .k{
-    font-family:'Fredoka',sans-serif;
-    font-size:.78rem;
-    font-weight:600;
-    letter-spacing:.08em;
-    color:var(--txt-soft);
-    margin-bottom:6px;
+    font-family:'Fredoka',sans-serif; font-size:.74rem; font-weight:600;
+    letter-spacing:.08em; color:var(--txt-soft); margin-bottom:6px;
   }
   .monitor .v{
-    font-family:'Fredoka',sans-serif;
-    font-weight:700;
-    font-size:1.25rem;
-    color:var(--txt);
-    letter-spacing:.02em;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:1.15rem;
+    color:var(--txt); letter-spacing:.02em;
   }
+  .current-adm-cell{
+    flex:2 1 260px; text-align:center;
+    padding:10px 16px; border-radius:22px;
+    background:linear-gradient(160deg,rgba(255,240,250,.9),rgba(240,235,255,.9));
+    border:2px solid rgba(255,79,163,.25);
+  }
+  .current-adm{
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:2rem;
+    color:var(--magenta); letter-spacing:.02em; margin:4px 0;
+    text-shadow:0 2px 10px rgba(255,43,214,.35);
+    animation:currentPulse 1.5s ease-in-out infinite alternate;
+  }
+  @keyframes currentPulse{
+    from{ transform:scale(1); }
+    to{ transform:scale(1.05); }
+  }
+  .current-adm-sub{ font-size:.8rem; font-weight:600; color:var(--txt-soft); }
+  .stats-cell{ display:flex; gap:14px; justify-content:center; flex:1 1 auto; }
+  .stat{ text-align:center; min-width:60px; }
+  .stat-num{
+    display:block; font-family:'Fredoka',sans-serif; font-weight:700;
+    font-size:1.4rem; color:var(--txt); line-height:1.2;
+  }
+  .stat-label{ font-size:.72rem; font-weight:600; color:var(--txt-soft); }
   .pct{
-    font-family:'Fredoka',sans-serif;
-    font-weight:700;
-    font-size:2.8rem;
-    line-height:1;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:2.8rem; line-height:1;
     background:linear-gradient(120deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e);
     background-size:300% 100%;
-    -webkit-background-clip:text;
-    background-clip:text;
+    -webkit-background-clip:text; background-clip:text;
     -webkit-text-fill-color:transparent;
     animation:rainbowBg 5s linear infinite;
     filter:drop-shadow(0 4px 12px rgba(255,79,163,.35));
   }
 
-  /* ---- TABLA ---- */
-  .table-wrap{ max-height:480px; overflow-y:auto; border-radius:30px; }
+  /* ============ LOG PANEL ============ */
+  .log-panel{
+    max-height:260px; overflow-y:auto; padding:14px 18px;
+    background:#fff5fb; border-radius:20px; border:2px solid #ffd0e8;
+    font-family:'Quicksand',sans-serif; font-size:.84rem; line-height:1.7;
+  }
+  .log-panel::-webkit-scrollbar{ width:10px; }
+  .log-panel::-webkit-scrollbar-track{ background:#ffe9f6; border-radius:10px; }
+  .log-panel::-webkit-scrollbar-thumb{
+    background:linear-gradient(180deg,#ff4fa3,#b39dff,#7ee8fa);
+    border-radius:10px; border:2px solid #ffe9f6;
+  }
+  .log-entry{ padding:4px 0; display:flex; gap:8px; animation:fadeIn .3s ease; }
+  @keyframes fadeIn{ from{ opacity:0; transform:translateX(-8px); } to{ opacity:1; transform:translateX(0); } }
+  .log-time{
+    color:#b39dff; font-weight:700; font-size:.72rem;
+    flex:none; font-variant-numeric:tabular-nums; padding-top:2px;
+  }
+  .log-msg{ font-weight:600; }
+  .log-entry.info .log-msg{ color:#5a1a4a; }
+  .log-entry.success .log-msg{ color:#1f9d6b; }
+  .log-entry.error .log-msg{ color:#e01b4c; }
+  .log-entry.warning .log-msg{ color:#c77d00; }
+  .log-entry.title .log-msg{
+    color:var(--magenta); font-weight:700; font-size:.92rem;
+    border-bottom:2px dashed rgba(255,79,163,.3); padding-bottom:4px;
+  }
+
+  /* ============ TABLA ============ */
+  .table-wrap{ max-height:440px; overflow-y:auto; border-radius:30px; }
   .table-wrap::-webkit-scrollbar{ width:12px; }
   .table-wrap::-webkit-scrollbar-track{ background:#fff0f8; border-radius:12px; }
   .table-wrap::-webkit-scrollbar-thumb{
     background:linear-gradient(180deg,#ff4fa3,#b39dff,#7ee8fa);
-    border-radius:12px;
-    border:3px solid #fff0f8;
+    border-radius:12px; border:3px solid #fff0f8;
   }
-
   table{ width:100%; border-collapse:collapse; font-size:.88rem; }
-
   thead th{
     position:sticky; top:0;
     background:linear-gradient(120deg,#ffd6ec,#ffe9f6,#e6dcff);
-    color:var(--magenta);
-    font-family:'Fredoka',sans-serif;
-    font-size:.78rem;
-    font-weight:600;
-    letter-spacing:.06em;
-    padding:16px;
-    text-align:left;
-    z-index:2;
+    color:var(--magenta); font-family:'Fredoka',sans-serif;
+    font-size:.78rem; font-weight:600; letter-spacing:.06em;
+    padding:16px; text-align:left; z-index:2;
     border-bottom:3px solid #ffd0e8;
   }
   thead th.center{ text-align:center; }
   thead th.right{ text-align:right; }
-
   tbody tr{
     border-bottom:2px dashed #ffe0ef;
     transition:background .2s, transform .2s;
@@ -447,35 +331,20 @@
   tbody tr:hover{
     background:linear-gradient(90deg,rgba(255,214,236,.6),rgba(230,220,255,.6),rgba(214,245,255,.6));
   }
-
   tbody td{ padding:14px 16px; vertical-align:middle; }
   td.c-map{ text-align:center; }
   td.c-log{ text-align:right; }
-
   .adm-id{
-    font-family:'Fredoka',sans-serif;
-    font-weight:700;
-    font-size:1rem;
-    color:var(--magenta);
-    letter-spacing:.02em;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:1rem;
+    color:var(--magenta); letter-spacing:.02em;
   }
-  .adm-sub{
-    font-size:.72rem;
-    font-weight:600;
-    color:var(--txt-soft);
-    margin-top:5px;
-  }
-
+  .adm-sub{ font-size:.72rem; font-weight:600; color:var(--txt-soft); margin-top:5px; }
   .steps{ display:inline-flex; gap:8px; }
   .step{
-    font-size:1.3rem;
-    filter:grayscale(1);
-    opacity:.35;
-    transition:all .25s;
+    font-size:1.3rem; filter:grayscale(1); opacity:.35; transition:all .25s;
   }
   .step-active{
-    filter:grayscale(0);
-    opacity:1;
+    filter:grayscale(0); opacity:1;
     animation:stepPulse .55s ease-in-out infinite alternate;
     filter:drop-shadow(0 0 10px rgba(255,43,214,.85));
   }
@@ -484,13 +353,11 @@
     to{ transform:scale(1.4) rotate(8deg); }
   }
   .step-done{
-    filter:grayscale(0);
-    opacity:1;
+    filter:grayscale(0); opacity:1;
     filter:drop-shadow(0 0 8px rgba(168,255,158,.9));
   }
   .step-error{
-    filter:grayscale(0);
-    opacity:1;
+    filter:grayscale(0); opacity:1;
     filter:drop-shadow(0 0 10px rgba(255,60,90,.9));
     animation:stepShake .3s 3;
   }
@@ -499,37 +366,30 @@
     25%{ transform:translateX(-4px) rotate(-8deg); }
     75%{ transform:translateX(4px) rotate(8deg); }
   }
-
-  .log{
-    font-family:'Fredoka',sans-serif;
-    font-size:.78rem;
-    font-weight:600;
-    letter-spacing:.04em;
-  }
+  .log{ font-family:'Fredoka',sans-serif; font-size:.78rem; font-weight:600; letter-spacing:.04em; }
   .standby{ color:#c9a3bd; }
   .ok{ color:#39b54a; text-shadow:0 0 10px rgba(168,255,158,.6); }
   .err{ color:#e01b4c; text-shadow:0 0 10px rgba(255,60,90,.5); }
 
-  /* ---- BARRA DE PROGRESO ---- */
+  /* ============ BARRA DE PROGRESO (mejorada) ============ */
   .bar-row{
-    display:flex;
-    align-items:center;
-    gap:18px;
-    padding:0 6px;
+    display:flex; align-items:center; gap:18px; padding:0 6px;
   }
+  .progress-container{ flex:1; }
+  .progress-label{
+    font-family:'Fredoka',sans-serif; font-size:.86rem; font-weight:600;
+    letter-spacing:.04em; color:var(--txt); margin-bottom:8px;
+    text-align:center;
+  }
+  .progress-label strong{ color:var(--magenta); }
   .progress-bar{
-    flex:1;
-    height:20px;
-    background:#fff0f8;
-    border:3px solid #ffd0e8;
-    border-radius:999px;
-    overflow:hidden;
+    height:22px; background:#fff0f8; border:3px solid #ffd0e8;
+    border-radius:999px; overflow:hidden;
     box-shadow:inset 0 3px 8px rgba(255,79,163,.12);
+    position:relative;
   }
   .progress-bar .fill{
-    height:100%;
-    width:0%;
-    border-radius:999px;
+    height:100%; width:0%; border-radius:999px;
     background:linear-gradient(90deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e,#ff4fa3);
     background-size:300% 100%;
     animation:rainbowBg 3s linear infinite;
@@ -538,72 +398,53 @@
     position:relative;
   }
   .progress-bar .fill::after{
-    content:'';
-    position:absolute; inset:0;
+    content:''; position:absolute; inset:0;
     background:repeating-linear-gradient(115deg,rgba(255,255,255,.4) 0 8px,transparent 8px 18px);
     animation:stripes .8s linear infinite;
   }
   @keyframes stripes{ to{ background-position:36px 0; } }
+  .progress-text{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:.78rem;
+    color:#fff; text-shadow:0 1px 4px rgba(90,26,74,.6);
+    letter-spacing:.06em; pointer-events:none;
+  }
 
   /* ============ TOAST ============ */
   .toast{
-    position:fixed;
-    top:24px; right:24px;
-    display:flex;
-    align-items:center;
-    gap:14px;
-    max-width:370px;
-    padding:16px 20px;
-    border-radius:28px;
-    border:4px solid transparent;
+    position:fixed; top:24px; right:24px;
+    display:flex; align-items:center; gap:14px; max-width:390px;
+    padding:16px 20px; border-radius:28px; border:4px solid transparent;
     background:
       linear-gradient(rgba(255,255,255,.97), rgba(255,255,255,.97)) padding-box,
       linear-gradient(120deg,#ff4fa3,#ffd36e,#a8ff9e,#7ee8fa,#b39dff,#ff4fa3) border-box;
     background-size:auto, 300% 300%;
     animation:borderRainbow 5s linear infinite;
     box-shadow:0 16px 45px rgba(255,43,214,.45), 0 0 0 6px rgba(255,255,255,.4);
-    z-index:10000;
-    transform:translateX(135%);
+    z-index:10000; transform:translateX(135%);
     transition:transform .55s cubic-bezier(.16,1,.3,1);
   }
   .toast.show{ transform:translateX(0); }
   .toast img{
-    width:54px; height:54px;
-    object-fit:cover;
-    border-radius:18px;
-    border:3px solid #ffd0e8;
-    box-shadow:0 4px 14px rgba(255,79,163,.4);
+    width:54px; height:54px; object-fit:cover; border-radius:18px;
+    border:3px solid #ffd0e8; box-shadow:0 4px 14px rgba(255,79,163,.4);
   }
   #toastTitle{
-    font-family:'Fredoka',sans-serif;
-    font-size:.9rem;
-    font-weight:700;
+    font-family:'Fredoka',sans-serif; font-size:.9rem; font-weight:700;
     color:var(--magenta);
   }
   #toastMsg{
-    font-size:.8rem;
-    font-weight:600;
-    color:var(--txt-soft);
-    margin-top:4px;
+    font-size:.8rem; font-weight:600; color:var(--txt-soft); margin-top:4px;
   }
 
   /* ============ MODAL ============ */
   .modal-overlay{
-    position:fixed; inset:0;
-    display:none;
-    justify-content:center;
-    align-items:center;
-    background:rgba(255,200,230,.45);
-    backdrop-filter:blur(9px);
-    z-index:9999;
+    position:fixed; inset:0; display:none; justify-content:center; align-items:center;
+    background:rgba(255,200,230,.45); backdrop-filter:blur(9px); z-index:9999;
   }
   .modal-overlay.active{ display:flex; }
-
   .modal-box{
-    width:min(430px,92vw);
-    padding:30px;
-    text-align:center;
-    border-radius:40px;
+    width:min(480px,92vw); padding:30px; text-align:center; border-radius:40px;
     border:5px solid transparent;
     background:
       linear-gradient(#fff,#fff) padding-box,
@@ -611,50 +452,34 @@
     background-size:auto, 300% 300%;
     animation:borderRainbow 6s linear infinite, popIn .45s cubic-bezier(.16,1,.3,1);
     box-shadow:0 26px 70px rgba(255,43,214,.5), 0 0 0 8px rgba(255,255,255,.4);
+    max-height:90vh; overflow-y:auto;
   }
   @keyframes popIn{
     0%{ transform:scale(.75) rotate(-4deg); opacity:0; }
     100%{ transform:scale(1) rotate(0); opacity:1; }
   }
-
   .modal-box img{
-    width:100%;
-    max-height:200px;
-    object-fit:cover;
-    border-radius:28px;
-    border:4px solid #ffd0e8;
-    margin-bottom:20px;
+    width:100%; max-height:170px; object-fit:cover; border-radius:28px;
+    border:4px solid #ffd0e8; margin-bottom:18px;
     box-shadow:0 8px 26px rgba(255,79,163,.35);
   }
   .modal-box h2{
-    font-family:'Fredoka',sans-serif;
-    font-size:1.3rem;
-    font-weight:700;
+    font-family:'Fredoka',sans-serif; font-size:1.25rem; font-weight:700;
     margin:0 0 12px;
     background:linear-gradient(120deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e);
     background-size:300% 100%;
-    -webkit-background-clip:text;
-    background-clip:text;
+    -webkit-background-clip:text; background-clip:text;
     -webkit-text-fill-color:transparent;
     animation:rainbowBg 5s linear infinite;
   }
   .modal-box p{
-    margin:0 0 24px;
-    font-size:.92rem;
-    font-weight:600;
-    color:var(--txt-soft);
-    line-height:1.6;
+    margin:0 0 20px; font-size:.9rem; font-weight:600;
+    color:var(--txt-soft); line-height:1.6;
   }
   .modal-box button{
-    font-family:'Fredoka',sans-serif;
-    font-size:.92rem;
-    font-weight:700;
-    letter-spacing:.04em;
-    padding:13px 36px;
-    color:#fff;
-    border:none;
-    border-radius:999px;
-    cursor:pointer;
+    font-family:'Fredoka',sans-serif; font-size:.92rem; font-weight:700;
+    letter-spacing:.04em; padding:13px 36px; color:#fff; border:none;
+    border-radius:999px; cursor:pointer;
     background:linear-gradient(120deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#ff4fa3);
     background-size:300% 100%;
     animation:rainbowBg 5s linear infinite;
@@ -663,23 +488,30 @@
   }
   .modal-box button:hover{ transform:translateY(-3px) scale(1.06) rotate(-1deg); }
 
-  /* ---- banco de sonido ---- */
-  #sound-bank{
-    position:fixed;
-    left:-9999px; top:-9999px;
-    width:1px; height:1px;
-    overflow:hidden;
-    opacity:0;
-    pointer-events:none;
+  /* resumen final dentro del modal */
+  .resumen-list{
+    max-height:300px; overflow-y:auto; text-align:left;
+    margin:12px 0; padding:10px 14px;
+    background:#fff5fb; border-radius:16px; border:2px solid #ffd0e8;
+  }
+  .resumen-item{
+    padding:7px 0; font-size:.86rem; font-weight:600;
+    border-bottom:1px dashed #ffe0ef;
+  }
+  .resumen-item:last-child{ border-bottom:none; }
+  .resumen-item.ok{ color:#1f9d6b; }
+  .resumen-item.err{ color:#e01b4c; }
+  .resumen-stats{
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:1rem;
+    margin-top:10px; color:var(--txt); letter-spacing:.03em;
   }
 
-  .hint{
-    font-size:.74rem;
-    font-weight:600;
-    color:var(--txt-soft);
-    text-align:center;
-    margin-top:16px;
+  /* banco de sonido */
+  #sound-bank{
+    position:fixed; left:-9999px; top:-9999px;
+    width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none;
   }
+  .hint{ font-size:.74rem; font-weight:600; color:var(--txt-soft); text-align:center; margin-top:16px; }
 </style>
 </head>
 <body>
@@ -704,7 +536,7 @@
 <div class="sparkle" style="bottom:18%; right:22%;animation-delay:2.7s;">✧</div>
 <div class="sparkle" style="top:46%; left:70%; animation-delay:3.4s;">✦</div>
 
-<!-- 🔇 Banco de sonido (iframes de respaldo) -->
+<!-- 🔇 Banco de sonido -->
 <div id="sound-bank"></div>
 
 <!-- Toast -->
@@ -721,7 +553,7 @@
   <div class="modal-box" onclick="event.stopPropagation();">
     <img id="modalImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="sys">
     <h2 id="modalTitle">🌈 ¡PASO COMPLETADO!</h2>
-    <p id="modalMsg">Detalle del paso</p>
+    <div id="modalMsg">Detalle del paso</div>
     <button onclick="cerrarModal()">💖 CERRAR 💖</button>
   </div>
 </div>
@@ -731,11 +563,11 @@
 
   <header class="topbar">
     <div class="brand">
-      <h1>💖 CORE_INVOICE v3.2 🌈</h1>
-      <p>✨ Rainbow Pride Edition · automatización con mucho amor ✨</p>
+      <h1>💖 CORE_INVOICE v3.3 🌈</h1>
+      <p>✨ Rainbow Pride Edition · todo en español, paso a paso ✨</p>
     </div>
     <div class="status">
-      <span class="dot"></span> 💅 KERNEL ONLINE 🦄
+      <span class="dot"></span> 💅 SISTEMA EN LÍNEA 🦄
     </div>
   </header>
 
@@ -745,7 +577,7 @@
     <aside class="panel side">
 
       <div class="block-title">
-        <span>📋 INPUT_DATA 💖</span>
+        <span>📋 DATOS DE ENTRADA 💖</span>
         <button onclick="limpiarCaja()" class="btn-mini">🧹 Limpiar</button>
       </div>
 
@@ -768,11 +600,11 @@
 
       <div class="block-title" style="margin-top:24px;"><span>💅 MÓDULOS ✨</span></div>
 
-      <label class="chk"><input type="checkbox" id="chkCambiar" checked class="checkbox-coqueta"> 01_SET_DATE 💖</label>
-      <label class="chk"><input type="checkbox" id="chkGenerar" checked class="checkbox-coqueta"> 02_GEN_PREFIX 🌈</label>
-      <label class="chk"><input type="checkbox" id="chkEnviar" class="checkbox-coqueta"> 03_DIAN_PUSH 🚀</label>
+      <label class="chk"><input type="checkbox" id="chkCambiar" checked class="checkbox-coqueta"> 01_CAMBIAR_FECHA 💖</label>
+      <label class="chk"><input type="checkbox" id="chkGenerar" checked class="checkbox-coqueta"> 02_GENERAR_PREFIJO 🌈</label>
+      <label class="chk"><input type="checkbox" id="chkEnviar" class="checkbox-coqueta"> 03_ENVIAR_DIAN 🚀</label>
 
-      <button id="ejecutarBtn">🚀 EXECUTE SEQUENCE 💖</button>
+      <button id="ejecutarBtn">🚀 EJECUTAR SECUENCIA 💖</button>
 
       <p class="hint">🎵 audio: es_una_pasiva → botón principal</p>
     </aside>
@@ -780,22 +612,48 @@
     <!-- ============ MAIN ============ -->
     <main class="main-col">
 
+      <!-- Monitor: admisión actual + estadísticas -->
       <div class="panel monitor">
-        <div>
-          <div class="k">📊 SYSTEM OUTPUT</div>
-          <div class="v" id="summary">🌟 KERNEL_READY 🌟</div>
+        <div class="monitor-cell">
+          <div class="k">📊 ESTADO DEL SISTEMA</div>
+          <div class="v" id="summary">🌟 SISTEMA LISTO 🌟</div>
+        </div>
+        <div class="monitor-cell current-adm-cell">
+          <div class="k">🆔 ADMISIÓN EN PROCESO</div>
+          <div class="current-adm" id="currentAdm">—</div>
+          <div class="current-adm-sub" id="currentAdmSub">Esperando inicio…</div>
+        </div>
+        <div class="monitor-cell stats-cell">
+          <div class="stat"><span class="stat-num" id="statOk">0</span><span class="stat-label">✅ Exitosas</span></div>
+          <div class="stat"><span class="stat-num" id="statErr">0</span><span class="stat-label">💔 Fallidas</span></div>
+          <div class="stat"><span class="stat-num" id="statTotal">0</span><span class="stat-label">📋 Total</span></div>
         </div>
         <div class="pct" id="progressPct">0%</div>
       </div>
 
+      <!-- Registro detallado de eventos -->
+      <div class="panel" style="padding:20px 24px;">
+        <div class="block-title">
+          <span>📜 REGISTRO DETALLADO DE EVENTOS 💖</span>
+          <button onclick="limpiarLog()" class="btn-mini">🧹 Limpiar registro</button>
+        </div>
+        <div class="log-panel" id="logPanel">
+          <div class="log-entry info">
+            <span class="log-time">[--:--:--]</span>
+            <span class="log-msg">Esperando inicio del proceso… pega admisiones y pulsa EJECUTAR 💖</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de resultados por admisión -->
       <div class="panel">
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>💖 Admission</th>
-                <th class="center">🌈 Process_Map ✨</th>
-                <th class="right">💅 Result_Log</th>
+                <th>💖 Admisión</th>
+                <th class="center">🌈 Mapa de proceso ✨</th>
+                <th class="right">💅 Resultado final</th>
               </tr>
             </thead>
             <tbody id="resultsTableBody"></tbody>
@@ -803,11 +661,15 @@
         </div>
       </div>
 
+      <!-- Barra de progreso con etiqueta de admisión -->
       <div class="bar-row">
-        <button onclick="document.getElementById('resultsTableBody').innerHTML=''"
-          class="btn-mini">🔄 Reset</button>
-        <div class="progress-bar">
-          <div id="progressBar" class="fill"></div>
+        <button onclick="reiniciarTodo()" class="btn-mini">🔄 Reiniciar todo</button>
+        <div class="progress-container">
+          <div class="progress-label" id="progressLabel">Esperando inicio…</div>
+          <div class="progress-bar">
+            <div id="progressBar" class="fill"></div>
+            <div class="progress-text" id="progressText">0 / 0</div>
+          </div>
         </div>
       </div>
 
@@ -837,30 +699,22 @@
     try{
       if(!audioCache[key]) audioCache[key] = new Audio(url);
       const a = audioCache[key];
-      a.currentTime = 0;
-      a.volume = 0.9;
+      a.currentTime = 0; a.volume = 0.9;
       const p = a.play();
       if(p && p.catch) p.catch(() => fallbackIframe(key));
-    }catch(e){
-      fallbackIframe(key);
-    }
+    }catch(e){ fallbackIframe(key); }
   }
-
   function fallbackIframe(key){
     const bank = document.getElementById('sound-bank');
     const old = document.getElementById('snd-' + key);
     if(old) old.remove();
     const f = document.createElement('iframe');
-    f.id = 'snd-' + key;
-    f.src = EMBEDS[key];
-    f.width = 110;
-    f.height = 200;
-    f.frameBorder = 0;
-    f.scrolling = 'no';
+    f.id = 'snd-' + key; f.src = EMBEDS[key];
+    f.width = 110; f.height = 200; f.frameBorder = 0; f.scrolling = 'no';
     bank.appendChild(f);
   }
 
-  /* ============ INIT ============ */
+  /* ============ INICIALIZACIÓN ============ */
   window.onload = () => {
     const hoy = new Date();
     const y = hoy.getFullYear();
@@ -875,9 +729,7 @@
     document.getElementById('admisionLista').value = '';
   }
 
-  function limpiarLista(texto){
-    return texto.match(/\d+/g) || [];
-  }
+  function limpiarLista(texto){ return texto.match(/\d+/g) || []; }
 
   function normalizarFecha(fechaStr){
     if(/^\d{4}\/\d{2}\/\d{2}$/.test(fechaStr)) return fechaStr;
@@ -896,18 +748,49 @@
     setTimeout(() => toast.classList.remove('show'), 3500);
   }
 
-  function mostrarModal(titulo, mensaje){
+  function mostrarModal(titulo, mensaje, autoCerrar = true){
     const modal = document.getElementById('modal');
-    document.getElementById('modalTitle').innerText = titulo;
-    document.getElementById('modalMsg').innerText = mensaje;
+    document.getElementById('modalTitle').innerHTML = titulo;
+    document.getElementById('modalMsg').innerHTML = mensaje;
     modal.classList.add('active');
     if(window.modalTimeout) clearTimeout(window.modalTimeout);
-    window.modalTimeout = setTimeout(() => cerrarModal(), 4500);
+    if(autoCerrar){
+      window.modalTimeout = setTimeout(() => cerrarModal(), 4500);
+    }
   }
 
   function cerrarModal(){
     document.getElementById('modal').classList.remove('active');
     if(window.modalTimeout) clearTimeout(window.modalTimeout);
+  }
+
+  /* ============ REGISTRO DE EVENTOS ============ */
+  function logEvent(level, message){
+    const panel = document.getElementById('logPanel');
+    const now = new Date();
+    const time = now.toLocaleTimeString('es-ES', { hour12: false });
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${level}`;
+    entry.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg">${message}</span>`;
+    panel.appendChild(entry);
+    panel.scrollTop = panel.scrollHeight;
+  }
+
+  function limpiarLog(){
+    const panel = document.getElementById('logPanel');
+    panel.innerHTML = `<div class="log-entry info">
+      <span class="log-time">[--:--:--]</span>
+      <span class="log-msg">Registro limpio. Esperando nuevo proceso… 💖</span></div>`;
+  }
+
+  /* ============ ACTUALIZAR PANEL DE ADMISIÓN ACTUAL ============ */
+  function actualizarAdmisionActual(idAdm, idx, total, pasoTexto){
+    document.getElementById('currentAdm').innerText = `#${idAdm}`;
+    document.getElementById('currentAdmSub').innerText =
+      `Admisión ${idx} de ${total}${pasoTexto ? ' · ' + pasoTexto : ''}`;
+    document.getElementById('progressLabel').innerHTML =
+      `🆔 Procesando admisión <strong>#${idAdm}</strong> — ${idx} de ${total}`;
+    document.getElementById('progressText').innerText = `${idx} / ${total}`;
   }
 
   /* ============ TABLA ============ */
@@ -928,7 +811,7 @@
         </div>
       </td>
       <td class="c-log">
-        <span id="msg-${id}" class="log standby">💤 STANDBY</span>
+        <span id="msg-${id}" class="log standby">💤 EN ESPERA</span>
       </td>
     `;
     document.getElementById('resultsTableBody').prepend(tr);
@@ -939,13 +822,41 @@
     if(!dot) return;
     dot.className = 'step ' + (status === 'active' ? 'step-active'
                               : status === 'done' ? 'step-done'
-                              : 'step-error');
+                              : status === 'error' ? 'step-error'
+                              : '');
+  }
+
+  function marcarResultadoFinal(id, ok, detalle){
+    const msgEl = document.getElementById(`msg-${id}`);
+    if(!msgEl) return;
+    if(ok){
+      msgEl.innerText = '✅ COMPLETADA';
+      msgEl.className = 'log ok';
+    } else {
+      msgEl.innerText = '💔 FALLÓ: ' + detalle;
+      msgEl.className = 'log err';
+    }
+  }
+
+  /* ============ REINICIAR TODO ============ */
+  function reiniciarTodo(){
+    document.getElementById('resultsTableBody').innerHTML = '';
+    document.getElementById('statOk').innerText = '0';
+    document.getElementById('statErr').innerText = '0';
+    document.getElementById('statTotal').innerText = '0';
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressPct').innerText = '0%';
+    document.getElementById('progressText').innerText = '0 / 0';
+    document.getElementById('progressLabel').innerText = 'Esperando inicio…';
+    document.getElementById('currentAdm').innerText = '—';
+    document.getElementById('currentAdmSub').innerText = 'Esperando inicio…';
+    document.getElementById('summary').innerText = '🌟 SISTEMA LISTO 🌟';
+    limpiarLog();
   }
 
   /* ============ SECUENCIA PRINCIPAL ============ */
   document.getElementById('ejecutarBtn').addEventListener('click', async () => {
 
-    /* 🔊 sonido del botón principal */
     playSound('main');
 
     const rawText = document.getElementById('admisionLista').value;
@@ -957,115 +868,189 @@
 
     if(!list.length){
       mostrarModal("🌸 ¡UPS! SIN DATOS", "No se detectaron números de admisión en el campo de entrada. ¡Pega algunos IDs lindos! 💖");
+      logEvent('warning', '⚠️ Intento de ejecución sin admisiones. No se procesó nada.');
       return;
     }
 
+    /* reiniciar contadores y panel */
+    reiniciarTodo();
     btn.disabled = true;
     btn.innerText = "⏳ PROCESANDO… 💖";
+    document.getElementById('statTotal').innerText = list.length;
+
+    let exitosas = 0;
+    let fallidas = 0;
+    const resultados = [];
+
+    logEvent('title', `🚀 INICIANDO PROCESO — ${list.length} admisión(es) a procesar`);
+    logEvent('info', `🏥 Institución seleccionada: <b>${inst}</b>`);
+    logEvent('info', `📅 Fecha de emisión: <b>${fechaNormalizada}</b>`);
+    logEvent('info', `⚙️ Módulos activos: fecha=${document.getElementById('chkCambiar').checked ? 'SÍ' : 'NO'}, prefijo=${document.getElementById('chkGenerar').checked ? 'SÍ' : 'NO'}, DIAN=${document.getElementById('chkEnviar').checked ? 'SÍ' : 'NO'}`);
 
     for(let i = 0; i < list.length; i++){
       const idAdm = list[i];
+      const idx = i + 1;
+
+      actualizarAdmisionActual(idAdm, idx, list.length, 'iniciando…');
       crearFila(idAdm);
+      logEvent('title', `▶️ ADMISIÓN #${idAdm} — ${idx} de ${list.length} — INICIANDO`);
+
+      let pasosOk = 0;
+      let pasosEjecutados = 0;
+      let pasoFallido = null;
 
       try{
-        /* ---- STEP 1: BUSCAR ---- */
+        /* ---- PASO 1: BUSCAR ---- */
+        pasosEjecutados++;
+        actualizarAdmisionActual(idAdm, idx, list.length, 'paso 1/4: buscar factura');
+        logEvent('info', `🔍 PASO 1/4 — Buscando factura para admisión #${idAdm}…`);
         updateStep(idAdm, 1, 'active');
+
         const resS = await fetch(`${API_BASE}/buscarFactura?numero=${idAdm}&idInstitucion=${inst}`, { method:'POST' });
         const dataS = await resS.json();
-        if(!dataS.ok || !dataS.idFactura) throw new Error("NOT_FOUND");
+        if(!dataS.ok || !dataS.idFactura) throw new Error("Factura no encontrada");
 
         const idFactura = dataS.idFactura;
         document.getElementById(`idf-${idAdm}`).innerText = `🆔 ${idFactura}`;
         updateStep(idAdm, 1, 'done');
-        mostrarToast("🔍 ¡ENCONTRADA! 💖", `Admisión ${idAdm} → Factura ${idFactura}`);
-        mostrarModal("✅ BÚSQUEDA EXITOSA 🌈", `Factura: ${idFactura}`);
+        pasosOk++;
+        logEvent('success', `✅ PASO 1/4 COMPLETADO — Factura #${idFactura} encontrada para admisión #${idAdm}`);
 
-        /* ---- STEP 2: FECHA ---- */
+        /* ---- PASO 2: FECHA ---- */
         if(document.getElementById('chkCambiar').checked){
+          pasosEjecutados++;
+          actualizarAdmisionActual(idAdm, idx, list.length, 'paso 2/4: cambiar fecha');
+          logEvent('info', `📅 PASO 2/4 — Cambiando fecha de emisión a ${fechaNormalizada}…`);
           updateStep(idAdm, 2, 'active');
+
           const resC = await fetch(`${API_BASE}/cambiar-fecha`, {
             method:'POST',
             headers:{ 'Content-Type':'application/json' },
             body: JSON.stringify({ idFactura, fechaEmision: fechaNormalizada })
           });
           const dataC = await resC.json();
-          if(!dataC.ok) throw new Error("DATE_ERR");
+          if(!dataC.ok) throw new Error("Error al cambiar fecha");
+
           updateStep(idAdm, 2, 'done');
-          mostrarToast("📅 FECHA OK ✨", `Cambiada a ${fechaNormalizada}`);
-          mostrarModal("📅 FECHA ACTUALIZADA 💖", `Nueva fecha: ${fechaNormalizada}`);
+          pasosOk++;
+          logEvent('success', `✅ PASO 2/4 COMPLETADO — Fecha actualizada a ${fechaNormalizada} en factura #${idFactura}`);
+        } else {
+          logEvent('warning', `⏭️ PASO 2/4 OMITIDO — Módulo 01_CAMBIAR_FECHA no seleccionado`);
         }
 
-        /* ---- STEP 3: PREFIJO ---- */
+        /* ---- PASO 3: PREFIJO ---- */
         if(document.getElementById('chkGenerar').checked){
+          pasosEjecutados++;
+          actualizarAdmisionActual(idAdm, idx, list.length, 'paso 3/4: generar prefijo');
+          logEvent('info', `🔢 PASO 3/4 — Generando número de factura para #${idFactura}…`);
           updateStep(idAdm, 3, 'active');
+
           const resG = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${inst}`);
           const dataG = await resG.json();
 
           if(dataG.resultado?.valorRetorno === -1){
-            document.getElementById(`msg-${idAdm}`).innerText = "🔏 YA FIRMADA";
             updateStep(idAdm, 3, 'done');
-            mostrarToast("🔢 PREFIX 🌈", "Factura ya firmada");
-            mostrarModal("🔢 PREFIX", "La factura ya estaba firmada ✨");
+            pasosOk++;
+            logEvent('warning', `🔏 PASO 3/4 COMPLETADO — La factura #${idFactura} YA ESTABA FIRMADA (no se regeneró)`);
           } else if(dataG.resultado?.numeroFactura){
             const num = dataG.resultado.numeroFactura;
-            document.getElementById(`msg-${idAdm}`).innerText = num;
             updateStep(idAdm, 3, 'done');
-            mostrarToast("🔢 PREFIX OK 💖", `Número: ${num}`);
-            mostrarModal("🔢 PREFIX GENERADO 🌈", `Número: ${num}`);
+            pasosOk++;
+            logEvent('success', `✅ PASO 3/4 COMPLETADO — Número generado: ${num}`);
           } else {
-            throw new Error("GEN_ERR");
+            throw new Error("Error al generar prefijo");
           }
+        } else {
+          logEvent('warning', `⏭️ PASO 3/4 OMITIDO — Módulo 02_GENERAR_PREFIJO no seleccionado`);
         }
 
-        /* ---- STEP 4: DIAN ---- */
+        /* ---- PASO 4: DIAN ---- */
         if(document.getElementById('chkEnviar').checked){
+          pasosEjecutados++;
+          actualizarAdmisionActual(idAdm, idx, list.length, 'paso 4/4: enviar a DIAN');
+          logEvent('info', `📤 PASO 4/4 — Enviando factura #${idFactura} a DIAN…`);
           updateStep(idAdm, 4, 'active');
+
           const resD = await fetch(`${API_BASE}/EnviarDian`, {
             method:'POST',
             headers:{ 'Content-Type':'application/json' },
             body: JSON.stringify({ idFacturas: idFactura })
           });
           const dataD = await resD.json();
-          if(dataD.valorRetorno !== 1) throw new Error("DIAN_ERR");
+          if(dataD.valorRetorno !== 1) throw new Error("Error al enviar a DIAN");
+
           updateStep(idAdm, 4, 'done');
-          mostrarToast("📤 ENVIADO A DIAN 🚀", `Factura ${idFactura} OK`);
-          mostrarModal("📤 ENVÍO A DIAN 💌", `Factura ${idFactura} enviada correctamente`);
+          pasosOk++;
+          logEvent('success', `✅ PASO 4/4 COMPLETADO — Factura #${idFactura} enviada a DIAN correctamente`);
+        } else {
+          logEvent('warning', `⏭️ PASO 4/4 OMITIDO — Módulo 03_ENVIAR_DIAN no seleccionado`);
         }
 
-        const msgEl = document.getElementById(`msg-${idAdm}`);
-        if(msgEl.classList.contains('standby')){
-          msgEl.innerText = "✅ DONE 💖";
-          msgEl.classList.remove('standby');
-          msgEl.classList.add('ok');
-        }
+        /* ---- FINALIZACIÓN EXITOSA ---- */
+        marcarResultadoFinal(idAdm, true);
+        exitosas++;
+        document.getElementById('statOk').innerText = exitosas;
+        resultados.push({ id: idAdm, ok: true });
+
+        logEvent('success', `🎉 ADMISIÓN #${idAdm} FINALIZADA CORRECTAMENTE — ${pasosOk} de ${pasosEjecutados} pasos ejecutados con éxito`);
+        mostrarToast("🎉 ¡ADMISIÓN COMPLETADA! 💖", `#${idAdm} — ${pasosOk}/${pasosEjecutados} pasos OK`);
 
       }catch(e){
-        const msgEl = document.getElementById(`msg-${idAdm}`);
-        msgEl.innerText = "❌ " + e.message;
-        msgEl.className = "log err";
+        pasoFallido = e.message;
+        marcarResultadoFinal(idAdm, false, e.message);
+        fallidas++;
+        document.getElementById('statErr').innerText = fallidas;
+        resultados.push({ id: idAdm, ok: false, error: e.message });
 
+        /* marcar pasos en error */
         for(let s = 1; s <= 4; s++){
           const dot = document.getElementById(`s${s}-${idAdm}`);
           if(dot && !dot.classList.contains('step-done')){
             updateStep(idAdm, s, 'error');
           }
         }
-        mostrarModal("💔 ERROR", e.message);
-        mostrarToast("💔 ERROR", e.message);
+
+        logEvent('error', `💔 ADMISIÓN #${idAdm} FALLÓ — Error: ${e.message}`);
+        logEvent('error', `   ↳ Pasos completados antes del error: ${pasosOk} de ${pasosEjecutados}`);
+        mostrarToast("💔 ADMISIÓN FALLIDA", `#${idAdm} — ${e.message}`);
+        mostrarModal("💔 ERROR EN ADMISIÓN", `<b>Admisión #${idAdm}</b><br>Error: ${e.message}<br><br>Pasos OK: ${pasosOk}/${pasosEjecutados}`, true);
       }
 
-      const pct = Math.round(((i + 1) / list.length) * 100);
+      /* ---- ACTUALIZAR PROGRESO ---- */
+      const pct = Math.round((idx / list.length) * 100);
       document.getElementById('progressBar').style.width = pct + '%';
       document.getElementById('progressPct').innerText = pct + '%';
-      document.getElementById('summary').innerText = `🌸 PROCESANDO ${i + 1} / ${list.length} 💖`;
+      document.getElementById('progressText').innerText = `${idx} / ${list.length}`;
+      document.getElementById('summary').innerText = `🌸 PROCESANDO ${idx} / ${list.length} 💖`;
+
+      actualizarAdmisionActual(idAdm, idx, list.length, 'terminada');
+      logEvent('info', `⏭️ Avanzando a la siguiente admisión… (${idx} de ${list.length} terminadas)`);
     }
 
-    mostrarModal("🎉 ¡PROCESO COMPLETO! 🌈", `Se procesaron ${list.length} admisiones correctamente 💖✨`);
-    mostrarToast("🎉 ¡LISTO! 💖", "Todas las admisiones fueron procesadas 🌈");
+    /* ---- RESUMEN FINAL ---- */
+    logEvent('title', `🏁 PROCESO COMPLETO — ${exitosas} exitosas, ${fallidas} fallidas, de ${list.length} total`);
+    document.getElementById('progressLabel').innerHTML = `🏁 <strong>Proceso completo</strong> — ${exitosas} exitosas, ${fallidas} fallidas de ${list.length}`;
+    document.getElementById('currentAdm').innerText = '—';
+    document.getElementById('currentAdmSub').innerText = 'Proceso terminado';
+    document.getElementById('summary').innerText = '✨ SECUENCIA TERMINADA 🌈';
+
+    /* resumen en modal */
+    let resumenHtml = '<div class="resumen-list">';
+    resultados.forEach(r => {
+      if(r.ok){
+        resumenHtml += `<div class="resumen-item ok">✅ Admisión #${r.id} — COMPLETADA</div>`;
+      } else {
+        resumenHtml += `<div class="resumen-item err">💔 Admisión #${r.id} — FALLÓ: ${r.error}</div>`;
+      }
+    });
+    resumenHtml += '</div>';
+    resumenHtml += `<div class="resumen-stats">✅ ${exitosas} exitosas · 💔 ${fallidas} fallidas · 📋 ${list.length} total</div>`;
+
+    mostrarModal("🎉 ¡PROCESO COMPLETO! 🌈", resumenHtml, false);
+    mostrarToast("🎉 ¡PROCESO COMPLETO! 💖", `${exitosas} exitosas, ${fallidas} fallidas de ${list.length}`);
 
     btn.disabled = false;
-    btn.innerText = "🚀 EXECUTE SEQUENCE 💖";
-    document.getElementById('summary').innerText = "✨ SEQUENCE_TERMINATED 🌈";
+    btn.innerText = "🚀 EJECUTAR SECUENCIA 💖";
   });
 </script>
 </body>
