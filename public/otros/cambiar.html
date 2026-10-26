@@ -3,1055 +3,771 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>💖 CORE_INVOICE v3.3 — RAINBOW PRIDE EDITION 🌈🦄</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<title>CORE_INVOICE v3.3 — Edición Elegante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --pink:#ff4fa3;
-    --magenta:#ff2bd6;
-    --purple:#b39dff;
-    --cyan:#7ee8fa;
-    --mint:#a8ff9e;
-    --yellow:#ffd36e;
-    --txt:#5a1a4a;
-    --txt-soft:#9b5b8a;
-    --white-glass:rgba(255,255,255,.9);
+    --bg:#0a0e14;
+    --panel:#101722;
+    --line:rgba(212,175,95,.18);
+    --line-strong:rgba(212,175,95,.45);
+    --gold:#d4af5f;
+    --gold-2:#f0d9a4;
+    --text:#e9ecf3;
+    --muted:#8592a6;
+    --danger:#e0728a;
+    --soft:rgba(255,255,255,.06);
   }
   *{ box-sizing:border-box; }
   html,body{ min-height:100%; }
   body{
-    margin:0; padding:20px;
-    font-family:'Quicksand', sans-serif;
-    color:var(--txt);
-    background:linear-gradient(135deg,
-      #ff9ecd 0%, #ffd36e 16%, #a8ff9e 33%,
-      #7ee8fa 50%, #b39dff 66%, #ff9ecd 83%, #ffd36e 100%);
-    background-size:400% 400%;
-    animation:rainbowBg 16s ease infinite;
-    overflow-x:hidden; position:relative;
+    margin:0;
+    padding:36px 20px 60px;
+    font-family:'Inter', system-ui, -apple-system, sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(1200px 620px at 12% -12%, rgba(212,175,95,.10), transparent 62%),
+      radial-gradient(900px 520px at 102% -4%, rgba(70,110,190,.12), transparent 58%),
+      var(--bg);
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    -webkit-font-smoothing:antialiased;
   }
-  @keyframes rainbowBg{
-    0%{ background-position:0% 50%; }
-    50%{ background-position:100% 50%; }
-    100%{ background-position:0% 50%; }
-  }
+  input, button{ font-family:inherit; }
 
-  /* ---- lluvia de emojis flotantes ---- */
-  .floaties{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
-  .floaties span{
-    position:absolute; font-size:2rem; opacity:.55;
-    filter:drop-shadow(0 4px 10px rgba(255,79,163,.45));
-    animation:floaty 9s ease-in-out infinite alternate;
-  }
-  @keyframes floaty{
-    0%{ transform:translateY(0) rotate(-8deg) scale(1); opacity:.35; }
-    100%{ transform:translateY(-38px) rotate(10deg) scale(1.15); opacity:.75; }
-  }
-  .sparkle{ position:fixed; pointer-events:none; z-index:1; font-size:1.1rem; animation:twinkle 3s ease-in-out infinite; }
-  @keyframes twinkle{
-    0%,100%{ opacity:.2; transform:scale(.7) rotate(0deg); }
-    50%{ opacity:1; transform:scale(1.2) rotate(25deg); }
-  }
-
-  /* ============ PANELES ============ */
-  .panel{
+  /* ================= Tarjeta principal ================= */
+  .app{
     position:relative;
-    border:4px solid transparent;
-    border-radius:34px;
-    background:
-      linear-gradient(var(--white-glass), var(--white-glass)) padding-box,
-      linear-gradient(135deg,#ff4fa3,#ffd36e,#a8ff9e,#7ee8fa,#b39dff,#ff2bd6,#ff4fa3) border-box;
-    background-size:auto, 350% 350%;
-    animation:borderRainbow 9s linear infinite;
-    box-shadow:
-      0 14px 40px rgba(255,79,163,.28),
-      0 6px 18px rgba(179,157,255,.35),
-      0 0 0 6px rgba(255,255,255,.35);
-    backdrop-filter:blur(8px);
-    transition:transform .25s ease, box-shadow .25s ease;
+    width:100%;
+    max-width:920px;
+    padding:34px 34px 28px;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.012));
+    box-shadow:0 44px 100px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter:blur(10px);
+    animation:rise .75s cubic-bezier(.2,.7,.3,1) both;
   }
-  .panel:hover{
-    transform:translateY(-3px) scale(1.004);
-    box-shadow:
-      0 20px 55px rgba(255,79,163,.38),
-      0 10px 26px rgba(126,232,250,.4),
-      0 0 0 6px rgba(255,255,255,.5);
+  .app::before{
+    content:"";
+    position:absolute; top:0; left:34px; right:34px; height:1px;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity:.55;
   }
-  @keyframes borderRainbow{
-    0%{ background-position:0 0, 0% 50%; }
-    100%{ background-position:0 0, 350% 50%; }
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(18px) scale(.985); }
+    to{ opacity:1; transform:none; }
   }
 
-  /* ============ TOPBAR ============ */
-  .shell{ position:relative; z-index:10; max-width:1260px; margin:0 auto; }
+  /* ================= Cabecera ================= */
   .topbar{
-    display:flex; justify-content:space-between; align-items:center;
-    gap:18px; flex-wrap:wrap; padding:22px 28px; margin-bottom:22px;
-    border-radius:38px; border:4px solid transparent;
-    background:
-      linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)) padding-box,
-      linear-gradient(120deg,#ff4fa3,#ffd36e,#a8ff9e,#7ee8fa,#b39dff,#ff2bd6,#ff4fa3) border-box;
-    background-size:auto, 350% 350%;
-    animation:borderRainbow 7s linear infinite;
-    box-shadow:0 14px 45px rgba(255,43,214,.3), 0 0 0 6px rgba(255,255,255,.35);
+    display:flex; align-items:center; justify-content:space-between;
+    gap:18px; flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:16px; }
+  .mark{
+    width:52px; height:52px; flex:0 0 auto;
+    display:grid; place-items:center;
+    border:1px solid var(--line-strong);
+    border-radius:14px;
+    background:linear-gradient(160deg, rgba(212,175,95,.16), rgba(212,175,95,.02));
+    font-family:'Playfair Display', serif;
+    font-size:1.15rem; font-weight:700; letter-spacing:.06em;
+    color:var(--gold-2);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
   }
   .brand h1{
-    font-family:'Fredoka', sans-serif; font-weight:700;
-    font-size:clamp(1.5rem,4vw,2.4rem); margin:0; letter-spacing:.02em;
-    background:linear-gradient(90deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e,#ff4fa3);
-    background-size:300% 100%;
-    -webkit-background-clip:text; background-clip:text;
-    -webkit-text-fill-color:transparent;
-    animation:rainbowBg 6s linear infinite;
-    text-shadow:0 4px 18px rgba(255,79,163,.25);
+    margin:0;
+    font-family:'Playfair Display', serif;
+    font-size:1.34rem;
+    font-weight:600;
+    letter-spacing:.11em;
+    text-transform:uppercase;
   }
-  .brand p{ margin:8px 0 0; font-size:.8rem; font-weight:600; color:var(--txt-soft); letter-spacing:.06em; }
-  .status{
-    display:flex; align-items:center; gap:10px;
-    font-family:'Fredoka',sans-serif; font-size:.78rem; font-weight:600;
-    letter-spacing:.08em; color:#fff; padding:10px 20px; border-radius:999px;
-    background:linear-gradient(135deg,#ff4fa3,#ff2bd6,#b39dff);
-    box-shadow:0 6px 22px rgba(255,43,214,.5);
-    animation:statusBounce 2.2s ease-in-out infinite;
+  .brand h1 span{
+    font-family:'Inter', sans-serif;
+    font-size:.62rem;
+    font-weight:600;
+    letter-spacing:.22em;
+    color:var(--gold);
+    vertical-align:middle;
+    margin-left:8px;
+    border:1px solid var(--line-strong);
+    border-radius:6px;
+    padding:3px 7px;
   }
-  @keyframes statusBounce{
-    0%,100%{ transform:translateY(0) rotate(-1deg); }
-    50%{ transform:translateY(-5px) rotate(1deg); }
+  .tag{
+    margin:7px 0 0;
+    font-size:.66rem;
+    font-weight:500;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--muted);
   }
-  .dot{
-    width:10px; height:10px; border-radius:50%; background:#a8ff9e;
-    box-shadow:0 0 12px #a8ff9e, 0 0 24px #a8ff9e;
-    animation:blink 1s steps(1) infinite;
+  .pill{
+    display:inline-flex; align-items:center; gap:9px;
+    padding:9px 16px;
+    border:1px solid var(--line-strong);
+    border-radius:999px;
+    background:rgba(212,175,95,.05);
+    font-size:.62rem; font-weight:600;
+    letter-spacing:.22em; text-transform:uppercase;
+    color:var(--gold-2);
+    white-space:nowrap;
   }
-  @keyframes blink{ 50%{ opacity:.2; } }
-
-  /* ============ LAYOUT ============ */
-  .layout{ display:grid; grid-template-columns:390px 1fr; gap:22px; align-items:start; }
-  @media (max-width:1060px){ .layout{ grid-template-columns:1fr; } }
-
-  /* ============ SIDEBAR ============ */
-  .side{ padding:26px; }
-  .block-title{
-    display:flex; justify-content:space-between; align-items:center;
-    font-family:'Fredoka',sans-serif; font-size:.9rem; font-weight:600;
-    letter-spacing:.04em; color:var(--magenta); margin-bottom:14px;
-  }
-  textarea#admisionLista{ width:100%; height:140px; resize:none; margin-bottom:20px; }
-  input, textarea, select{
-    width:100%; font-family:'Quicksand',sans-serif; font-size:.9rem; font-weight:600;
-    color:var(--txt); background:#fff5fb; border:3px solid #ffd0e8;
-    border-radius:22px; padding:13px 16px; outline:none; transition:.2s;
-    box-shadow:inset 0 3px 8px rgba(255,79,163,.08);
-  }
-  input::placeholder, textarea::placeholder{ color:#d9a3c4; }
-  input:focus, textarea:focus, select:focus{
-    border-color:var(--pink); background:#fff;
-    box-shadow:0 0 0 5px rgba(255,79,163,.18), 0 6px 20px rgba(255,79,163,.2);
-  }
-  select{ cursor:pointer; }
-  select option{ background:#fff; color:var(--txt); }
-  .field{ margin-bottom:18px; }
-  .label{
-    display:block; font-family:'Fredoka',sans-serif; font-size:.76rem; font-weight:600;
-    letter-spacing:.06em; color:var(--txt-soft); margin-bottom:8px;
-  }
-  .label b{ color:var(--pink); }
-
-  /* ---- checkboxes ---- */
-  .chk{
-    display:flex; align-items:center; gap:12px; font-size:.88rem; font-weight:600;
-    color:var(--txt); cursor:pointer; padding:10px 14px; border-radius:18px;
-    border:2px solid transparent; transition:.2s;
-  }
-  .chk:hover{ background:rgba(255,79,163,.08); border-color:#ffd0e8; transform:translateX(4px); }
-  .checkbox-coqueta{
-    appearance:none; width:24px; height:24px; flex:0 0 24px;
-    border:3px solid #ffb3d9; border-radius:9px; background:#fff;
-    cursor:pointer; position:relative; transition:.2s;
-  }
-  .checkbox-coqueta:checked{
-    background:linear-gradient(135deg,#ff4fa3,#b39dff); border-color:#ff4fa3;
-    box-shadow:0 0 16px rgba(255,43,214,.6); transform:scale(1.08);
-  }
-  .checkbox-coqueta:checked::after{
-    content:'✓'; position:absolute; inset:0; display:flex;
-    align-items:center; justify-content:center; color:#fff;
-    font-size:15px; font-weight:700;
+  .pill .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--gold);
+    box-shadow:0 0 10px var(--gold);
   }
 
-  /* ---- BOTÓN PRINCIPAL ---- */
-  #ejecutarBtn{
-    width:100%; margin-top:24px; padding:18px 16px;
-    font-family:'Fredoka',sans-serif; font-weight:700; font-size:1.05rem;
-    letter-spacing:.05em; color:#fff; text-shadow:0 2px 8px rgba(120,0,80,.4);
-    background:linear-gradient(120deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e,#ff4fa3);
-    background-size:300% 100%; border:none; border-radius:999px; cursor:pointer;
-    position:relative; overflow:hidden;
-    box-shadow:
-      0 10px 28px rgba(255,43,214,.5),
-      0 4px 14px rgba(126,232,250,.45),
-      0 0 0 5px rgba(255,255,255,.55);
-    animation:rainbowBg 6s linear infinite;
-    transition:transform .2s ease, box-shadow .2s ease;
+  /* ================= Datos ================= */
+  .meta-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:16px;
+    margin-top:28px;
   }
-  #ejecutarBtn::before{
-    content:''; position:absolute; top:0; left:-130%; width:55%; height:100%;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
-    transform:skewX(-22deg); transition:left .6s ease;
+  .card{
+    padding:18px 18px 14px;
+    border:1px solid rgba(255,255,255,.055);
+    border-radius:14px;
+    background:var(--panel);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
   }
-  #ejecutarBtn:hover:not(:disabled)::before{ left:150%; }
-  #ejecutarBtn:hover:not(:disabled){
-    transform:translateY(-4px) scale(1.03) rotate(-1deg);
-    box-shadow:
-      0 18px 42px rgba(255,43,214,.65),
-      0 8px 22px rgba(126,232,250,.6),
-      0 0 0 7px rgba(255,255,255,.75);
+  .card h2{
+    margin:0 0 14px;
+    font-size:.62rem; font-weight:700;
+    letter-spacing:.24em; text-transform:uppercase;
+    color:var(--gold);
   }
-  #ejecutarBtn:active:not(:disabled){ transform:translateY(-1px) scale(.99); }
-  #ejecutarBtn:disabled{
-    cursor:not-allowed; filter:grayscale(.45) brightness(.95);
-    animation:btnPulse 1s ease-in-out infinite alternate;
-    box-shadow:0 6px 16px rgba(150,120,160,.35);
+  .field{ display:block; margin-bottom:13px; }
+  .field:last-child{ margin-bottom:0; }
+  .field span{
+    display:block;
+    font-size:.58rem; font-weight:600;
+    letter-spacing:.17em; text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:5px;
   }
-  @keyframes btnPulse{ to{ opacity:.65; } }
+  .field input{
+    width:100%;
+    padding:7px 2px;
+    background:transparent;
+    border:0;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    color:var(--text);
+    font-size:.88rem;
+    font-weight:500;
+    transition:border-color .22s ease, background .22s ease;
+  }
+  .field input::placeholder{ color:#525c6d; }
+  .field input:focus{
+    outline:none;
+    border-bottom-color:var(--gold);
+    background:linear-gradient(180deg, transparent, rgba(212,175,95,.07));
+  }
+  input[type="date"]{ color-scheme:dark; }
 
-  .btn-mini{
-    font-family:'Fredoka',sans-serif; font-size:.76rem; font-weight:600;
-    letter-spacing:.05em; color:#fff;
-    background:linear-gradient(135deg,#ff9ecd,#ff4fa3);
-    border:none; border-radius:999px; padding:8px 18px; cursor:pointer;
-    box-shadow:0 5px 16px rgba(255,79,163,.45); transition:.2s;
+  /* ================= Conceptos ================= */
+  .items{ margin-top:32px; }
+  .items-title{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:12px; margin-bottom:12px;
   }
-  .btn-mini:hover{
-    transform:translateY(-2px) scale(1.07) rotate(-2deg);
-    box-shadow:0 9px 24px rgba(255,43,214,.65);
+  .items-title h2{
+    margin:0;
+    font-family:'Playfair Display', serif;
+    font-size:1.02rem; font-weight:600;
+    letter-spacing:.06em;
   }
-  .btn-mini:active{ transform:scale(.96); }
+  .items-title .hint{
+    font-size:.64rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .items-head, .row{
+    display:grid;
+    grid-template-columns:1fr 80px 118px 118px 34px;
+    gap:12px;
+    align-items:center;
+  }
+  .items-head{
+    padding:0 0 10px;
+    border-bottom:1px solid var(--line);
+    font-size:.58rem; font-weight:700;
+    letter-spacing:.2em; text-transform:uppercase;
+    color:var(--muted);
+  }
+  .items-head span:nth-child(2),
+  .items-head span:nth-child(3),
+  .items-head span:nth-child(4){ text-align:right; }
 
-  /* ============ MONITOR (mejorado) ============ */
-  .monitor{
-    display:flex; flex-wrap:wrap; gap:20px; align-items:center;
-    padding:22px 26px;
+  .row{
+    padding:9px 0;
+    border-bottom:1px solid rgba(255,255,255,.05);
+    transition:background .2s ease;
   }
-  .monitor-cell{ flex:1 1 auto; min-width:150px; }
-  .monitor .k{
-    font-family:'Fredoka',sans-serif; font-size:.74rem; font-weight:600;
-    letter-spacing:.08em; color:var(--txt-soft); margin-bottom:6px;
+  .row:focus-within{ background:rgba(212,175,95,.035); }
+  .row input{
+    width:100%;
+    padding:8px 6px;
+    background:transparent;
+    border:1px solid transparent;
+    border-radius:8px;
+    color:var(--text);
+    font-size:.9rem;
+    font-weight:500;
+    transition:.2s ease;
   }
-  .monitor .v{
-    font-family:'Fredoka',sans-serif; font-weight:700; font-size:1.15rem;
-    color:var(--txt); letter-spacing:.02em;
+  .row input::placeholder{ color:#525c6d; font-weight:400; }
+  .row input:focus{
+    outline:none;
+    border-color:var(--line-strong);
+    background:rgba(212,175,95,.07);
   }
-  .current-adm-cell{
-    flex:2 1 260px; text-align:center;
-    padding:10px 16px; border-radius:22px;
-    background:linear-gradient(160deg,rgba(255,240,250,.9),rgba(240,235,255,.9));
-    border:2px solid rgba(255,79,163,.25);
+  .r-qty, .r-price{ text-align:right; font-variant-numeric:tabular-nums; }
+  .r-amount{
+    text-align:right;
+    font-weight:600;
+    font-size:.9rem;
+    color:var(--gold-2);
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
   }
-  .current-adm{
-    font-family:'Fredoka',sans-serif; font-weight:700; font-size:2rem;
-    color:var(--magenta); letter-spacing:.02em; margin:4px 0;
-    text-shadow:0 2px 10px rgba(255,43,214,.35);
-    animation:currentPulse 1.5s ease-in-out infinite alternate;
+  .r-del{
+    width:30px; height:30px;
+    display:grid; place-items:center;
+    padding:0;
+    border:1px solid transparent;
+    border-radius:9px;
+    background:transparent;
+    color:var(--muted);
+    font-size:1.15rem; line-height:1;
+    cursor:pointer;
+    transition:.2s ease;
   }
-  @keyframes currentPulse{
-    from{ transform:scale(1); }
-    to{ transform:scale(1.05); }
+  .r-del:hover{
+    color:var(--danger);
+    border-color:rgba(224,114,138,.4);
+    background:rgba(224,114,138,.1);
   }
-  .current-adm-sub{ font-size:.8rem; font-weight:600; color:var(--txt-soft); }
-  .stats-cell{ display:flex; gap:14px; justify-content:center; flex:1 1 auto; }
-  .stat{ text-align:center; min-width:60px; }
-  .stat-num{
-    display:block; font-family:'Fredoka',sans-serif; font-weight:700;
-    font-size:1.4rem; color:var(--txt); line-height:1.2;
-  }
-  .stat-label{ font-size:.72rem; font-weight:600; color:var(--txt-soft); }
-  .pct{
-    font-family:'Fredoka',sans-serif; font-weight:700; font-size:2.8rem; line-height:1;
-    background:linear-gradient(120deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e);
-    background-size:300% 100%;
-    -webkit-background-clip:text; background-clip:text;
-    -webkit-text-fill-color:transparent;
-    animation:rainbowBg 5s linear infinite;
-    filter:drop-shadow(0 4px 12px rgba(255,79,163,.35));
-  }
+  input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 
-  /* ============ LOG PANEL ============ */
-  .log-panel{
-    max-height:260px; overflow-y:auto; padding:14px 18px;
-    background:#fff5fb; border-radius:20px; border:2px solid #ffd0e8;
-    font-family:'Quicksand',sans-serif; font-size:.84rem; line-height:1.7;
+  .add-row{
+    width:100%;
+    margin-top:14px;
+    padding:13px;
+    border:1px dashed var(--line-strong);
+    border-radius:12px;
+    background:transparent;
+    color:var(--gold);
+    font-size:.68rem; font-weight:700;
+    letter-spacing:.2em; text-transform:uppercase;
+    cursor:pointer;
+    transition:.22s ease;
   }
-  .log-panel::-webkit-scrollbar{ width:10px; }
-  .log-panel::-webkit-scrollbar-track{ background:#ffe9f6; border-radius:10px; }
-  .log-panel::-webkit-scrollbar-thumb{
-    background:linear-gradient(180deg,#ff4fa3,#b39dff,#7ee8fa);
-    border-radius:10px; border:2px solid #ffe9f6;
+  .add-row:hover{
+    background:rgba(212,175,95,.08);
+    border-style:solid;
+    color:var(--gold-2);
   }
-  .log-entry{ padding:4px 0; display:flex; gap:8px; animation:fadeIn .3s ease; }
-  @keyframes fadeIn{ from{ opacity:0; transform:translateX(-8px); } to{ opacity:1; transform:translateX(0); } }
-  .log-time{
-    color:#b39dff; font-weight:700; font-size:.72rem;
-    flex:none; font-variant-numeric:tabular-nums; padding-top:2px;
-  }
-  .log-msg{ font-weight:600; }
-  .log-entry.info .log-msg{ color:#5a1a4a; }
-  .log-entry.success .log-msg{ color:#1f9d6b; }
-  .log-entry.error .log-msg{ color:#e01b4c; }
-  .log-entry.warning .log-msg{ color:#c77d00; }
-  .log-entry.title .log-msg{
-    color:var(--magenta); font-weight:700; font-size:.92rem;
-    border-bottom:2px dashed rgba(255,79,163,.3); padding-bottom:4px;
-  }
+  .add-row:active{ transform:translateY(1px); }
 
-  /* ============ TABLA ============ */
-  .table-wrap{ max-height:440px; overflow-y:auto; border-radius:30px; }
-  .table-wrap::-webkit-scrollbar{ width:12px; }
-  .table-wrap::-webkit-scrollbar-track{ background:#fff0f8; border-radius:12px; }
-  .table-wrap::-webkit-scrollbar-thumb{
-    background:linear-gradient(180deg,#ff4fa3,#b39dff,#7ee8fa);
-    border-radius:12px; border:3px solid #fff0f8;
+  /* ================= Totales ================= */
+  .summary{
+    margin:26px 0 0 auto;
+    width:100%;
+    max-width:360px;
   }
-  table{ width:100%; border-collapse:collapse; font-size:.88rem; }
-  thead th{
-    position:sticky; top:0;
-    background:linear-gradient(120deg,#ffd6ec,#ffe9f6,#e6dcff);
-    color:var(--magenta); font-family:'Fredoka',sans-serif;
-    font-size:.78rem; font-weight:600; letter-spacing:.06em;
-    padding:16px; text-align:left; z-index:2;
-    border-bottom:3px solid #ffd0e8;
+  .sum-row{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px;
+    padding:9px 0;
+    font-size:.86rem;
+    color:var(--muted);
   }
-  thead th.center{ text-align:center; }
-  thead th.right{ text-align:right; }
-  tbody tr{
-    border-bottom:2px dashed #ffe0ef;
-    transition:background .2s, transform .2s;
+  .sum-row strong{
+    color:var(--text);
+    font-weight:600;
+    font-variant-numeric:tabular-nums;
   }
-  tbody tr:nth-child(odd){ background:rgba(255,240,248,.5); }
-  tbody tr:hover{
-    background:linear-gradient(90deg,rgba(255,214,236,.6),rgba(230,220,255,.6),rgba(214,245,255,.6));
+  #taxRow{ transition:opacity .25s ease; }
+  .switch{
+    display:inline-flex; align-items:center; gap:9px;
+    cursor:pointer;
+    font-size:.76rem; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted);
   }
-  tbody td{ padding:14px 16px; vertical-align:middle; }
-  td.c-map{ text-align:center; }
-  td.c-log{ text-align:right; }
-  .adm-id{
-    font-family:'Fredoka',sans-serif; font-weight:700; font-size:1rem;
-    color:var(--magenta); letter-spacing:.02em;
+  .switch input{
+    width:16px; height:16px;
+    accent-color:var(--gold);
+    cursor:pointer;
+    margin:0;
   }
-  .adm-sub{ font-size:.72rem; font-weight:600; color:var(--txt-soft); margin-top:5px; }
-  .steps{ display:inline-flex; gap:8px; }
-  .step{
-    font-size:1.3rem; filter:grayscale(1); opacity:.35; transition:all .25s;
+  .sum-total{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:16px;
+    margin-top:10px;
+    padding-top:15px;
+    border-top:1px solid var(--line-strong);
   }
-  .step-active{
-    filter:grayscale(0); opacity:1;
-    animation:stepPulse .55s ease-in-out infinite alternate;
-    filter:drop-shadow(0 0 10px rgba(255,43,214,.85));
+  .sum-total span{
+    font-size:.66rem; font-weight:700;
+    letter-spacing:.24em; text-transform:uppercase;
+    color:var(--gold);
   }
-  @keyframes stepPulse{
-    from{ transform:scale(1) rotate(-6deg); }
-    to{ transform:scale(1.4) rotate(8deg); }
-  }
-  .step-done{
-    filter:grayscale(0); opacity:1;
-    filter:drop-shadow(0 0 8px rgba(168,255,158,.9));
-  }
-  .step-error{
-    filter:grayscale(0); opacity:1;
-    filter:drop-shadow(0 0 10px rgba(255,60,90,.9));
-    animation:stepShake .3s 3;
-  }
-  @keyframes stepShake{
-    0%,100%{ transform:translateX(0) rotate(0); }
-    25%{ transform:translateX(-4px) rotate(-8deg); }
-    75%{ transform:translateX(4px) rotate(8deg); }
-  }
-  .log{ font-family:'Fredoka',sans-serif; font-size:.78rem; font-weight:600; letter-spacing:.04em; }
-  .standby{ color:#c9a3bd; }
-  .ok{ color:#39b54a; text-shadow:0 0 10px rgba(168,255,158,.6); }
-  .err{ color:#e01b4c; text-shadow:0 0 10px rgba(255,60,90,.5); }
-
-  /* ============ BARRA DE PROGRESO (mejorada) ============ */
-  .bar-row{
-    display:flex; align-items:center; gap:18px; padding:0 6px;
-  }
-  .progress-container{ flex:1; }
-  .progress-label{
-    font-family:'Fredoka',sans-serif; font-size:.86rem; font-weight:600;
-    letter-spacing:.04em; color:var(--txt); margin-bottom:8px;
-    text-align:center;
-  }
-  .progress-label strong{ color:var(--magenta); }
-  .progress-bar{
-    height:22px; background:#fff0f8; border:3px solid #ffd0e8;
-    border-radius:999px; overflow:hidden;
-    box-shadow:inset 0 3px 8px rgba(255,79,163,.12);
-    position:relative;
-  }
-  .progress-bar .fill{
-    height:100%; width:0%; border-radius:999px;
-    background:linear-gradient(90deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e,#ff4fa3);
-    background-size:300% 100%;
-    animation:rainbowBg 3s linear infinite;
-    box-shadow:0 0 18px rgba(255,43,214,.7);
-    transition:width .6s cubic-bezier(.4,0,.2,1);
-    position:relative;
-  }
-  .progress-bar .fill::after{
-    content:''; position:absolute; inset:0;
-    background:repeating-linear-gradient(115deg,rgba(255,255,255,.4) 0 8px,transparent 8px 18px);
-    animation:stripes .8s linear infinite;
-  }
-  @keyframes stripes{ to{ background-position:36px 0; } }
-  .progress-text{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-family:'Fredoka',sans-serif; font-weight:700; font-size:.78rem;
-    color:#fff; text-shadow:0 1px 4px rgba(90,26,74,.6);
-    letter-spacing:.06em; pointer-events:none;
+  .sum-total strong{
+    font-family:'Playfair Display', serif;
+    font-size:1.9rem;
+    font-weight:700;
+    color:var(--gold-2);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.01em;
   }
 
-  /* ============ TOAST ============ */
+  /* ================= Acciones ================= */
+  .actions{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px; flex-wrap:wrap;
+    margin-top:30px;
+    padding-top:22px;
+    border-top:1px solid rgba(255,255,255,.07);
+  }
+  .actions-right{ display:flex; gap:12px; flex-wrap:wrap; }
+  .btn{
+    padding:13px 24px;
+    border-radius:12px;
+    border:1px solid transparent;
+    font-size:.68rem; font-weight:700;
+    letter-spacing:.16em; text-transform:uppercase;
+    cursor:pointer;
+    transition:.22s ease;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-ghost{
+    background:transparent;
+    border-color:rgba(255,255,255,.13);
+    color:var(--text);
+  }
+  .btn-ghost:hover{
+    border-color:var(--line-strong);
+    color:var(--gold-2);
+    background:rgba(212,175,95,.06);
+  }
+  .btn-gold{
+    background:linear-gradient(180deg, #f0d9a4, #c9a24b);
+    color:#1a1206;
+    box-shadow:0 12px 26px rgba(212,175,95,.22);
+  }
+  .btn-gold:hover{
+    transform:translateY(-1px);
+    box-shadow:0 16px 32px rgba(212,175,95,.3);
+    filter:brightness(1.04);
+  }
+  .legal{
+    font-size:.62rem;
+    letter-spacing:.1em;
+    color:#5d6678;
+    margin:0;
+    max-width:320px;
+    line-height:1.6;
+  }
+
+  /* ================= Aviso flotante ================= */
   .toast{
-    position:fixed; top:24px; right:24px;
-    display:flex; align-items:center; gap:14px; max-width:390px;
-    padding:16px 20px; border-radius:28px; border:4px solid transparent;
-    background:
-      linear-gradient(rgba(255,255,255,.97), rgba(255,255,255,.97)) padding-box,
-      linear-gradient(120deg,#ff4fa3,#ffd36e,#a8ff9e,#7ee8fa,#b39dff,#ff4fa3) border-box;
-    background-size:auto, 300% 300%;
-    animation:borderRainbow 5s linear infinite;
-    box-shadow:0 16px 45px rgba(255,43,214,.45), 0 0 0 6px rgba(255,255,255,.4);
-    z-index:10000; transform:translateX(135%);
-    transition:transform .55s cubic-bezier(.16,1,.3,1);
+    position:fixed;
+    left:50%; bottom:28px;
+    transform:translate(-50%, 20px);
+    padding:13px 22px;
+    border:1px solid var(--line-strong);
+    border-radius:12px;
+    background:rgba(16,23,34,.97);
+    color:var(--gold-2);
+    font-size:.72rem; font-weight:600;
+    letter-spacing:.14em; text-transform:uppercase;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);
+    opacity:0;
+    pointer-events:none;
+    transition:.32s cubic-bezier(.2,.7,.3,1);
+    z-index:50;
   }
-  .toast.show{ transform:translateX(0); }
-  .toast img{
-    width:54px; height:54px; object-fit:cover; border-radius:18px;
-    border:3px solid #ffd0e8; box-shadow:0 4px 14px rgba(255,79,163,.4);
-  }
-  #toastTitle{
-    font-family:'Fredoka',sans-serif; font-size:.9rem; font-weight:700;
-    color:var(--magenta);
-  }
-  #toastMsg{
-    font-size:.8rem; font-weight:600; color:var(--txt-soft); margin-top:4px;
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  /* ================= Responsive ================= */
+  @media (max-width:780px){
+    body{ padding:20px 14px 44px; }
+    .app{ padding:24px 20px 22px; border-radius:18px; }
+    .app::before{ left:20px; right:20px; }
+    .meta-grid{ grid-template-columns:1fr; gap:12px; }
+    .items-head{ display:none; }
+    .row{
+      grid-template-columns:1fr 1fr 34px;
+      gap:10px;
+      padding:15px 0;
+    }
+    .r-desc{ grid-column:1 / -1; }
+    .r-qty{ grid-column:1; }
+    .r-price{ grid-column:2; }
+    .r-del{ grid-column:3; grid-row:2; justify-self:end; }
+    .r-amount{
+      grid-column:1 / -1;
+      text-align:right;
+      padding-top:9px;
+      border-top:1px dashed rgba(255,255,255,.09);
+    }
+    .summary{ max-width:100%; }
+    .actions{ flex-direction:column; align-items:stretch; }
+    .actions-right{ justify-content:flex-end; }
+    .legal{ max-width:100%; order:2; }
   }
 
-  /* ============ MODAL ============ */
-  .modal-overlay{
-    position:fixed; inset:0; display:none; justify-content:center; align-items:center;
-    background:rgba(255,200,230,.45); backdrop-filter:blur(9px); z-index:9999;
+  /* ================= Impresión ================= */
+  @media print{
+    @page{ margin:16mm; }
+    body{
+      background:#fff !important;
+      color:#111;
+      padding:0;
+      display:block;
+    }
+    .app{
+      border:none; box-shadow:none; background:#fff;
+      max-width:100%; padding:0; backdrop-filter:none;
+    }
+    .app::before{ display:none; }
+    .mark{ border-color:#c9a24b; color:#8a6d2f; }
+    .pill{ border-color:#ccc; color:#555; }
+    .card{ background:#fff; border-color:#e3e3e3; }
+    .field span, .items-head, .tag, .items-title .hint, .switch, .sum-row, .legal{ color:#666; }
+    .field input, .row input{ color:#111; border-bottom-color:#ddd; }
+    .row{ border-bottom:1px solid #eee; }
+    .r-amount, .sum-row strong{ color:#111; }
+    .sum-total{ border-top-color:#c9a24b; }
+    .sum-total span{ color:#8a6d2f; }
+    .sum-total strong{ color:#111; }
+    .actions, .add-row, .r-del, .toast{ display:none !important; }
   }
-  .modal-overlay.active{ display:flex; }
-  .modal-box{
-    width:min(480px,92vw); padding:30px; text-align:center; border-radius:40px;
-    border:5px solid transparent;
-    background:
-      linear-gradient(#fff,#fff) padding-box,
-      linear-gradient(135deg,#ff4fa3,#ffd36e,#a8ff9e,#7ee8fa,#b39dff,#ff2bd6,#ff4fa3) border-box;
-    background-size:auto, 300% 300%;
-    animation:borderRainbow 6s linear infinite, popIn .45s cubic-bezier(.16,1,.3,1);
-    box-shadow:0 26px 70px rgba(255,43,214,.5), 0 0 0 8px rgba(255,255,255,.4);
-    max-height:90vh; overflow-y:auto;
-  }
-  @keyframes popIn{
-    0%{ transform:scale(.75) rotate(-4deg); opacity:0; }
-    100%{ transform:scale(1) rotate(0); opacity:1; }
-  }
-  .modal-box img{
-    width:100%; max-height:170px; object-fit:cover; border-radius:28px;
-    border:4px solid #ffd0e8; margin-bottom:18px;
-    box-shadow:0 8px 26px rgba(255,79,163,.35);
-  }
-  .modal-box h2{
-    font-family:'Fredoka',sans-serif; font-size:1.25rem; font-weight:700;
-    margin:0 0 12px;
-    background:linear-gradient(120deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#a8ff9e,#ffd36e);
-    background-size:300% 100%;
-    -webkit-background-clip:text; background-clip:text;
-    -webkit-text-fill-color:transparent;
-    animation:rainbowBg 5s linear infinite;
-  }
-  .modal-box p{
-    margin:0 0 20px; font-size:.9rem; font-weight:600;
-    color:var(--txt-soft); line-height:1.6;
-  }
-  .modal-box button{
-    font-family:'Fredoka',sans-serif; font-size:.92rem; font-weight:700;
-    letter-spacing:.04em; padding:13px 36px; color:#fff; border:none;
-    border-radius:999px; cursor:pointer;
-    background:linear-gradient(120deg,#ff4fa3,#ff2bd6,#b39dff,#7ee8fa,#ff4fa3);
-    background-size:300% 100%;
-    animation:rainbowBg 5s linear infinite;
-    box-shadow:0 8px 24px rgba(255,43,214,.5), 0 0 0 5px rgba(255,255,255,.5);
-    transition:transform .2s;
-  }
-  .modal-box button:hover{ transform:translateY(-3px) scale(1.06) rotate(-1deg); }
-
-  /* resumen final dentro del modal */
-  .resumen-list{
-    max-height:300px; overflow-y:auto; text-align:left;
-    margin:12px 0; padding:10px 14px;
-    background:#fff5fb; border-radius:16px; border:2px solid #ffd0e8;
-  }
-  .resumen-item{
-    padding:7px 0; font-size:.86rem; font-weight:600;
-    border-bottom:1px dashed #ffe0ef;
-  }
-  .resumen-item:last-child{ border-bottom:none; }
-  .resumen-item.ok{ color:#1f9d6b; }
-  .resumen-item.err{ color:#e01b4c; }
-  .resumen-stats{
-    font-family:'Fredoka',sans-serif; font-weight:700; font-size:1rem;
-    margin-top:10px; color:var(--txt); letter-spacing:.03em;
-  }
-
-  /* banco de sonido */
-  #sound-bank{
-    position:fixed; left:-9999px; top:-9999px;
-    width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none;
-  }
-  .hint{ font-size:.74rem; font-weight:600; color:var(--txt-soft); text-align:center; margin-top:16px; }
 </style>
 </head>
 <body>
 
-<!-- 🌈 Lluvia de emojis -->
-<div class="floaties">
-  <span style="top:8%;  left:5%;  animation-delay:0s;">🌈</span>
-  <span style="top:18%; right:8%; animation-delay:1.2s;">💖</span>
-  <span style="top:38%; left:12%; animation-delay:2.4s;">✨</span>
-  <span style="top:60%; right:14%;animation-delay:3.6s;">🦄</span>
-  <span style="top:78%; left:7%;  animation-delay:4.8s;">🌸</span>
-  <span style="bottom:8%; right:5%;animation-delay:6s;">🎀</span>
-  <span style="top:50%; left:48%;animation-delay:2s;">💅</span>
-  <span style="top:88%; left:55%;animation-delay:5.4s;">💖</span>
-  <span style="top:30%; right:38%;animation-delay:7s;">🌈</span>
-</div>
+<main class="app">
 
-<!-- ✨ Destellos -->
-<div class="sparkle" style="top:14%; left:22%; animation-delay:.3s;">✦</div>
-<div class="sparkle" style="top:34%; right:26%; animation-delay:1.1s;">✧</div>
-<div class="sparkle" style="top:66%; left:18%; animation-delay:1.9s;">✦</div>
-<div class="sparkle" style="bottom:18%; right:22%;animation-delay:2.7s;">✧</div>
-<div class="sparkle" style="top:46%; left:70%; animation-delay:3.4s;">✦</div>
-
-<!-- 🔇 Banco de sonido -->
-<div id="sound-bank"></div>
-
-<!-- Toast -->
-<div id="toast" class="toast">
-  <img id="toastImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="sys">
-  <div>
-    <div id="toastTitle">💖 ¡PASO COMPLETADO!</div>
-    <div id="toastMsg">Detalle del sistema</div>
-  </div>
-</div>
-
-<!-- Modal -->
-<div id="modal" class="modal-overlay" onclick="cerrarModal()">
-  <div class="modal-box" onclick="event.stopPropagation();">
-    <img id="modalImg" src="https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg" alt="sys">
-    <h2 id="modalTitle">🌈 ¡PASO COMPLETADO!</h2>
-    <div id="modalMsg">Detalle del paso</div>
-    <button onclick="cerrarModal()">💖 CERRAR 💖</button>
-  </div>
-</div>
-
-<!-- ============ CONTENIDO ============ -->
-<div class="shell">
-
+  <!-- ======= Cabecera ======= -->
   <header class="topbar">
     <div class="brand">
-      <h1>💖 CORE_INVOICE v3.3 🌈</h1>
-      <p>✨ Rainbow Pride Edition · todo en español, paso a paso ✨</p>
+      <div class="mark">CI</div>
+      <div>
+        <h1>CORE_INVOICE <span>v3.3</span></h1>
+        <p class="tag">Facturación profesional · Edición Elegante</p>
+      </div>
     </div>
-    <div class="status">
-      <span class="dot"></span> 💅 SISTEMA EN LÍNEA 🦄
+    <div class="pill" id="statusPill">
+      <span class="dot"></span>
+      <span id="statusText">Borrador</span>
     </div>
   </header>
 
-  <div class="layout">
+  <!-- ======= Datos ======= -->
+  <section class="meta-grid">
 
-    <!-- ============ SIDEBAR ============ -->
-    <aside class="panel side">
+    <div class="card">
+      <h2>Emisor</h2>
+      <label class="field">
+        <span>Razón social</span>
+        <input id="senderName" value="Nexo Studio S.A.S." autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>NIT / Documento</span>
+        <input id="senderDoc" value="901.458.220-7" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>Correo</span>
+        <input id="senderEmail" type="email" value="facturacion@nexostudio.co" autocomplete="off" />
+      </label>
+    </div>
 
-      <div class="block-title">
-        <span>📋 DATOS DE ENTRADA 💖</span>
-        <button onclick="limpiarCaja()" class="btn-mini">🧹 Limpiar</button>
-      </div>
+    <div class="card">
+      <h2>Cliente</h2>
+      <label class="field">
+        <span>Nombre / Empresa</span>
+        <input id="clientName" placeholder="Nombre del cliente" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>NIT / Documento</span>
+        <input id="clientDoc" placeholder="900.000.000-0" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>Correo</span>
+        <input id="clientEmail" type="email" placeholder="cliente@empresa.com" autocomplete="off" />
+      </label>
+    </div>
 
-      <textarea id="admisionLista"
-        placeholder="✨ Pega aquí: 275572, 275573 - 275574 ..."></textarea>
+    <div class="card">
+      <h2>Detalles</h2>
+      <label class="field">
+        <span>N.º de factura</span>
+        <input id="invNumber" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>Fecha de emisión</span>
+        <input id="issueDate" type="date" />
+      </label>
+      <label class="field">
+        <span>Vencimiento</span>
+        <input id="dueDate" type="date" />
+      </label>
+    </div>
 
-      <div class="field">
-        <label class="label">🏥 Institución <b>[id]</b></label>
-        <select id="selInstitucion">
-          <option value="14">C.S. SAN JOSE DE TOLUVIEJO (14)</option>
-          <option value="20" selected>E.S.E. HOSPITAL SAN JORGE (20)</option>
-          <option value="45">ESE CENTRO DE SALUD SANTA LUCIA (45)</option>
-        </select>
-      </div>
+  </section>
 
-      <div class="field">
-        <label class="label">📅 Fecha de emisión <b>[editable]</b></label>
-        <input id="fechaInput" type="text" maxlength="10">
-      </div>
+  <!-- ======= Conceptos ======= -->
+  <section class="items">
+    <div class="items-title">
+      <h2>Conceptos</h2>
+      <span class="hint">Cálculo automático</span>
+    </div>
 
-      <div class="block-title" style="margin-top:24px;"><span>💅 MÓDULOS ✨</span></div>
+    <div class="items-head">
+      <span>Descripción</span>
+      <span>Cant.</span>
+      <span>Precio unit.</span>
+      <span>Importe</span>
+      <span></span>
+    </div>
 
-      <label class="chk"><input type="checkbox" id="chkCambiar" checked class="checkbox-coqueta"> 01_CAMBIAR_FECHA 💖</label>
-      <label class="chk"><input type="checkbox" id="chkGenerar" checked class="checkbox-coqueta"> 02_GENERAR_PREFIJO 🌈</label>
-      <label class="chk"><input type="checkbox" id="chkEnviar" class="checkbox-coqueta"> 03_ENVIAR_DIAN 🚀</label>
+    <div id="rows"></div>
 
-      <button id="ejecutarBtn">🚀 EJECUTAR SECUENCIA 💖</button>
+    <button class="add-row" id="addBtn" type="button">+ Añadir concepto</button>
+  </section>
 
-      <p class="hint">🎵 audio: es_una_pasiva → botón principal</p>
-    </aside>
+  <!-- ======= Totales ======= -->
+  <section class="summary">
+    <div class="sum-row">
+      <span>Subtotal</span>
+      <strong id="subtotal">$ 0</strong>
+    </div>
+    <div class="sum-row" id="taxRow">
+      <label class="switch">
+        <input type="checkbox" id="iva" checked />
+        <span>IVA 19%</span>
+      </label>
+      <strong id="tax">$ 0</strong>
+    </div>
+    <div class="sum-total">
+      <span>Total</span>
+      <strong id="total">$ 0</strong>
+    </div>
+  </section>
 
-    <!-- ============ MAIN ============ -->
-    <main class="main-col">
+  <!-- ======= Acciones ======= -->
+  <footer class="actions">
+    <p class="legal">Documento generado automáticamente. Requiere firma y sello para validez fiscal.</p>
+    <div class="actions-right">
+      <button class="btn btn-ghost" id="newBtn" type="button">Nueva factura</button>
+      <button class="btn btn-ghost" id="saveBtn" type="button">Guardar borrador</button>
+      <button class="btn btn-gold" id="printBtn" type="button">Imprimir / PDF</button>
+    </div>
+  </footer>
 
-      <!-- Monitor: admisión actual + estadísticas -->
-      <div class="panel monitor">
-        <div class="monitor-cell">
-          <div class="k">📊 ESTADO DEL SISTEMA</div>
-          <div class="v" id="summary">🌟 SISTEMA LISTO 🌟</div>
-        </div>
-        <div class="monitor-cell current-adm-cell">
-          <div class="k">🆔 ADMISIÓN EN PROCESO</div>
-          <div class="current-adm" id="currentAdm">—</div>
-          <div class="current-adm-sub" id="currentAdmSub">Esperando inicio…</div>
-        </div>
-        <div class="monitor-cell stats-cell">
-          <div class="stat"><span class="stat-num" id="statOk">0</span><span class="stat-label">✅ Exitosas</span></div>
-          <div class="stat"><span class="stat-num" id="statErr">0</span><span class="stat-label">💔 Fallidas</span></div>
-          <div class="stat"><span class="stat-num" id="statTotal">0</span><span class="stat-label">📋 Total</span></div>
-        </div>
-        <div class="pct" id="progressPct">0%</div>
-      </div>
+</main>
 
-      <!-- Registro detallado de eventos -->
-      <div class="panel" style="padding:20px 24px;">
-        <div class="block-title">
-          <span>📜 REGISTRO DETALLADO DE EVENTOS 💖</span>
-          <button onclick="limpiarLog()" class="btn-mini">🧹 Limpiar registro</button>
-        </div>
-        <div class="log-panel" id="logPanel">
-          <div class="log-entry info">
-            <span class="log-time">[--:--:--]</span>
-            <span class="log-msg">Esperando inicio del proceso… pega admisiones y pulsa EJECUTAR 💖</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabla de resultados por admisión -->
-      <div class="panel">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>💖 Admisión</th>
-                <th class="center">🌈 Mapa de proceso ✨</th>
-                <th class="right">💅 Resultado final</th>
-              </tr>
-            </thead>
-            <tbody id="resultsTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Barra de progreso con etiqueta de admisión -->
-      <div class="bar-row">
-        <button onclick="reiniciarTodo()" class="btn-mini">🔄 Reiniciar todo</button>
-        <div class="progress-container">
-          <div class="progress-label" id="progressLabel">Esperando inicio…</div>
-          <div class="progress-bar">
-            <div id="progressBar" class="fill"></div>
-            <div class="progress-text" id="progressText">0 / 0</div>
-          </div>
-        </div>
-      </div>
-
-    </main>
-  </div>
-</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-  /* ============ CONFIG ============ */
-  const API_BASE = window.location.origin;
-  const IMAGEN = "https://hospitalsanjorgeayapel.gov.co/LectorPdf/Img/funcionario/Neder%20Jer%C3%B3nimo-%20Ortega-Coordinador%20TIC-SI.jpg";
+(function () {
+  "use strict";
 
-  /* ============ AUDIO ============ */
-  const SOUNDS = {
-    main:  "https://www.myinstants.com/media/sounds/es-una-pasiva.mp3",
-    clear: "https://www.myinstants.com/media/sounds/gemision.mp3"
-  };
-  const EMBEDS = {
-    main:  "https://www.myinstants.com/instant/es-una-pasiva-20058/embed/",
-    clear: "https://www.myinstants.com/instant/gemision-88211/embed/"
-  };
-  const audioCache = {};
+  const $  = (s) => document.querySelector(s);
+  const rowsEl   = $("#rows");
+  const ivaInput = $("#iva");
+  const taxRow   = $("#taxRow");
+  const subEl    = $("#subtotal");
+  const taxEl    = $("#tax");
+  const totalEl  = $("#total");
+  const statusText = $("#statusText");
+  const toastEl  = $("#toast");
 
-  function playSound(key){
-    const url = SOUNDS[key];
-    if(!url) return;
-    try{
-      if(!audioCache[key]) audioCache[key] = new Audio(url);
-      const a = audioCache[key];
-      a.currentTime = 0; a.volume = 0.9;
-      const p = a.play();
-      if(p && p.catch) p.catch(() => fallbackIframe(key));
-    }catch(e){ fallbackIframe(key); }
-  }
-  function fallbackIframe(key){
-    const bank = document.getElementById('sound-bank');
-    const old = document.getElementById('snd-' + key);
-    if(old) old.remove();
-    const f = document.createElement('iframe');
-    f.id = 'snd-' + key; f.src = EMBEDS[key];
-    f.width = 110; f.height = 200; f.frameBorder = 0; f.scrolling = 'no';
-    bank.appendChild(f);
-  }
-
-  /* ============ INICIALIZACIÓN ============ */
-  window.onload = () => {
-    const hoy = new Date();
-    const y = hoy.getFullYear();
-    const m = String(hoy.getMonth() + 1).padStart(2, '0');
-    const d = String(hoy.getDate()).padStart(2, '0');
-    document.getElementById('fechaInput').value = `${y}/${m}/${d}`;
-  };
-
-  /* ============ UTILIDADES ============ */
-  function limpiarCaja(){
-    playSound('clear');
-    document.getElementById('admisionLista').value = '';
-  }
-
-  function limpiarLista(texto){ return texto.match(/\d+/g) || []; }
-
-  function normalizarFecha(fechaStr){
-    if(/^\d{4}\/\d{2}\/\d{2}$/.test(fechaStr)) return fechaStr;
-    const partes = fechaStr.split('/');
-    if(partes.length === 3 && partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4){
-      return `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-    return fechaStr;
-  }
-
-  function mostrarToast(titulo, mensaje){
-    const toast = document.getElementById('toast');
-    document.getElementById('toastTitle').innerText = titulo;
-    document.getElementById('toastMsg').innerText = mensaje;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
-  }
-
-  function mostrarModal(titulo, mensaje, autoCerrar = true){
-    const modal = document.getElementById('modal');
-    document.getElementById('modalTitle').innerHTML = titulo;
-    document.getElementById('modalMsg').innerHTML = mensaje;
-    modal.classList.add('active');
-    if(window.modalTimeout) clearTimeout(window.modalTimeout);
-    if(autoCerrar){
-      window.modalTimeout = setTimeout(() => cerrarModal(), 4500);
-    }
-  }
-
-  function cerrarModal(){
-    document.getElementById('modal').classList.remove('active');
-    if(window.modalTimeout) clearTimeout(window.modalTimeout);
-  }
-
-  /* ============ REGISTRO DE EVENTOS ============ */
-  function logEvent(level, message){
-    const panel = document.getElementById('logPanel');
-    const now = new Date();
-    const time = now.toLocaleTimeString('es-ES', { hour12: false });
-    const entry = document.createElement('div');
-    entry.className = `log-entry ${level}`;
-    entry.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg">${message}</span>`;
-    panel.appendChild(entry);
-    panel.scrollTop = panel.scrollHeight;
-  }
-
-  function limpiarLog(){
-    const panel = document.getElementById('logPanel');
-    panel.innerHTML = `<div class="log-entry info">
-      <span class="log-time">[--:--:--]</span>
-      <span class="log-msg">Registro limpio. Esperando nuevo proceso… 💖</span></div>`;
-  }
-
-  /* ============ ACTUALIZAR PANEL DE ADMISIÓN ACTUAL ============ */
-  function actualizarAdmisionActual(idAdm, idx, total, pasoTexto){
-    document.getElementById('currentAdm').innerText = `#${idAdm}`;
-    document.getElementById('currentAdmSub').innerText =
-      `Admisión ${idx} de ${total}${pasoTexto ? ' · ' + pasoTexto : ''}`;
-    document.getElementById('progressLabel').innerHTML =
-      `🆔 Procesando admisión <strong>#${idAdm}</strong> — ${idx} de ${total}`;
-    document.getElementById('progressText').innerText = `${idx} / ${total}`;
-  }
-
-  /* ============ TABLA ============ */
-  function crearFila(id){
-    const tr = document.createElement('tr');
-    tr.id = `r-${id}`;
-    tr.innerHTML = `
-      <td>
-        <div class="adm-id">#${id}</div>
-        <div id="idf-${id}" class="adm-sub">🆔 buscando…</div>
-      </td>
-      <td class="c-map">
-        <div class="steps">
-          <span id="s1-${id}" class="step">💖</span>
-          <span id="s2-${id}" class="step">🌈</span>
-          <span id="s3-${id}" class="step">✨</span>
-          <span id="s4-${id}" class="step">💌</span>
-        </div>
-      </td>
-      <td class="c-log">
-        <span id="msg-${id}" class="log standby">💤 EN ESPERA</span>
-      </td>
-    `;
-    document.getElementById('resultsTableBody').prepend(tr);
-  }
-
-  function updateStep(id, step, status){
-    const dot = document.getElementById(`s${step}-${id}`);
-    if(!dot) return;
-    dot.className = 'step ' + (status === 'active' ? 'step-active'
-                              : status === 'done' ? 'step-done'
-                              : status === 'error' ? 'step-error'
-                              : '');
-  }
-
-  function marcarResultadoFinal(id, ok, detalle){
-    const msgEl = document.getElementById(`msg-${id}`);
-    if(!msgEl) return;
-    if(ok){
-      msgEl.innerText = '✅ COMPLETADA';
-      msgEl.className = 'log ok';
-    } else {
-      msgEl.innerText = '💔 FALLÓ: ' + detalle;
-      msgEl.className = 'log err';
-    }
-  }
-
-  /* ============ REINICIAR TODO ============ */
-  function reiniciarTodo(){
-    document.getElementById('resultsTableBody').innerHTML = '';
-    document.getElementById('statOk').innerText = '0';
-    document.getElementById('statErr').innerText = '0';
-    document.getElementById('statTotal').innerText = '0';
-    document.getElementById('progressBar').style.width = '0%';
-    document.getElementById('progressPct').innerText = '0%';
-    document.getElementById('progressText').innerText = '0 / 0';
-    document.getElementById('progressLabel').innerText = 'Esperando inicio…';
-    document.getElementById('currentAdm').innerText = '—';
-    document.getElementById('currentAdmSub').innerText = 'Esperando inicio…';
-    document.getElementById('summary').innerText = '🌟 SISTEMA LISTO 🌟';
-    limpiarLog();
-  }
-
-  /* ============ SECUENCIA PRINCIPAL ============ */
-  document.getElementById('ejecutarBtn').addEventListener('click', async () => {
-
-    playSound('main');
-
-    const rawText = document.getElementById('admisionLista').value;
-    const list = limpiarLista(rawText);
-    const fechaRaw = document.getElementById('fechaInput').value.trim();
-    const fechaNormalizada = normalizarFecha(fechaRaw);
-    const inst = document.getElementById('selInstitucion').value;
-    const btn = document.getElementById('ejecutarBtn');
-
-    if(!list.length){
-      mostrarModal("🌸 ¡UPS! SIN DATOS", "No se detectaron números de admisión en el campo de entrada. ¡Pega algunos IDs lindos! 💖");
-      logEvent('warning', '⚠️ Intento de ejecución sin admisiones. No se procesó nada.');
-      return;
-    }
-
-    /* reiniciar contadores y panel */
-    reiniciarTodo();
-    btn.disabled = true;
-    btn.innerText = "⏳ PROCESANDO… 💖";
-    document.getElementById('statTotal').innerText = list.length;
-
-    let exitosas = 0;
-    let fallidas = 0;
-    const resultados = [];
-
-    logEvent('title', `🚀 INICIANDO PROCESO — ${list.length} admisión(es) a procesar`);
-    logEvent('info', `🏥 Institución seleccionada: <b>${inst}</b>`);
-    logEvent('info', `📅 Fecha de emisión: <b>${fechaNormalizada}</b>`);
-    logEvent('info', `⚙️ Módulos activos: fecha=${document.getElementById('chkCambiar').checked ? 'SÍ' : 'NO'}, prefijo=${document.getElementById('chkGenerar').checked ? 'SÍ' : 'NO'}, DIAN=${document.getElementById('chkEnviar').checked ? 'SÍ' : 'NO'}`);
-
-    for(let i = 0; i < list.length; i++){
-      const idAdm = list[i];
-      const idx = i + 1;
-
-      actualizarAdmisionActual(idAdm, idx, list.length, 'iniciando…');
-      crearFila(idAdm);
-      logEvent('title', `▶️ ADMISIÓN #${idAdm} — ${idx} de ${list.length} — INICIANDO`);
-
-      let pasosOk = 0;
-      let pasosEjecutados = 0;
-      let pasoFallido = null;
-
-      try{
-        /* ---- PASO 1: BUSCAR ---- */
-        pasosEjecutados++;
-        actualizarAdmisionActual(idAdm, idx, list.length, 'paso 1/4: buscar factura');
-        logEvent('info', `🔍 PASO 1/4 — Buscando factura para admisión #${idAdm}…`);
-        updateStep(idAdm, 1, 'active');
-
-        const resS = await fetch(`${API_BASE}/buscarFactura?numero=${idAdm}&idInstitucion=${inst}`, { method:'POST' });
-        const dataS = await resS.json();
-        if(!dataS.ok || !dataS.idFactura) throw new Error("Factura no encontrada");
-
-        const idFactura = dataS.idFactura;
-        document.getElementById(`idf-${idAdm}`).innerText = `🆔 ${idFactura}`;
-        updateStep(idAdm, 1, 'done');
-        pasosOk++;
-        logEvent('success', `✅ PASO 1/4 COMPLETADO — Factura #${idFactura} encontrada para admisión #${idAdm}`);
-
-        /* ---- PASO 2: FECHA ---- */
-        if(document.getElementById('chkCambiar').checked){
-          pasosEjecutados++;
-          actualizarAdmisionActual(idAdm, idx, list.length, 'paso 2/4: cambiar fecha');
-          logEvent('info', `📅 PASO 2/4 — Cambiando fecha de emisión a ${fechaNormalizada}…`);
-          updateStep(idAdm, 2, 'active');
-
-          const resC = await fetch(`${API_BASE}/cambiar-fecha`, {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json' },
-            body: JSON.stringify({ idFactura, fechaEmision: fechaNormalizada })
-          });
-          const dataC = await resC.json();
-          if(!dataC.ok) throw new Error("Error al cambiar fecha");
-
-          updateStep(idAdm, 2, 'done');
-          pasosOk++;
-          logEvent('success', `✅ PASO 2/4 COMPLETADO — Fecha actualizada a ${fechaNormalizada} en factura #${idFactura}`);
-        } else {
-          logEvent('warning', `⏭️ PASO 2/4 OMITIDO — Módulo 01_CAMBIAR_FECHA no seleccionado`);
-        }
-
-        /* ---- PASO 3: PREFIJO ---- */
-        if(document.getElementById('chkGenerar').checked){
-          pasosEjecutados++;
-          actualizarAdmisionActual(idAdm, idx, list.length, 'paso 3/4: generar prefijo');
-          logEvent('info', `🔢 PASO 3/4 — Generando número de factura para #${idFactura}…`);
-          updateStep(idAdm, 3, 'active');
-
-          const resG = await fetch(`${API_BASE}/GenerarNumeroFactura?idFacturas=${idFactura}&Idinstitucion=${inst}`);
-          const dataG = await resG.json();
-
-          if(dataG.resultado?.valorRetorno === -1){
-            updateStep(idAdm, 3, 'done');
-            pasosOk++;
-            logEvent('warning', `🔏 PASO 3/4 COMPLETADO — La factura #${idFactura} YA ESTABA FIRMADA (no se regeneró)`);
-          } else if(dataG.resultado?.numeroFactura){
-            const num = dataG.resultado.numeroFactura;
-            updateStep(idAdm, 3, 'done');
-            pasosOk++;
-            logEvent('success', `✅ PASO 3/4 COMPLETADO — Número generado: ${num}`);
-          } else {
-            throw new Error("Error al generar prefijo");
-          }
-        } else {
-          logEvent('warning', `⏭️ PASO 3/4 OMITIDO — Módulo 02_GENERAR_PREFIJO no seleccionado`);
-        }
-
-        /* ---- PASO 4: DIAN ---- */
-        if(document.getElementById('chkEnviar').checked){
-          pasosEjecutados++;
-          actualizarAdmisionActual(idAdm, idx, list.length, 'paso 4/4: enviar a DIAN');
-          logEvent('info', `📤 PASO 4/4 — Enviando factura #${idFactura} a DIAN…`);
-          updateStep(idAdm, 4, 'active');
-
-          const resD = await fetch(`${API_BASE}/EnviarDian`, {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json' },
-            body: JSON.stringify({ idFacturas: idFactura })
-          });
-          const dataD = await resD.json();
-          if(dataD.valorRetorno !== 1) throw new Error("Error al enviar a DIAN");
-
-          updateStep(idAdm, 4, 'done');
-          pasosOk++;
-          logEvent('success', `✅ PASO 4/4 COMPLETADO — Factura #${idFactura} enviada a DIAN correctamente`);
-        } else {
-          logEvent('warning', `⏭️ PASO 4/4 OMITIDO — Módulo 03_ENVIAR_DIAN no seleccionado`);
-        }
-
-        /* ---- FINALIZACIÓN EXITOSA ---- */
-        marcarResultadoFinal(idAdm, true);
-        exitosas++;
-        document.getElementById('statOk').innerText = exitosas;
-        resultados.push({ id: idAdm, ok: true });
-
-        logEvent('success', `🎉 ADMISIÓN #${idAdm} FINALIZADA CORRECTAMENTE — ${pasosOk} de ${pasosEjecutados} pasos ejecutados con éxito`);
-        mostrarToast("🎉 ¡ADMISIÓN COMPLETADA! 💖", `#${idAdm} — ${pasosOk}/${pasosEjecutados} pasos OK`);
-
-      }catch(e){
-        pasoFallido = e.message;
-        marcarResultadoFinal(idAdm, false, e.message);
-        fallidas++;
-        document.getElementById('statErr').innerText = fallidas;
-        resultados.push({ id: idAdm, ok: false, error: e.message });
-
-        /* marcar pasos en error */
-        for(let s = 1; s <= 4; s++){
-          const dot = document.getElementById(`s${s}-${idAdm}`);
-          if(dot && !dot.classList.contains('step-done')){
-            updateStep(idAdm, s, 'error');
-          }
-        }
-
-        logEvent('error', `💔 ADMISIÓN #${idAdm} FALLÓ — Error: ${e.message}`);
-        logEvent('error', `   ↳ Pasos completados antes del error: ${pasosOk} de ${pasosEjecutados}`);
-        mostrarToast("💔 ADMISIÓN FALLIDA", `#${idAdm} — ${e.message}`);
-        mostrarModal("💔 ERROR EN ADMISIÓN", `<b>Admisión #${idAdm}</b><br>Error: ${e.message}<br><br>Pasos OK: ${pasosOk}/${pasosEjecutados}`, true);
-      }
-
-      /* ---- ACTUALIZAR PROGRESO ---- */
-      const pct = Math.round((idx / list.length) * 100);
-      document.getElementById('progressBar').style.width = pct + '%';
-      document.getElementById('progressPct').innerText = pct + '%';
-      document.getElementById('progressText').innerText = `${idx} / ${list.length}`;
-      document.getElementById('summary').innerText = `🌸 PROCESANDO ${idx} / ${list.length} 💖`;
-
-      actualizarAdmisionActual(idAdm, idx, list.length, 'terminada');
-      logEvent('info', `⏭️ Avanzando a la siguiente admisión… (${idx} de ${list.length} terminadas)`);
-    }
-
-    /* ---- RESUMEN FINAL ---- */
-    logEvent('title', `🏁 PROCESO COMPLETO — ${exitosas} exitosas, ${fallidas} fallidas, de ${list.length} total`);
-    document.getElementById('progressLabel').innerHTML = `🏁 <strong>Proceso completo</strong> — ${exitosas} exitosas, ${fallidas} fallidas de ${list.length}`;
-    document.getElementById('currentAdm').innerText = '—';
-    document.getElementById('currentAdmSub').innerText = 'Proceso terminado';
-    document.getElementById('summary').innerText = '✨ SECUENCIA TERMINADA 🌈';
-
-    /* resumen en modal */
-    let resumenHtml = '<div class="resumen-list">';
-    resultados.forEach(r => {
-      if(r.ok){
-        resumenHtml += `<div class="resumen-item ok">✅ Admisión #${r.id} — COMPLETADA</div>`;
-      } else {
-        resumenHtml += `<div class="resumen-item err">💔 Admisión #${r.id} — FALLÓ: ${r.error}</div>`;
-      }
-    });
-    resumenHtml += '</div>';
-    resumenHtml += `<div class="resumen-stats">✅ ${exitosas} exitosas · 💔 ${fallidas} fallidas · 📋 ${list.length} total</div>`;
-
-    mostrarModal("🎉 ¡PROCESO COMPLETO! 🌈", resumenHtml, false);
-    mostrarToast("🎉 ¡PROCESO COMPLETO! 💖", `${exitosas} exitosas, ${fallidas} fallidas de ${list.length}`);
-
-    btn.disabled = false;
-    btn.innerText = "🚀 EJECUTAR SECUENCIA 💖";
+  const nf = new Intl.NumberFormat("es-CO", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
   });
+  const money = (n) => "$ " + nf.format(Number.isFinite(n) ? n : 0);
+  const esc = (s) => String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  /* ---------- Aviso flotante ---------- */
+  let toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2400);
+  }
+
+  function setStatus(text) {
+    statusText.textContent = text;
+  }
+
+  /* ---------- Filas ---------- */
+  function addRow(desc = "", qty = 1, price = 0) {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `
+      <input class="r-desc" type="text" placeholder="Descripción del concepto" value="${esc(desc)}" />
+      <input class="r-qty" type="number" min="0" step="1" value="${esc(qty)}" aria-label="Cantidad" />
+      <input class="r-price" type="number" min="0" step="0.01" value="${esc(price)}" aria-label="Precio unitario" />
+      <div class="r-amount">$ 0</div>
+      <button class="r-del" type="button" title="Eliminar concepto" aria-label="Eliminar concepto">&times;</button>
+    `;
+    rowsEl.appendChild(row);
+    calculate();
+  }
+
+  /* ---------- Cálculo ---------- */
+  function calculate() {
+    let subtotal = 0;
+
+    rowsEl.querySelectorAll(".row").forEach((row) => {
+      const qty   = parseFloat(row.querySelector(".r-qty").value) || 0;
+      const price = parseFloat(row.querySelector(".r-price").value) || 0;
+      const amount = qty * price;
+      row.querySelector(".r-amount").textContent = money(amount);
+      subtotal += amount;
+    });
+
+    const rate = ivaInput.checked ? 0.19 : 0;
+    const tax  = subtotal * rate;
+    const total = subtotal + tax;
+
+    subEl.textContent  = money(subtotal);
+    taxEl.textContent  = money(tax);
+    totalEl.textContent = money(total);
+
+    taxRow.style.opacity = ivaInput.checked ? "1" : ".45";
+  }
+
+  /* ---------- Eventos de filas ---------- */
+  rowsEl.addEventListener("input", (e) => {
+    if (e.target.matches("input")) calculate();
+  });
+
+  rowsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".r-del");
+    if (!btn) return;
+
+    const rows = rowsEl.querySelectorAll(".row");
+    if (rows.length === 1) {
+      const r = rows[0];
+      r.querySelector(".r-desc").value  = "";
+      r.querySelector(".r-qty").value   = "1";
+      r.querySelector(".r-price").value = "0";
+    } else {
+      btn.closest(".row").remove();
+    }
+    calculate();
+  });
+
+  $("#addBtn").addEventListener("click", () => {
+    addRow("", 1, 0);
+    const rows = rowsEl.querySelectorAll(".row");
+    rows[rows.length - 1].querySelector(".r-desc").focus();
+  });
+
+  ivaInput.addEventListener("change", calculate);
+
+  /* ---------- Fechas y numeración ---------- */
+  const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    .toISOString().slice(0, 10);
+
+  const today = new Date();
+  const plusDays = (d, n) => new Date(d.getTime() + n * 86400000);
+
+  function nextNumber() {
+    const year = new Date().getFullYear();
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `FAC-${year}-${rand}`;
+  }
+
+  function resetDates() {
+    $("#issueDate").value = iso(today);
+    $("#dueDate").value   = iso(plusDays(today, 15));
+  }
+
+  /* ---------- Acciones ---------- */
+  $("#newBtn").addEventListener("click", () => {
+    $("#clientName").value  = "";
+    $("#clientDoc").value   = "";
+    $("#clientEmail").value = "";
+    $("#invNumber").value   = nextNumber();
+    resetDates();
+
+    rowsEl.innerHTML = "";
+    addRow("", 1, 0);
+    ivaInput.checked = true;
+    calculate();
+
+    setStatus("Borrador");
+    toast("Nueva factura creada");
+    $("#clientName").focus();
+  });
+
+  $("#saveBtn").addEventListener("click", () => {
+    const data = {
+      invNumber: $("#invNumber").value,
+      client: {
+        name:  $("#clientName").value,
+        doc:   $("#clientDoc").value,
+        email: $("#clientEmail").value
+      },
+      issueDate: $("#issueDate").value,
+      dueDate:   $("#dueDate").value,
+      iva: ivaInput.checked,
+      rows: Array.from(rowsEl.querySelectorAll(".row")).map((r) => ({
+        desc:  r.querySelector(".r-desc").value,
+        qty:   r.querySelector(".r-qty").value,
+        price: r.querySelector(".r-price").value
+      })),
+      savedAt: new Date().toISOString()
+    };
+
+    try {
+      localStorage.setItem("core_invoice_draft", JSON.stringify(data));
+      setStatus("Guardada");
+      toast("Borrador guardado");
+    } catch (err) {
+      toast("No se pudo guardar el borrador");
+    }
+  });
+
+  $("#printBtn").addEventListener("click", () => {
+    toast("Preparando documento…");
+    setTimeout(() => window.print(), 320);
+  });
+
+  /* ---------- Arranque ---------- */
+  function boot() {
+    $("#invNumber").value = nextNumber();
+    resetDates();
+
+    addRow("Consultoría estratégica", 1, 2400000);
+    addRow("Diseño de identidad visual", 1, 1800000);
+    addRow("Soporte y mantenimiento", 3, 320000);
+
+    calculate();
+  }
+
+  boot();
+})();
 </script>
 </body>
 </html>
